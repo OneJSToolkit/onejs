@@ -1,0 +1,37 @@
+import EventGroup = require('EventGroup');
+declare class View {
+    public viewName: string;
+    public baseTag: string;
+    public baseClass: string;
+    public baseStyle: string;
+    public viewModelType: any;
+    public id: string;
+    public element: HTMLElement;
+    public parent: View;
+    public children: View[];
+    public events: EventGroup;
+    private static _instanceCount;
+    public _bindings: any;
+    private _viewModel;
+    private _subElements;
+    private _hasChanged;
+    private _isEvaluatingView;
+    private _state;
+    private _initialData;
+    constructor(data?: any);
+    public dispose(): void;
+    public setData(data: any, forceUpdate?: boolean): void;
+    public initialize(): void;
+    public renderHtml(): string;
+    public activate(): void;
+    public deactivate(): void;
+    public addChild(view: View): View;
+    public removeChild(view: View): View;
+    public clearChildren(): void;
+    public onRenderHtml(viewModel: any): string;
+    static genStyle(defaultStyles: string, styleMap?: string[]): string;
+    static genClass(defaultClasses: string, classMap?: string[]): string;
+    static genAttr(defaultAttributes: string, attributeMap: string[]): string;
+    private _bindEvents();
+}
+export = View;
