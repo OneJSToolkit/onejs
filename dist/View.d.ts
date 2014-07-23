@@ -29,9 +29,10 @@ declare class View {
     public removeChild(view: View): View;
     public clearChildren(): void;
     public onRenderHtml(viewModel: any): string;
-    static genStyle(defaultStyles: string, styleMap?: string[]): string;
-    static genClass(defaultClasses: string, classMap?: string[]): string;
-    static genAttr(defaultAttributes: string, attributeMap: string[]): string;
+    public genStyle(defaultStyles: string, styleMap?: string[]): string;
+    public genClass(defaultClasses: string, classMap?: string[]): string;
+    public genAttr(defaultAttributes: string, attributeMap: string[]): string;
+    static loadStyles(rules: any): void;
     private _bindEvents();
 }
 export = View;

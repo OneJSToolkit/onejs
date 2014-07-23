@@ -122,19 +122,34 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
             return '<div id="' + this.id + '"></div>';
         };
 
-        View.genStyle = function (defaultStyles, styleMap) {
+        View.prototype.genStyle = function (defaultStyles, styleMap) {
             defaultStyles = defaultStyles || '';
 
             var styles = defaultStyles.split(';');
+            var viewModel = this._viewModel;
 
             for (var i = 0; styleMap && i < styleMap.length; i += 2) {
-                styles.push(styleMap[i] + ': ' + Encode.toHtmlAttr(this[styleMap[i + 1]]));
+                var styleRule = styleMap[i];
+                var source = styleMap[i + 1];
+
+                switch (styleRule) {
+                    case 'display':
+                    case 'display.inline-block':
+                        styles.push('display: ' + (viewModel[source] ? ((styleRule.indexOf('.') > -1) ? styleRule.split('.').pop() : 'block') : 'none'));
+                        break;
+
+                    default:
+                        if (styleMap[i + 1]) {
+                            styles.push(styleMap[i] + ': ' + Encode.toHtmlAttr(viewModel[styleMap[i + 1]]));
+                        }
+                        break;
+                }
             }
 
             return 'style="' + styles.join('; ') + '"';
         };
 
-        View.genClass = function (defaultClasses, classMap) {
+        View.prototype.genClass = function (defaultClasses, classMap) {
             defaultClasses = defaultClasses || '';
 
             var classes = defaultClasses.split(' ');
@@ -148,7 +163,7 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
             return 'class="' + classes.join(' ') + '"';
         };
 
-        View.genAttr = function (defaultAttributes, attributeMap) {
+        View.prototype.genAttr = function (defaultAttributes, attributeMap) {
             var attrString = '';
             var attributes = [];
 
@@ -157,6 +172,20 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
             }
 
             return attributes.join(' ');
+        };
+
+        View.loadStyles = function (rules) {
+            var styleEl = document.getElementById('ViewStyles');
+
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+
+                // Apparently some version of Safari needs the following line.
+                styleEl.appendChild(document.createTextNode(''));
+                document.head.appendChild(styleEl);
+            }
+
+            styleEl['sheet'].insertRule(rules);
         };
 
         View.prototype._bindEvents = function () {
