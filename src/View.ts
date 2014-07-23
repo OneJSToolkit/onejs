@@ -198,18 +198,11 @@ class View {
 
     public static loadStyles(rules)
     {
-        var styleEl = document.getElementById('ViewStyles');
+        var styleEl = document.createElement('style');
 
-        if (!styleEl) {
-            styleEl = document.createElement('style');
-            styleEl.id = 'ViewStyles';
-
-            // Apparently some version of Safari needs the following line.
-            styleEl.appendChild(document.createTextNode(''));
-            document.head.appendChild(styleEl);
-        }
-
-        styleEl['sheet'].insertRule(rules, 0);
+        styleEl.type = "text/css";
+        styleEl.appendChild(document.createTextNode(rules));
+        document.head.appendChild(styleEl);
     }
 
     private _bindEvents() {
