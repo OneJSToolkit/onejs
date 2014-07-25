@@ -1,10 +1,10 @@
 class Encode {
   public static toHtml(val: string): string {
-    return val || '';
+    return Encode.toSafe(val);
   }
 
   public static toHtmlAttr(val: string): string {
-    return val || '';
+    return Encode.toHtml(val);
   }
 
   public static toJS(val: string): string {
@@ -12,7 +12,7 @@ class Encode {
   }
 
   public static toUrl(val: string): string {
-    return val || '';
+    return Encode.toSafe(val);
   }
 
   public static toSafe(val: string): string {

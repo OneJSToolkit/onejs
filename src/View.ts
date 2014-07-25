@@ -21,13 +21,12 @@ class View {
     public element: HTMLElement;
     public parent: View;
     public children: View[];
-
     public events: EventGroup;
 
     private static _instanceCount = 0;
     public _bindings;
     private _viewModel: ViewModel;
-    private _subElements: HTMLElement[];
+    private _subElements: any;
     private _hasChanged: boolean;
     private _isEvaluatingView: boolean;
     private _state: number = ViewState.CREATED;
@@ -48,9 +47,9 @@ class View {
 
             this._state = ViewState.DISPOSED;
 
-            this.children.forEach(function(child) {
-                child.dispose();
-            });
+            for (var i = 0; i < this.children.length; i++) {
+                this.children[i].dispose();
+            }
 
             this.clearChildren();
             this.events.dispose();
@@ -90,13 +89,12 @@ class View {
             this._state = ViewState.ACTIVE;
 
             this._bindEvents();
+            this._findElements();
 
-            this.children.forEach(function(child) {
-                child.activate();
-            });
+            for (var i = 0; i < this.children.length; i++) {
+                this.children[i].activate();
+            }
 
-            this.element = document.getElementById(this.id + '_0');
-            this.element['control'] = this;
             this._viewModel.onActivate(this._subElements);
         }
     }
@@ -105,9 +103,12 @@ class View {
         if (this._state === ViewState.ACTIVE) {
             this._state = ViewState.INACTIVE;
 
-            this.children.forEach(function(child) {
-                child.deactivate();
-            });
+            this._subElements = null;
+            this.events.off();
+
+            for (var i = 0; i < this.children.length; i++) {
+                this.children[i].deactivate();
+            }
 
             this.element['control'] = null;
 
@@ -218,6 +219,20 @@ class View {
                         this.events.on(targetElement, eventName, this._viewModel[targetName]);
                     }
                 }
+            }
+        }
+    }
+
+    private _findElements() {
+        this.element = document.getElementById(this.id + '_0');
+        this.element['control'] = this;
+        this._subElements = {};
+
+        for (var i = 0; i < this._bindings.length; i++) {
+            var binding = this._bindings[i];
+
+            if (binding.childId) {
+                this._subElements[binding.childId] = document.getElementById(this.id + '_' + binding.id);
             }
         }
     }

@@ -1,7 +1,5 @@
 class EventGroup {
-
   private static _uniqueId = 0;
-
   private _parent;
   private _eventRecords: any[];
   private _id = EventGroup._uniqueId++;
@@ -57,6 +55,10 @@ class EventGroup {
 
         if (!--targetArrayLookup.count) {
           delete eventRecord.target.__events[eventRecord.eventName];
+        }
+
+        if (eventRecord.target.removeEventListener) {
+          eventRecord.target.removeEventListener(eventRecord.eventName, eventRecord.callback);
         }
 
         this._eventRecords.splice(i, 1);
