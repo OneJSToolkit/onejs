@@ -50,6 +50,10 @@ define(["require", "exports"], function(require, exports) {
                         delete eventRecord.target.__events[eventRecord.eventName];
                     }
 
+                    if (eventRecord.target.removeEventListener) {
+                        eventRecord.target.removeEventListener(eventRecord.eventName, eventRecord.callback);
+                    }
+
                     this._eventRecords.splice(i, 1);
                 }
             }

@@ -3,11 +3,11 @@ define(["require", "exports"], function(require, exports) {
         function Encode() {
         }
         Encode.toHtml = function (val) {
-            return val || '';
+            return Encode.toSafe(val);
         };
 
         Encode.toHtmlAttr = function (val) {
-            return val || '';
+            return Encode.toHtml(val);
         };
 
         Encode.toJS = function (val) {
@@ -15,7 +15,7 @@ define(["require", "exports"], function(require, exports) {
         };
 
         Encode.toUrl = function (val) {
-            return val || '';
+            return Encode.toSafe(val);
         };
 
         Encode.toSafe = function (val) {

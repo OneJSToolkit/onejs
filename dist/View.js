@@ -27,9 +27,9 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
 
                 this._state = 3 /* DISPOSED */;
 
-                this.children.forEach(function (child) {
-                    child.dispose();
-                });
+                for (var i = 0; i < this.children.length; i++) {
+                    this.children[i].dispose();
+                }
 
                 this.clearChildren();
                 this.events.dispose();
@@ -69,13 +69,12 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
                 this._state = 2 /* ACTIVE */;
 
                 this._bindEvents();
+                this._findElements();
 
-                this.children.forEach(function (child) {
-                    child.activate();
-                });
+                for (var i = 0; i < this.children.length; i++) {
+                    this.children[i].activate();
+                }
 
-                this.element = document.getElementById(this.id + '_0');
-                this.element['control'] = this;
                 this._viewModel.onActivate(this._subElements);
             }
         };
@@ -84,9 +83,12 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
             if (this._state === 2 /* ACTIVE */) {
                 this._state = 1 /* INACTIVE */;
 
-                this.children.forEach(function (child) {
-                    child.deactivate();
-                });
+                this._subElements = null;
+                this.events.off();
+
+                for (var i = 0; i < this.children.length; i++) {
+                    this.children[i].deactivate();
+                }
 
                 this.element['control'] = null;
 
@@ -122,7 +124,7 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
             return '<div id="' + this.id + '"></div>';
         };
 
-        View.prototype.genStyle = function (defaultStyles, styleMap) {
+        View.prototype._genStyle = function (defaultStyles, styleMap) {
             defaultStyles = defaultStyles || '';
 
             var styles = defaultStyles.split(';');
@@ -149,7 +151,7 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
             return 'style="' + styles.join('; ') + '"';
         };
 
-        View.prototype.genClass = function (defaultClasses, classMap) {
+        View.prototype._genClass = function (defaultClasses, classMap) {
             defaultClasses = defaultClasses || '';
 
             var classes = defaultClasses.split(' ');
@@ -163,7 +165,7 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
             return 'class="' + classes.join(' ') + '"';
         };
 
-        View.prototype.genAttr = function (defaultAttributes, attributeMap) {
+        View.prototype._genAttr = function (defaultAttributes, attributeMap) {
             var attrString = '';
             var attributes = [];
 
@@ -174,18 +176,34 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
             return attributes.join(' ');
         };
 
-        View.loadStyles = function (rules) {
-            var styleEl = document.getElementById('ViewStyles');
+        View.prototype._genText = function (propertyName) {
+            return Encode.toJS(this._getValue(propertyName));
+        };
 
-            if (!styleEl) {
-                styleEl = document.createElement('style');
+        View.prototype._genHtml = function (propertyName) {
+            return Encode.toHtml(this._getValue(propertyName));
+        };
 
-                // Apparently some version of Safari needs the following line.
-                styleEl.appendChild(document.createTextNode(''));
-                document.head.appendChild(styleEl);
+        View.prototype._getValue = function (propertyName, rootObject) {
+            var value = '';
+            var parentObject = rootObject || this._viewModel;
+            var periodIndex = propertyName.indexOf('.');
+
+            while (periodIndex > -1 && parentObject) {
+                parentObject = parentObject[propertyName.substr(0, periodIndex)];
+                propertyName = propertyName.substr(periodIndex + 1);
+                periodIndex = propertyName.indexOf('.');
             }
 
-            styleEl['sheet'].insertRule(rules);
+            return (parentObject ? parentObject[propertyName] : '');
+        };
+
+        View.loadStyles = function (rules) {
+            var styleEl = document.createElement('style');
+
+            styleEl.type = "text/css";
+            styleEl.appendChild(document.createTextNode(rules));
+            document.head.appendChild(styleEl);
         };
 
         View.prototype._bindEvents = function () {
@@ -201,6 +219,20 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
                             this.events.on(targetElement, eventName, this._viewModel[targetName]);
                         }
                     }
+                }
+            }
+        };
+
+        View.prototype._findElements = function () {
+            this.element = document.getElementById(this.id + '_0');
+            this.element['control'] = this;
+            this._subElements = {};
+
+            for (var i = 0; i < this._bindings.length; i++) {
+                var binding = this._bindings[i];
+
+                if (binding.childId) {
+                    this._subElements[binding.childId] = document.getElementById(this.id + '_' + binding.id);
                 }
             }
         };

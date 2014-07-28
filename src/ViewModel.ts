@@ -1,6 +1,9 @@
 import EventGroup = require('EventGroup');
 
 class ViewModel {
+  private static _instanceCount = 0;
+
+  private id = ViewModel._instanceCount++;
   private events: EventGroup;
 
   public constructor(data?: any) {
@@ -14,7 +17,7 @@ class ViewModel {
     this.events.dispose();
   }
 
-  public setData(data: any, forceChange?: boolean) {
+  public setData(data: any, shouldFireChange?: boolean) {
     var hasChanged = false;
 
     for (var i in data) {
@@ -35,7 +38,7 @@ class ViewModel {
       }
     }
 
-    if (hasChanged || forceChange) {
+    if ((hasChanged && shouldFireChange !== false) || shouldFireChange === true) {
       this.events.raise('change');
     }
   }

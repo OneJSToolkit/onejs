@@ -29,10 +29,14 @@ declare class View {
     public removeChild(view: View): View;
     public clearChildren(): void;
     public onRenderHtml(viewModel: any): string;
-    public genStyle(defaultStyles: string, styleMap?: string[]): string;
-    public genClass(defaultClasses: string, classMap?: string[]): string;
-    public genAttr(defaultAttributes: string, attributeMap: string[]): string;
+    public _genStyle(defaultStyles: string, styleMap?: string[]): string;
+    public _genClass(defaultClasses: string, classMap?: string[]): string;
+    public _genAttr(defaultAttributes: string, attributeMap: string[]): string;
+    public _genText(propertyName: any): string;
+    public _genHtml(propertyName: any): string;
+    public _getValue(propertyName: string, rootObject?: any): any;
     static loadStyles(rules: any): void;
     private _bindEvents();
+    private _findElements();
 }
 export = View;
