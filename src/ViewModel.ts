@@ -1,15 +1,15 @@
 import EventGroup = require('EventGroup');
 
 class ViewModel {
-  private static _instanceCount = 0;
+  public data = {};
 
+  private static _instanceCount = 0;
   private id = ViewModel._instanceCount++;
   private events: EventGroup;
 
   public constructor(data?: any) {
     this.events = new EventGroup(this);
     this.events.declare('change');
-
     this.setData(data);
   }
 
@@ -22,14 +22,14 @@ class ViewModel {
 
     for (var i in data) {
       if (data.hasOwnProperty(i)) {
-        var oldValue = this[i];
+        var oldValue = this.data[i];
         var newValue = data[i];
 
         if (oldValue !== newValue) {
           if (oldValue && EventGroup.isDeclared(oldValue, 'change')) {
             this.events.off(oldValue);
           }
-          this[i] = newValue;
+          this.data[i] = newValue;
           hasChanged = true;
           if (newValue && EventGroup.isDeclared(newValue, 'change')) {
             this.events.on(newValue, 'change', this.change);
