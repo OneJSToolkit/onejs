@@ -1,4 +1,6 @@
 class Encode {
+  // TODO
+
   public static toHtml(val: string): string {
     return Encode.toSafe(val);
   }
