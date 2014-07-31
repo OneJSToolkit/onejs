@@ -1,6 +1,6 @@
 {
   "name": "onejs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "gulpfile.js",
   "scripts": {
@@ -10,8 +10,8 @@
     "type": "git",
     "url": "https://github.com/dzearing/onejs.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "David Zearing",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/dzearing/onejs/issues"
   },
@@ -23,6 +23,7 @@
     "gulp-clean": "^0.3.1",
     "gulp-jasmine": "^0.2.0",
     "karma-chrome-launcher": "^0.1.4",
+    "typescript": "^1.0.1",
     "karma-jasmine": "^0.1.5",
     "karma": "^0.12.16",
     "karma-requirejs": "^0.2.2",
