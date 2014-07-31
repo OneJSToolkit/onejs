@@ -240,6 +240,6 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'Encode'], function(req
         return View;
     })();
 
-    
+
     return View;
 });

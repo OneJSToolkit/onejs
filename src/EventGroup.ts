@@ -34,7 +34,13 @@ class EventGroup {
 
         if (target.addEventListener) {
             target.addEventListener(eventName, function() {
-                return callback.apply(parent, arguments);
+                var result = callback.apply(parent, arguments);
+
+                if (result === false && arguments[0] && arguments[0].preventDefault) {
+                    arguments[0].preventDefault();
+                }
+
+                return result;
             });
         }
 

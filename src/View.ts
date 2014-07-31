@@ -1,6 +1,7 @@
 import ViewModel = require('ViewModel');
 import EventGroup = require('EventGroup');
 import Encode = require('Encode');
+import DomUtils = require('DomUtils');
 
 enum ViewState {
     CREATED = 0,
@@ -15,21 +16,22 @@ class View {
 
     public id: string;
     public parent: View;
+    public owner: View;
     public children: View[];
     public events: EventGroup;
     public activeEvents: EventGroup;
 
+    _viewModel: ViewModel;
+    _parentViewModel: ViewModel;
     _bindings = [];
-    private _lastValues = {};
+    _lastValues = {};
+    _subElements: any;
+    _hasChanged: boolean;
+    _isEvaluatingView: boolean;
+    _state: number = ViewState.CREATED;
+    _initialData;
 
-    private _viewModel: ViewModel;
-    private _subElements: any;
-    private _hasChanged: boolean;
-    private _isEvaluatingView: boolean;
-    private _state: number = ViewState.CREATED;
-    private _initialData;
-
-    private static _instanceCount = 0;
+    static _instanceCount = 0;
 
     constructor(data ? : any) {
         this.events = new EventGroup(this);
@@ -135,8 +137,10 @@ class View {
         }
     }
 
-    public addChild(view: View): View {
+    public addChild(view: View, owner?: View): View {
         view.parent = this;
+        view.owner = owner;
+
         this.children.push(view);
 
         return view;
@@ -186,7 +190,7 @@ class View {
                                 if (!updateValuesOnly) {
 
                                     if (bindingType == 'className') {
-                                        toggleClass(el, bindingDest, currentValue);
+                                        DomUtils.toggleClass(el, bindingDest, currentValue);
                                     } else if (bindingType == 'attr') {
                                         if (currentValue) {
                                             el.setAttribute(bindingDest, currentValue);
@@ -203,7 +207,81 @@ class View {
         }
     }
 
-    public genStyle(defaultStyles: string, styleMap ? : string[]): string {
+    public getViewModel() {
+        return this._viewModel;
+    }
+
+    public getValue(propertyName: string): any {
+        var targetObject = this._getPropTarget(propertyName);
+
+        propertyName = this._getPropName(propertyName);
+
+        var targetValue = targetObject ? targetObject[propertyName] : '';
+
+        if (typeof targetValue === 'function') {
+            targetValue = targetValue.call(targetObject, this._viewModel.data, propertyName);
+        }
+
+        return targetValue;
+    }
+
+    public setValue(propertyName: string, propertyValue: any) {
+        var targetViewModel = this.getViewModel();
+        var targetObject = this._getPropTarget(propertyName);
+
+        if (targetObject) {
+            var data = {};
+            data[this._getPropName(propertyName)] = propertyValue;
+            targetViewModel.setData(data);
+        }
+    }
+
+    _getPropName(propertyName) {
+        var periodIndex = propertyName.lastIndexOf('.');
+
+        if (periodIndex > -1) {
+            propertyName = propertyName.substr(periodIndex + 1);
+        }
+
+        return propertyName;
+    }
+
+    _getPropTarget(propertyName) {
+        var view = this;
+        var propTarget: any = view.getViewModel().data;
+        var periodIndex = propertyName.indexOf('.');
+        var propertyPart;
+
+        while (periodIndex > -1 && propTarget) {
+            propertyPart = propertyName.substr(0, periodIndex);
+
+            if (propertyPart === '$parent') {
+                view = this.parent.owner || this.parent;
+                propTarget = view ? view.getViewModel().data : null;
+            } else if (propertyPart === '$root') {
+                view = this._getRoot();
+                propTarget = view.getViewModel().data;
+            } else {
+                propTarget = propTarget[propertyPart];
+            }
+            propertyName = propertyName.substr(periodIndex + 1);
+            periodIndex = propertyName.indexOf('.');
+        }
+
+        return propTarget ? propTarget : null;
+    }
+
+    _getRoot() {
+        var root = this;
+
+        while (root.parent) {
+            root = root.parent;
+        }
+
+        return root;
+    }
+
+    _genStyle(defaultStyles: string, styleMap ? : string[]): string {
 
         defaultStyles = defaultStyles || '';
 
@@ -231,7 +309,7 @@ class View {
         return 'style="' + styles.join('; ') + '"';
     }
 
-    public genClass(defaultClasses: string, classMap ? : string[]): string {
+    _genClass(defaultClasses: string, classMap ? : string[]): string {
         defaultClasses = defaultClasses || '';
 
         var classes = defaultClasses ? defaultClasses.split(' ') : [];
@@ -245,7 +323,7 @@ class View {
         return classes.length ? ('class="' + classes.join(' ') + '"') : '';
     }
 
-    public genAttr(defaultAttributes: string, attributeMap: string[]): string {
+    _genAttr(defaultAttributes: string, attributeMap: string[]): string {
         var attrString = '';
         var attributes = [];
 
@@ -259,87 +337,15 @@ class View {
         return attributes.join(' ');
     }
 
-    public genText(propertyName) {
+    _genText(propertyName) {
         return Encode.toJS(this.getValue(propertyName));
     }
 
-    public genHtml(propertyName) {
+    _genHtml(propertyName) {
         return Encode.toHtml(this.getValue(propertyName));
     }
 
-    public getViewModel() {
-        return this._viewModel;
-    }
-
-    public getValue(propertyName: string): any {
-        var targetObject = this._getPropTarget(propertyName);
-
-        propertyName = this._getPropName(propertyName);
-
-        var targetValue = targetObject ? targetObject[propertyName] : '';
-
-        if (typeof targetValue === 'function') {
-            targetValue = targetValue.call(targetObject, this._viewModel.data, propertyName);
-        }
-
-        return targetValue;// || '';
-    }
-
-    public setValue(propertyName: string, propertyValue: any) {
-        var targetViewModel = this.getViewModel();
-        var targetObject = this._getPropTarget(propertyName);
-
-        if (targetObject) {
-            var data = {};
-            data[this._getPropName(propertyName)] = propertyValue;
-            targetViewModel.setData(data);
-        }
-    }
-
-    private _getPropName(propertyName) {
-        var periodIndex = propertyName.lastIndexOf('.');
-
-        if (periodIndex > -1) {
-            propertyName = propertyName.substr(periodIndex + 1);
-        }
-
-        return propertyName;
-    }
-
-    private _getPropTarget(propertyName) {
-        var view = this;
-        var propTarget: any = view.getViewModel().data;
-        var periodIndex = propertyName.indexOf('.');
-        var propertyPart;
-
-        while (periodIndex > -1 && propTarget) {
-            propertyPart = propertyName.substr(0, periodIndex);
-
-            if (propertyPart === '$parent') {
-                view = view.parent;
-                propTarget = view ? view.getViewModel().data : null;
-            } else if (propertyPart === '$root') {
-                view = this._getRoot();
-                propTarget = view.getViewModel().data;
-            } else {
-                propTarget = propTarget[propertyPart];
-            }
-            propertyName = propertyName.substr(periodIndex + 1);
-            periodIndex = propertyName.indexOf('.');
-        }
-
-        return propTarget ? propTarget : null;
-    }
-
-    public static loadStyles(rules) {
-        var styleEl = document.createElement('style');
-
-        styleEl.type = "text/css";
-        styleEl.appendChild(document.createTextNode(rules));
-        document.head.appendChild(styleEl);
-    }
-
-    private _bindEvents() {
+    _bindEvents() {
         for (var i = 0; i < this._bindings.length; i++) {
             var binding = this._bindings[i];
 
@@ -350,7 +356,7 @@ class View {
                         var source = binding[bindingType][bindingDest];
                         if (source.indexOf('$parent') > -1) {
                             this._viewModel.setData({
-                                '$parent': this.parent.getViewModel()
+                                '$parent': (this.owner || this.parent).getViewModel()
                             }, false);
                         }
                         if (source.indexOf('$root') > -1) {
@@ -385,17 +391,7 @@ class View {
         }
     }
 
-    private _getRoot() {
-        var root = this;
-
-        while (root.parent) {
-            root = root.parent;
-        }
-
-        return root;
-    }
-
-    private _bindUtil(element, eventName, util) {
+    _bindUtil(element, eventName, util) {
         var _this = this;
         var paramIndex = util.indexOf('(');
         var utilName = util.substr(0, paramIndex);
@@ -404,26 +400,30 @@ class View {
 
         if (method) {
             _this.events.on(element, eventName, function() {
-                method.apply(_this, params);
+                return method.apply(_this, params);
             });
         }
     }
 
-    private _toggle(propertyName: string) {
+    _toggle(propertyName: string) {
         this.setValue(propertyName, !this.getValue(propertyName));
+
+        return false;
     }
 
-    private _send(sourcePropertyName, destinationPropertyName) {
+    _send(sourcePropertyName, destinationPropertyName) {
         this.setValue(destinationPropertyName, this.getValue(sourcePropertyName));
+
+        return false;
     }
 
-    private _bubble(eventName: string, propertyName ? : string) {
+    _bubble(eventName: string, propertyName ? : string) {
         var propertyValue = propertyName ? this.getValue(propertyName) : this.getViewModel();
 
         return this.events.raise(eventName, propertyValue, true);
     }
 
-    private _findElements() {
+    _findElements() {
         this._subElements = {};
 
         for (var i = 0; i < this._bindings.length; i++) {
@@ -436,21 +436,8 @@ class View {
             }
         }
     }
-}
 
-function toggleClass(element, className, isEnabled) {
-    var classList = element._classes = element._classes || (element.className ? element.className.split(' ') : []);
-    var index = classList.indexOf(className);
-
-    if (isEnabled) {
-        if (index == -1) {
-            classList.push(className);
-        }
-    } else if (index > -1) {
-        classList.splice(index, 1);
-    }
-
-    element.className = classList.join(' ');
+    loadStyles = DomUtils.loadStyles;
 }
 
 export = View;

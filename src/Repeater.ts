@@ -24,7 +24,7 @@ class Repeater extends View {
         this.clearChildren();
 
         for (var i = 0; items && i < items.length; i++) {
-            var newChild = this.addChild(new this.childViewType());
+            var newChild = this.addChild(new this.childViewType(), this.owner);
             var childData;
 
             childData = {};

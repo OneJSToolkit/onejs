@@ -2,10 +2,10 @@ import EventGroup = require('EventGroup');
 
 class ViewModel {
   public data = {};
+  public events: EventGroup;
 
   private static _instanceCount = 0;
   private id = ViewModel._instanceCount++;
-  private events: EventGroup;
 
   public constructor(data?: any) {
     this.events = new EventGroup(this);
