@@ -171,7 +171,6 @@ class View {
     public updateView(updateValuesOnly ? : boolean) {
         if (this._state === ViewState.ACTIVE) {
 
-            console.log(this.viewName + ' updateView');
 
             for (var i = 0; this._bindings && i < this._bindings.length; i++) {
                 var binding = this._bindings[i];
@@ -180,14 +179,16 @@ class View {
                     if (bindingType != 'id' && bindingType != 'events' && bindingType != 'childId' && bindingType != 'text' && bindingType != 'html') {
                         for (var bindingDest in binding[bindingType]) {
                             var sourcePropertyName = binding[bindingType][bindingDest];
-                            var lastValue = this._lastValues[sourcePropertyName];
+                            var key = binding.id + bindingType + '.' + bindingDest;
+                            var lastValue = this._lastValues[key];
                             var currentValue = this.getValue(sourcePropertyName);
 
                             if (lastValue != currentValue) {
                                 var el = this._subElements[binding.id];
-                                this._lastValues[sourcePropertyName] = currentValue;
+                                this._lastValues[key] = currentValue;
 
                                 if (!updateValuesOnly) {
+                                    console.log(this.viewName + ' updateView' + this.id);
 
                                     if (bindingType == 'className') {
                                         DomUtils.toggleClass(el, bindingDest, currentValue);
