@@ -11,13 +11,22 @@ gulp.task('clean', function() {
     .pipe(clean());
 });
 
-gulp.task('tsc', ['clean'], function() {
+gulp.task('tscAMD', ['clean'], function() {
   return gulp.src(paths.source)
     .pipe(tsc({
       module: 'amd',
       declaration: true
     }))
-    .pipe(gulp.dest('dist'));
+    .pipe(gulp.dest('dist/amd'));
 });
 
-gulp.task('default', ['tsc']);
+gulp.task('tscCommonJS', ['clean'], function() {
+  return gulp.src(paths.source)
+    .pipe(tsc({
+      module: 'commonjs',
+      declaration: true
+    }))
+    .pipe(gulp.dest('dist/commonjs'));
+});
+
+gulp.task('default', ['tscAMD']);

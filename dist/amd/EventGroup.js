@@ -11,22 +11,33 @@ define(["require", "exports"], function(require, exports) {
         };
 
         EventGroup.prototype.on = function (target, eventName, callback) {
+            var parent = this._parent;
             var eventRecord = {
                 target: target,
                 eventName: eventName,
-                parent: this._parent,
+                parent: parent,
                 callback: callback
             };
 
             // Initialize and wire up the record on the target, so that it can call the callback if the event fires.
             target.__events = target.__events || {};
-            target.__events[eventName] = target.__events[eventName] || { count: 0 };
+            target.__events[eventName] = target.__events[eventName] || {
+                count: 0
+            };
             target.__events[eventName][this._id] = target.__events[eventName][this._id] || [];
             target.__events[eventName][this._id].push(eventRecord);
             target.__events[eventName].count++;
 
             if (target.addEventListener) {
-                target.addEventListener(eventName, callback);
+                target.addEventListener(eventName, function () {
+                    var result = callback.apply(parent, arguments);
+
+                    if (result === false && arguments[0] && arguments[0].preventDefault) {
+                        arguments[0].preventDefault();
+                    }
+
+                    return result;
+                });
             }
 
             // Remember the record locally, so that it can be removed.

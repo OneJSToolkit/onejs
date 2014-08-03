@@ -1,53 +1,36 @@
-import ViewModel = require('ViewModel');
-import EventGroup = require('EventGroup');
-import Encode = require('Encode');
-import DomUtils = require('DomUtils');
+var ViewModel = require('ViewModel');
+var EventGroup = require('EventGroup');
+var Encode = require('Encode');
+var DomUtils = require('DomUtils');
 
-enum ViewState {
-    CREATED = 0,
-    INACTIVE = 1,
-    ACTIVE = 2,
-    DISPOSED = 3
-}
+var ViewState;
+(function (ViewState) {
+    ViewState[ViewState["CREATED"] = 0] = "CREATED";
+    ViewState[ViewState["INACTIVE"] = 1] = "INACTIVE";
+    ViewState[ViewState["ACTIVE"] = 2] = "ACTIVE";
+    ViewState[ViewState["DISPOSED"] = 3] = "DISPOSED";
+})(ViewState || (ViewState = {}));
 
-class View {
-    public viewName: string = 'View';
-    public viewModelType: any = ViewModel;
-
-    public id: string;
-    public parent: View;
-    public owner: View;
-    public children: View[];
-    public events: EventGroup;
-    public activeEvents: EventGroup;
-
-    _viewModel: ViewModel;
-    _parentViewModel: ViewModel;
-    _bindings = [];
-    _lastValues = {};
-    _subElements: any;
-    _hasChanged: boolean;
-    _isEvaluatingView: boolean;
-    _state: number = ViewState.CREATED;
-    _initialData;
-
-    static _instanceCount = 0;
-
-    constructor(data ? : any) {
+var View = (function () {
+    function View(data) {
+        this.viewName = 'View';
+        this.viewModelType = ViewModel;
+        this._bindings = [];
+        this._lastValues = {};
+        this._state = 0 /* CREATED */;
+        this.loadStyles = DomUtils.loadStyles;
         this.events = new EventGroup(this);
         this.activeEvents = new EventGroup(this);
         this.children = [];
         this._initialData = data;
     }
-
-    public dispose(): void {
-        if (this._state !== ViewState.DISPOSED) {
-
-            if (this._state == ViewState.ACTIVE) {
+    View.prototype.dispose = function () {
+        if (this._state !== 3 /* DISPOSED */) {
+            if (this._state == 2 /* ACTIVE */) {
                 this.deactivate();
             }
 
-            this._state = ViewState.DISPOSED;
+            this._state = 3 /* DISPOSED */;
 
             for (var i = 0; i < this.children.length; i++) {
                 this.children[i].dispose();
@@ -58,26 +41,30 @@ class View {
             this.activeEvents.dispose();
             this._viewModel.dispose();
         }
-    }
+    };
 
-    public onInitialize() {}
-    public onRenderHtml(viewModel: any): string {
+    View.prototype.onInitialize = function () {
+    };
+    View.prototype.onRenderHtml = function (viewModel) {
         return '';
-    }
-    public onActivate() {}
-    public onDeactivate() {}
-    public onViewModelChanged() {}
+    };
+    View.prototype.onActivate = function () {
+    };
+    View.prototype.onDeactivate = function () {
+    };
+    View.prototype.onViewModelChanged = function () {
+    };
 
-    public setData(data: any, forceUpdate ? : boolean) {
-        if (this._state !== ViewState.DISPOSED) {
+    View.prototype.setData = function (data, forceUpdate) {
+        if (this._state !== 3 /* DISPOSED */) {
             this.initialize();
             this._viewModel.setData(data, forceUpdate);
         }
-    }
+    };
 
-    public initialize(): void {
-        if (this._state === ViewState.CREATED) {
-            this._state = ViewState.INACTIVE;
+    View.prototype.initialize = function () {
+        if (this._state === 0 /* CREATED */) {
+            this._state = 1 /* INACTIVE */;
 
             this.id = this.viewName + '-' + (View._instanceCount++);
 
@@ -87,45 +74,43 @@ class View {
             this.onViewModelChanged();
             this.onInitialize();
 
-
             for (var i = 0; i < this.children.length; i++) {
                 this.children[i].initialize();
             }
         }
-    }
+    };
 
-    public renderHtml(): string {
+    View.prototype.renderHtml = function () {
         var html;
 
-
-        if (this._state !== ViewState.DISPOSED) {
+        if (this._state !== 3 /* DISPOSED */) {
             this.initialize();
 
             html = this.onRenderHtml(this._viewModel);
         }
 
         return html;
-    }
+    };
 
-    public activate(): void {
-        if (this._state === ViewState.INACTIVE) {
-            this._state = ViewState.ACTIVE;
+    View.prototype.activate = function () {
+        if (this._state === 1 /* INACTIVE */) {
+            this._state = 2 /* ACTIVE */;
 
             this._bindEvents();
             this._findElements();
             this.updateView(true);
 
+            this.onActivate();
+
             for (var i = 0; i < this.children.length; i++) {
                 this.children[i].activate();
             }
-
-            this.onActivate();
         }
-    }
+    };
 
-    public deactivate(): void {
-        if (this._state === ViewState.ACTIVE) {
-            this._state = ViewState.INACTIVE;
+    View.prototype.deactivate = function () {
+        if (this._state === 2 /* ACTIVE */) {
+            this._state = 1 /* INACTIVE */;
 
             this.onDeactivate();
 
@@ -136,18 +121,18 @@ class View {
                 this.children[i].deactivate();
             }
         }
-    }
+    };
 
-    public addChild(view: View, owner?: View): View {
+    View.prototype.addChild = function (view, owner) {
         view.parent = this;
         view.owner = owner;
 
         this.children.push(view);
 
         return view;
-    }
+    };
 
-    public removeChild(view: View): View {
+    View.prototype.removeChild = function (view) {
         var childIndex = this.children.indexOf(view);
         var child = this.children[childIndex];
 
@@ -156,23 +141,21 @@ class View {
         }
 
         return view;
-    }
+    };
 
-    public clearChildren() {
+    View.prototype.clearChildren = function () {
         while (this.children.length > 0) {
             this.removeChild(this.children[0]);
         }
-    }
+    };
 
-    public evaluateView() {
+    View.prototype.evaluateView = function () {
         this.onViewModelChanged();
         this.updateView();
-    }
+    };
 
-    public updateView(updateValuesOnly ? : boolean) {
-        if (this._state === ViewState.ACTIVE) {
-
-
+    View.prototype.updateView = function (updateValuesOnly) {
+        if (this._state === 2 /* ACTIVE */) {
             for (var i = 0; this._bindings && i < this._bindings.length; i++) {
                 var binding = this._bindings[i];
 
@@ -207,13 +190,13 @@ class View {
                 }
             }
         }
-    }
+    };
 
-    public getViewModel() {
+    View.prototype.getViewModel = function () {
         return this._viewModel;
-    }
+    };
 
-    public getValue(propertyName: string): any {
+    View.prototype.getValue = function (propertyName) {
         var targetObject = this._getPropTarget(propertyName);
 
         propertyName = this._getPropName(propertyName);
@@ -225,9 +208,9 @@ class View {
         }
 
         return targetValue;
-    }
+    };
 
-    public setValue(propertyName: string, propertyValue: any) {
+    View.prototype.setValue = function (propertyName, propertyValue) {
         var targetObject = this._getPropTarget(propertyName);
         var targetViewModel = targetObject.view.getViewModel();
 
@@ -237,9 +220,9 @@ class View {
             data[this._getPropName(propertyName)] = propertyValue;
             targetViewModel.setData(data);
         }
-    }
+    };
 
-    _getPropName(propertyName) {
+    View.prototype._getPropName = function (propertyName) {
         var periodIndex = propertyName.lastIndexOf('.');
 
         if (periodIndex > -1) {
@@ -247,11 +230,11 @@ class View {
         }
 
         return propertyName;
-    }
+    };
 
-    _getPropTarget(propertyName) {
+    View.prototype._getPropTarget = function (propertyName) {
         var view = this;
-        var propTarget: any = view.getViewModel().data;
+        var propTarget = view.getViewModel().data;
         var periodIndex = propertyName.indexOf('.');
         var propertyPart;
 
@@ -272,13 +255,12 @@ class View {
         }
 
         return {
-            originView: this,
             view: view,
             target: propTarget
         };
-    }
+    };
 
-    _getRoot() {
+    View.prototype._getRoot = function () {
         var root = this;
 
         while (root.parent) {
@@ -286,10 +268,9 @@ class View {
         }
 
         return root;
-    }
+    };
 
-    _genStyle(defaultStyles: string, styleMap ? : string[]): string {
-
+    View.prototype._genStyle = function (defaultStyles, styleMap) {
         defaultStyles = defaultStyles || '';
 
         var styles = defaultStyles.split(';');
@@ -314,9 +295,9 @@ class View {
         }
 
         return 'style="' + styles.join('; ') + '"';
-    }
+    };
 
-    _genClass(defaultClasses: string, classMap ? : string[]): string {
+    View.prototype._genClass = function (defaultClasses, classMap) {
         defaultClasses = defaultClasses || '';
 
         var classes = defaultClasses ? defaultClasses.split(' ') : [];
@@ -328,9 +309,9 @@ class View {
         }
 
         return classes.length ? ('class="' + classes.join(' ') + '"') : '';
-    }
+    };
 
-    _genAttr(defaultAttributes: string, attributeMap: string[]): string {
+    View.prototype._genAttr = function (defaultAttributes, attributeMap) {
         var attrString = '';
         var attributes = [];
 
@@ -342,21 +323,20 @@ class View {
         }
 
         return attributes.join(' ');
-    }
+    };
 
-    _genText(propertyName) {
+    View.prototype._genText = function (propertyName) {
         return Encode.toJS(this.getValue(propertyName));
-    }
+    };
 
-    _genHtml(propertyName) {
+    View.prototype._genHtml = function (propertyName) {
         return Encode.toHtml(this.getValue(propertyName));
-    }
+    };
 
-    _bindEvents() {
+    View.prototype._bindEvents = function () {
         for (var i = 0; i < this._bindings.length; i++) {
             var binding = this._bindings[i];
 
-            // Observe parent if bindings reference parent.
             for (var bindingType in binding) {
                 if (bindingType != 'id' && bindingType != 'events') {
                     for (var bindingDest in binding[bindingType]) {
@@ -396,9 +376,9 @@ class View {
                 }
             }
         }
-    }
+    };
 
-    _bindUtil(element, eventName, util) {
+    View.prototype._bindUtil = function (element, eventName, util) {
         var _this = this;
         var paramIndex = util.indexOf('(');
         var utilName = util.substr(0, paramIndex);
@@ -406,29 +386,29 @@ class View {
         var method = _this['_' + utilName];
 
         if (method) {
-            _this.events.on(element, eventName, function() {
+            _this.events.on(element, eventName, function () {
                 return method.apply(_this, params);
             });
         }
-    }
+    };
 
-    _toggle(propertyName: string) {
+    View.prototype._toggle = function (propertyName) {
         this.setValue(propertyName, !this.getValue(propertyName));
 
         return false;
-    }
+    };
 
-    _send(sourcePropertyName, destinationPropertyName) {
+    View.prototype._send = function (sourcePropertyName, destinationPropertyName) {
         this.setValue(destinationPropertyName, this.getValue(sourcePropertyName));
-    }
+    };
 
-    _bubble(eventName: string, propertyName ? : string) {
+    View.prototype._bubble = function (eventName, propertyName) {
         var propertyValue = propertyName ? this.getValue(propertyName) : this.getViewModel();
 
         return this.events.raise(eventName, propertyValue, true);
-    }
+    };
 
-    _findElements() {
+    View.prototype._findElements = function () {
         this._subElements = {};
 
         for (var i = 0; i < this._bindings.length; i++) {
@@ -440,9 +420,9 @@ class View {
                 this._subElements[binding.childId] = element;
             }
         }
-    }
+    };
+    View._instanceCount = 0;
+    return View;
+})();
 
-    loadStyles = DomUtils.loadStyles;
-}
-
-export = View;
+module.exports = View;

@@ -1,7 +1,7 @@
 import EventGroup = require('EventGroup');
 
 class ViewModel {
-  public data = {};
+  public data: any = {};
   public events: EventGroup;
 
   private static _instanceCount = 0;
@@ -44,8 +44,6 @@ class ViewModel {
   }
 
   public onInitialize() {}
-  public onActivate(subControls) {}
-  public onDeactivate() {}
 
   public change(args) {
     this.events.raise('change', args);

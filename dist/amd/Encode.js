@@ -2,13 +2,9 @@ define(["require", "exports"], function(require, exports) {
     var Encode = (function () {
         function Encode() {
         }
+        // TODO
         Encode.toHtml = function (val) {
-            return String(Encode.toSafe(val))
-            .replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+            return String(Encode.toSafe(val)).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         };
 
         Encode.toHtmlAttr = function (val) {
@@ -29,6 +25,6 @@ define(["require", "exports"], function(require, exports) {
         return Encode;
     })();
 
-
+    
     return Encode;
 });
