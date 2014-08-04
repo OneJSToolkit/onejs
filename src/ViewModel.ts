@@ -45,7 +45,7 @@ class ViewModel {
 
   public onInitialize() {}
 
-  public change(args) {
+  public change(args?: any) {
     this.events.raise('change', args);
   }
 }

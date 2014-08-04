@@ -20,7 +20,8 @@ class EventGroup {
             target: target,
             eventName: eventName,
             parent: parent,
-            callback: callback
+            callback: callback,
+            elementCallback: null
         };
 
         // Initialize and wire up the record on the target, so that it can call the callback if the event fires.
@@ -33,15 +34,23 @@ class EventGroup {
         target.__events[eventName].count++;
 
         if (target.addEventListener) {
-            target.addEventListener(eventName, function() {
-                var result = callback.apply(parent, arguments);
+            eventRecord.elementCallback = processElementEvent;
 
+            target.addEventListener(eventName, processElementEvent);
+
+            if (eventName === 'click') {
+                target.addEventListener('touchstart', processElementEvent);
+            }
+
+            function processElementEvent() {
+                var result = callback.apply(parent, arguments);
                 if (result === false && arguments[0] && arguments[0].preventDefault) {
                     arguments[0].preventDefault();
                 }
 
                 return result;
-            });
+            }
+
         }
 
         // Remember the record locally, so that it can be removed.
@@ -68,7 +77,11 @@ class EventGroup {
                 }
 
                 if (eventRecord.target.removeEventListener) {
-                    eventRecord.target.removeEventListener(eventRecord.eventName, eventRecord.callback);
+                    eventRecord.target.removeEventListener(eventRecord.eventName, eventRecord.elementCallback);
+
+                    if (eventName === 'click') {
+                        target.removeEventListener('touchstart', eventRecord.elementCallback);
+                    }
                 }
 
                 this._eventRecords.splice(i, 1);
