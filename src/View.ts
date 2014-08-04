@@ -231,11 +231,15 @@ class View {
         var targetObject = this._getPropTarget(propertyName);
         var targetViewModel = targetObject.view.getViewModel();
 
-        if (targetViewModel) {
-            var data = {};
+        // TODO, this is a temp fix, less than ideal. If we set command.isExpanded
+        // as the property name, we'd have to do what we have below which is to reach
+        // in and set the value on the the target. We shouldn't do this.
+        // But viewmodel.setData is shallow, so if we passed in { command: { isExpanded: true }},
+        // it would stomp on the existing value as it's a new command object.
 
-            data[this._getPropName(propertyName)] = propertyValue;
-            targetViewModel.setData(data);
+        if (targetViewModel) {
+            targetObject.target[this._getPropName(propertyName)] = propertyValue;
+            targetViewModel.change();
         }
     }
 
