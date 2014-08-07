@@ -209,7 +209,7 @@ class View {
         }
     }
 
-    public getViewModel() {
+    public getViewModel(): any {
         return this._viewModel;
     }
 
@@ -221,7 +221,7 @@ class View {
         var targetValue = (targetObject && targetObject.target) ? targetObject.target[propertyName] : '';
 
         if (typeof targetValue === 'function') {
-            targetValue = targetValue.call(targetObject, this._viewModel.data, propertyName);
+            targetValue = targetValue.call(targetObject.target, this._viewModel, propertyName);
         }
 
         return targetValue;
@@ -255,7 +255,7 @@ class View {
 
     _getPropTarget(propertyName) {
         var view = this;
-        var propTarget: any = view.getViewModel().data;
+        var propTarget: any = view.getViewModel();
         var periodIndex = propertyName.indexOf('.');
         var propertyPart;
 
@@ -264,10 +264,10 @@ class View {
 
             if (propertyPart === '$parent') {
                 view = this.parent.owner || this.parent;
-                propTarget = view ? view.getViewModel().data : null;
+                propTarget = view ? view.getViewModel() : null;
             } else if (propertyPart === '$root') {
                 view = this._getRoot();
-                propTarget = view.getViewModel().data;
+                propTarget = view.getViewModel();
             } else {
                 propTarget = propTarget[propertyPart];
             }
