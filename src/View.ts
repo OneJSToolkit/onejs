@@ -64,6 +64,7 @@ class View {
     public onRenderHtml(viewModel: any): string {
         return '';
     }
+    public onResize() {}
     public onActivate() {}
     public onDeactivate() {}
     public onViewModelChanged() {}
@@ -123,7 +124,18 @@ class View {
         }
     }
 
-    public deactivate(): void {
+    public resize() {
+        if (this._state === ViewState.ACTIVE) {
+
+            this.onResize();
+
+            for (var i = 0; i < this.children.length; i++) {
+                this.children[i].resize();
+            }
+        }
+    }
+
+    public deactivate() {
         if (this._state === ViewState.ACTIVE) {
             this._state = ViewState.INACTIVE;
 

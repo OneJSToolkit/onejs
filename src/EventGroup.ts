@@ -4,8 +4,8 @@ class EventGroup {
     private _eventRecords: any[];
     private _id = EventGroup._uniqueId++;
 
-    public constructor(parent: any) {
-        this._parent = parent;
+    public constructor(parent?: any) {
+        this._parent = parent || window;
         this._eventRecords = [];
     }
 
