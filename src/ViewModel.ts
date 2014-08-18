@@ -1,6 +1,8 @@
 import EventGroup = require('EventGroup');
 
 class ViewModel {
+    isViewModel = true;
+
     __events: EventGroup;
 
     private static __instanceCount = 0;
@@ -12,11 +14,21 @@ class ViewModel {
         this.setData(data);
     }
 
-    public dispose() {
-        this.__events.dispose();
+    public initialize() {
+        this.setData(this, false, true);
+        this.onInitialize();
     }
 
-    public setData(data: any, shouldFireChange ? : boolean) {
+    public onInitialize() {}
+
+    public dispose() {
+        this.__events.dispose();
+        this.onDispose();
+    }
+
+    public onDispose() {}
+
+    public setData(data: any, shouldFireChange ? : boolean, forceListen?: boolean) {
         var hasChanged = false;
 
         for (var i in data) {
@@ -29,7 +41,7 @@ class ViewModel {
                 var oldValue = this[i];
                 var newValue = data[i];
 
-                if (oldValue !== newValue) {
+                if (oldValue !== newValue || forceListen) {
                     if (oldValue && EventGroup.isDeclared(oldValue, 'change')) {
                         this.__events.off(oldValue);
                     }
@@ -47,7 +59,6 @@ class ViewModel {
         }
     }
 
-    public onInitialize() {}
 
     public change(args ? : any) {
         this.__events.raise('change', args);

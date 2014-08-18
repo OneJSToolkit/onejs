@@ -4,7 +4,7 @@ class EventGroup {
     private _eventRecords: any[];
     private _id = EventGroup._uniqueId++;
 
-    public constructor(parent?: any) {
+    public constructor(parent ? : any) {
         this._parent = parent || window;
         this._eventRecords = [];
     }
@@ -15,46 +15,55 @@ class EventGroup {
     }
 
     public on(target: any, eventName: string, callback: (args ? : any) => void) {
-        var parent = this._parent;
-        var eventRecord = {
-            target: target,
-            eventName: eventName,
-            parent: parent,
-            callback: callback,
-            elementCallback: null
-        };
 
-        // Initialize and wire up the record on the target, so that it can call the callback if the event fires.
-        target.__events = target.__events || {};
-        target.__events[eventName] = target.__events[eventName] || {
-            count: 0
-        };
-        target.__events[eventName][this._id] = target.__events[eventName][this._id] || [];
-        target.__events[eventName][this._id].push(eventRecord);
-        target.__events[eventName].count++;
+        if (eventName.indexOf(',') > -1) {
+            var events = eventName.split(/[ ,]+/);
 
-        if (target.addEventListener) {
-            eventRecord.elementCallback = processElementEvent;
-
-            target.addEventListener(eventName, processElementEvent);
-
-            if (eventName === 'click') {
-                target.addEventListener('touchstart', processElementEvent);
+            for (var i = 0; i < events.length; i++) {
+                this.on(target, events[i], callback);
             }
+        } else {
+            var parent = this._parent;
+            var eventRecord = {
+                target: target,
+                eventName: eventName,
+                parent: parent,
+                callback: callback,
+                elementCallback: null
+            };
 
-            function processElementEvent() {
-                var result = callback.apply(parent, arguments);
-                if (result === false && arguments[0] && arguments[0].preventDefault) {
-                    arguments[0].preventDefault();
+            // Initialize and wire up the record on the target, so that it can call the callback if the event fires.
+            target.__events = target.__events || {};
+            target.__events[eventName] = target.__events[eventName] || {
+                count: 0
+            };
+            target.__events[eventName][this._id] = target.__events[eventName][this._id] || [];
+            target.__events[eventName][this._id].push(eventRecord);
+            target.__events[eventName].count++;
+
+            if (target.addEventListener) {
+                eventRecord.elementCallback = processElementEvent;
+
+                target.addEventListener(eventName, processElementEvent);
+
+                if (eventName === 'click') {
+                    target.addEventListener('touchstart', processElementEvent);
                 }
 
-                return result;
+                function processElementEvent() {
+                    var result = callback.apply(parent, arguments);
+                    if (result === false && arguments[0] && arguments[0].preventDefault) {
+                        arguments[0].preventDefault();
+                    }
+
+                    return result;
+                }
+
             }
 
+            // Remember the record locally, so that it can be removed.
+            this._eventRecords.push(eventRecord);
         }
-
-        // Remember the record locally, so that it can be removed.
-        this._eventRecords.push(eventRecord);
     }
 
     public off(target ? : any, eventName ? : string, callback ? : (args ? : any) => void) {
