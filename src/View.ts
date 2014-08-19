@@ -338,6 +338,57 @@ class View {
         return root;
     }
 
+    _ce(tagName: string, attributes: string[], text: string, bindings?: any, children?: HTMLElement[]) {
+        var element = document.createElement(tagName);
+        var i;
+        var value;
+
+        // Set default attributes.
+        for (i = 0; i < attributes.length; i += 2) {
+            element.setAttribute(attributes[i], attributes[i + 1]);
+        }
+
+        // Set text.
+        if (text) {
+            element.textContent = text;
+        }
+
+        if (bindings) {
+            bindings.element = element;
+
+            // Update bound attributes.
+            for (var attrName in bindings.attr) {
+                value = this.getValue(bindings.attr[attrName]);
+
+                if (value) {
+                    element.setAttribute(value);
+                }
+            }
+
+            // Toggle bound classes.
+            for (var className in bindings.className) {
+                DomUtils.toggleClass(element, className, !!this.getValue(bindings.className[className]));
+            }
+
+            // Update bound text/html.
+            if (bindings.text) {
+                DomUtils.setText(element, this.getValue(bindings.text));
+            }
+            else if (bindings.html) {
+                element.innerHTML = this.getValue(bindings.html);
+            }
+        }
+
+        // Append children.
+        if (children) {
+            for (i = 0; i < children.length; i++) {
+                element.appendChild(children[i]);
+            }
+        }
+
+        return element;
+    }
+
     _genStyle(defaultStyles: string, styleMap ? : string[]): string {
 
         defaultStyles = defaultStyles || '';
