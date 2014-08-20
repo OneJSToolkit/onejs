@@ -15,17 +15,18 @@ class View {
     public viewModelType: any = ViewModel;
 
     public id: string;
+    public element: HTMLElement;
     public parent: View;
     public owner: View; // used in repeater cases where "parent" is repeater, but "owner" is host with repeat blocks.
     public children: View[];
     public events: EventGroup;
     public activeEvents: EventGroup;
+    public subElements: any = {};
 
     _viewModel: ViewModel;
     _inheritedModel: ViewModel;
-    _bindings = [];
+    _bindings: any[] = [];
     _lastValues = {};
-    _subElements: any;
     _hasChanged: boolean;
     _isEvaluatingView: boolean;
     _state: number = ViewState.CREATED;
@@ -59,13 +60,17 @@ class View {
             if (!this._inheritedModel) {
                 this._viewModel.dispose();
             }
+
+            if (this.element) {
+                this.element['control'] = null;
+                this.element = null;
+            }
         }
     }
 
     public onInitialize() {}
-    public onRenderHtml(viewModel: any): string {
-        return '';
-    }
+
+    public onRenderElement() { this.element = this._ce('div'); }
     public onResize() {}
     public onActivate() {}
     public onDeactivate() {}
@@ -97,17 +102,16 @@ class View {
         }
     }
 
-    public renderHtml(): string {
-        var html;
-
+    public renderElement(): HTMLElement {
 
         if (this._state !== ViewState.DISPOSED) {
             this.initialize();
-
-            html = this.onRenderHtml(this._viewModel);
+            this.onRenderElement();
+            this.updateView();
+            this.element['control'] = this;
         }
 
-        return html;
+        return this.element;
     }
 
     public activate(): void {
@@ -119,8 +123,7 @@ class View {
             this._state = ViewState.ACTIVE;
 
             this._bindEvents();
-            this._findElements();
-            this.updateView(true);
+            // this.updateView(true);
 
             this.onActivate();
         }
@@ -147,7 +150,7 @@ class View {
 
             this.onDeactivate();
 
-            this._subElements = null;
+            this.subElements = null;
             this.activeEvents.off();
         }
     }
@@ -184,13 +187,12 @@ class View {
     }
 
     public updateView(updateValuesOnly ? : boolean) {
-        if (this._state === ViewState.ACTIVE) {
-
-            for (var i = 0; this._bindings && i < this._bindings.length; i++) {
+        if (this._bindings && this.element) {
+             for (var i = 0; this._bindings && i < this._bindings.length; i++) {
                 var binding = this._bindings[i];
 
                 for (var bindingType in binding) {
-                    if (bindingType != 'id' && bindingType != 'events' && bindingType != 'childId') {
+                    if (bindingType != 'id' && bindingType != 'events' && bindingType != 'childId' && bindingType != 'element') {
                         if (bindingType === 'text' || bindingType === 'html') {
                             this._updateViewValue(binding, bindingType, binding[bindingType], updateValuesOnly);
                         } else {
@@ -214,9 +216,8 @@ class View {
 
             // TODO: enqueue for renderframe update.
             if (!updateValuesOnly) {
-                console.log(this.viewName + ' updateView' + this.id);
 
-                var el = this._subElements[binding.id];
+                var el = this.subElements[binding.id];
 
                 console.log('Updating "' + binding.id + '" because "' + sourcePropertyName + '" changed to "' + currentValue + '"');
 
@@ -227,6 +228,10 @@ class View {
 
                     case 'html':
                         el.innerHTML = currentValue;
+                        break;
+
+                    case 'css':
+                        el.style[bindingDest] = currentValue;
                         break;
 
                     case 'className':
@@ -307,11 +312,15 @@ class View {
             } else if (propertyPart === '$root') {
                 view = this._getRoot();
                 propTarget = view.getViewModel();
+            } else if (propertyPart === '$view') {
+                view = this;
+                propTarget = this;
+                viewModel = null;
             } else {
                 propTarget = propTarget[propertyPart];
             }
 
-            if (propTarget.isViewModel) {
+            if (propTarget && propTarget.isViewModel) {
                 viewModel = propTarget;
             }
 
@@ -338,44 +347,29 @@ class View {
         return root;
     }
 
-    _ce(tagName: string, attributes: string[], text: string, bindings?: any, children?: HTMLElement[]) {
+    _ce(tagName: string, attributes?: string[], binding?: any, children?: any[]) : HTMLElement {
         var element = document.createElement(tagName);
         var i;
-        var value;
+        var val;
 
         // Set default attributes.
-        for (i = 0; i < attributes.length; i += 2) {
+        for (i = 0; attributes && i < attributes.length; i += 2) {
             element.setAttribute(attributes[i], attributes[i + 1]);
         }
 
-        // Set text.
-        if (text) {
-            element.textContent = text;
-        }
-
-        if (bindings) {
-            bindings.element = element;
+        if (binding) {
+            this.subElements[binding.id] = binding.element = element;
+            if (binding.childId) {
+                this.subElements[binding.childId] = element;
+            }
 
             // Update bound attributes.
-            for (var attrName in bindings.attr) {
-                value = this.getValue(bindings.attr[attrName]);
+            for (var attrName in binding.attr) {
+                val = this.getValue(binding.attr[attrName]);
 
-                if (value) {
-                    element.setAttribute(value);
+                if (val) {
+                    element.setAttribute(attrName, val);
                 }
-            }
-
-            // Toggle bound classes.
-            for (var className in bindings.className) {
-                DomUtils.toggleClass(element, className, !!this.getValue(bindings.className[className]));
-            }
-
-            // Update bound text/html.
-            if (bindings.text) {
-                DomUtils.setText(element, this.getValue(bindings.text));
-            }
-            else if (bindings.html) {
-                element.innerHTML = this.getValue(bindings.html);
             }
         }
 
@@ -389,68 +383,8 @@ class View {
         return element;
     }
 
-    _genStyle(defaultStyles: string, styleMap ? : string[]): string {
-
-        defaultStyles = defaultStyles || '';
-
-        var styles = defaultStyles.split(';');
-        var viewModel = this._viewModel;
-
-        for (var i = 0; styleMap && i < styleMap.length; i += 2) {
-            var styleRule = styleMap[i];
-            var source = styleMap[i + 1];
-
-            switch (styleRule) {
-                case 'display':
-                case 'display.inline-block':
-                    styles.push('display: ' + (this.getValue(source) ? ((styleRule.indexOf('.') > -1) ? styleRule.split('.').pop() : 'block') : 'none'));
-                    break;
-
-                default:
-                    if (styleMap[i + 1]) {
-                        styles.push(styleMap[i] + ': ' + Encode.toHtmlAttr(this.getValue(styleMap[i + 1])));
-                    }
-                    break;
-            }
-        }
-
-        return 'style="' + styles.join('; ') + '"';
-    }
-
-    _genClass(defaultClasses: string, classMap ? : string[]): string {
-        defaultClasses = defaultClasses || '';
-
-        var classes = defaultClasses ? defaultClasses.split(' ') : [];
-
-        for (var i = 0; classMap && i < classMap.length; i += 2) {
-            if (this.getValue(classMap[i + 1])) {
-                classes.push(classMap[i]);
-            }
-        }
-
-        return classes.length ? ('class="' + classes.join(' ') + '"') : '';
-    }
-
-    _genAttr(defaultAttributes: string, attributeMap: string[]): string {
-        var attrString = '';
-        var attributes = [];
-
-        for (var i = 0; i < attributeMap.length; i += 2) {
-            var val = this.getValue(attributeMap[i + 1]);
-            if (val) {
-                attributes.push(attributeMap[i] + '="' + Encode.toHtmlAttr(val) + '"');
-            }
-        }
-
-        return attributes.join(' ');
-    }
-
-    _genText(propertyName) {
-        return Encode.toJS(this.getValue(propertyName));
-    }
-
-    _genHtml(propertyName) {
-        return Encode.toHtml(this.getValue(propertyName));
+    _ct(val:string): Text {
+        return document.createTextNode(val);
     }
 
     _bindEvents() {
@@ -458,12 +392,12 @@ class View {
 
         for (var i = 0; i < this._bindings.length; i++) {
             var binding = this._bindings[i];
-            var targetElement = document.getElementById(this.id + '_' + binding.id);
+            var targetElement = binding.element;
 
             // Observe parent if bindings reference parent.
             // TODO: This should be moved/removed.
             for (var bindingType in binding) {
-                if (bindingType != 'id' && bindingType != 'events') {
+                if (bindingType != 'id' && bindingType != 'events' && bindingType != 'element') {
                     for (var bindingDest in binding[bindingType]) {
                         var source = binding[bindingType][bindingDest];
                         if (source.indexOf('$parent') > -1) {
@@ -489,9 +423,8 @@ class View {
             }
 
             this._bindInputEvent(targetElement, binding);
-        }
+        }    }
 
-    }
     _bindInputEvent(element, binding) {
         if (binding.attr && (binding.attr.value || binding.attr.checked)) {
             this.activeEvents.on(element, 'input,change', function() {
@@ -520,63 +453,34 @@ class View {
 
                     args = [];
                     for (var i = 0; i < providedArgs.length; i++) {
-                        args.push(this.getValue(providedArgs[i]));
+                        var arg = providedArgs[i];
+
+                        // pass in literal or value.
+                        args.push(arg[0] == "'" ? arg.substr(1, arg.length - 2) : this.getValue(providedArgs[i]));
                     }
                     target = target.substr(0, paramsPosition);
                 }
 
-                //if (target[0] == '$') {
-                //    return _this._callUtility(element, eventName, target.substr(1));
-                //} else {
-                    var propTarget = _this._getPropTarget(target);
-                    var parentObject = propTarget.target;
-                    var propertyName = propTarget.propertyName;
+                var propTarget = _this._getPropTarget(target);
+                var parentObject = propTarget.target;
+                var propertyName = propTarget.propertyName;
 
-                    if (parentObject && parentObject[propertyName]) {
-                        return parentObject[propertyName].apply(parentObject, args);
-                    }
-                //}
+                if (parentObject && parentObject[propertyName]) {
+                    return parentObject[propertyName].apply(parentObject, args);
+                }
             }
         });
     }
 
-    _callUtility(element, eventName, util) {
-        var _this = this;
-        var paramIndex = util.indexOf('(');
-        var utilName = util.substr(0, paramIndex);
-        var params = util.substr(paramIndex + 1, util.length - paramIndex - 2).split(/[\s,]+/);
-        var method = _this['_' + utilName];
-
-        if (method) {
-            return method.apply(this, params);
-        }
-    }
-
-    _toggle(propertyName: string) {
+    toggle(propertyName: string) {
         this.setValue(propertyName, !this.getValue(propertyName));
 
         return false;
     }
 
-    _send(sourcePropertyName, destinationPropertyName) {
+    send(sourcePropertyName, destinationPropertyName) {
         this.setValue(destinationPropertyName, this.getValue(sourcePropertyName));
     }
-
-    _findElements() {
-        this._subElements = {};
-
-        for (var i = 0; i < this._bindings.length; i++) {
-            var binding = this._bindings[i];
-            var element = document.getElementById(this.id + '_' + binding.id);
-
-            this._subElements[binding.id] = element;
-            if (binding.childId) {
-                this._subElements[binding.childId] = element;
-            }
-        }
-    }
-
-    loadStyles = DomUtils.loadStyles;
 }
 
 export = View;

@@ -28,7 +28,7 @@ class DomUtils {
 
     static setText(el, text) {
         // Hope that we don't run setText before document.body?
-        if (document.body) {
+        if (!document.body) {
             throw "setText can't be called before body is available.";
         }
 

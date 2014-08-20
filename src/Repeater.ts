@@ -18,96 +18,56 @@ class Repeater extends View {
     _endComment: string;
     _surfaceRoots = [];
 
-    onRenderHtml(): string {
-        return '<div id="' + this.id + '_0">' + this.renderItems() + '</div>';
+    onRenderElement(): HTMLElement {
+        return(this.element = this._ce('div', [], null, this.getChildElements()));
+    }
+
+    getChildElements(): HTMLElement[] {
+        var items = this.getValue(this.collectionName);
+        var childElements = [];
+
+        if (!items || !items.isList) {
+            items = new List(items);
+        }
+
+        this.clearChildren();
+
+        for (var i = 0; items && i < items.getCount(); i++) {
+            childElements.push(this._createChild(items.getAt(i), i).renderElement());
+        }
+
+        return childElements;
     }
 
     onViewModelChanged(changeArgs) {
         // evaluate new set of items
         if (this._state === 2 && changeArgs) {
-            var surfaceElement = this._subElements.surface;
+            var surfaceElement = this.subElements.surface;
 
             switch (changeArgs.type) {
-                case 'reset':
-                    this._subElements.surface.innerHTML = this.renderItems();
-                    this._findRoots();
-                    break;
-
                 case 'insert':
-
                     var div = document.createElement('div');
                     var frag = document.createDocumentFragment();
                     var child = this._createChild(changeArgs.item, changeArgs.index);
+                    var elementAtPosition = surfaceElement.childNodes[changeArgs.index];
+                    var childElement = child.renderElement();
 
-                    div.innerHTML = child.renderHtml();
-                    while (div.childNodes.length) {
-                        frag.appendChild(div.firstChild);
+                    if (elementAtPosition) {
+                        surfaceElement.insertBefore(childElement, elementAtPosition);
                     }
-
-                    var elementBefore = this._surfaceRoots[changeArgs.index];
-
-                    this._surfaceRoots.splice(changeArgs.index, 0, frag.firstChild);
-
-                    if (elementBefore) {
-                        surfaceElement.insertBefore(frag, elementBefore);
-                    } else {
-                        surfaceElement.appendChild(frag);
+                    else {
+                        surfaceElement.appendChild(childElement);
                     }
 
                     child.activate();
-
                     break;
 
                 case'remove':
-                    var childRoot = this._surfaceRoots[changeArgs.index];
-                    var nodeToRemove = (changeArgs.index === (this._surfaceRoots.length - 1)) ? surfaceElement.lastChild : this._surfaceRoots[changeArgs.index + 1].previousSibling;
-                    var lastNodeRemoved;
+                    var element = surfaceElement.childNodes[changeArgs.index];
 
-                    do {
-                        lastNodeRemoved = nodeToRemove;
-                        nodeToRemove = nodeToRemove.previousSibling;
-                        surfaceElement.removeChild(lastNodeRemoved);
-                    } while (lastNodeRemoved != childRoot);
-
-                    this._surfaceRoots.splice(changeArgs.index, 1);
+                    element['control'].dispose();
+                    surfaceElement.removeChild(element);
                     break;
-            }
-        }
-    }
-
-    onActivate() {
-        this._findRoots();
-    }
-
-    renderItems() {
-        var items = this.getValue(this.collectionName);
-        var childHtml = '';
-
-
-        if (!items.isList) {
-            items = new List(items);
-        }
-
-        this.clearChildren();
-        this._surfaceRoots = [];
-
-        for (var i = 0; items && i < items.getCount(); i++) {
-            childHtml += this._createChild(items.getAt(i), i).renderHtml() + '<!--' + this.id + '-->';
-        }
-
-        return childHtml;
-    }
-
-    _findRoots() {
-        var childElements = this._subElements.surface.childNodes;
-        var i;
-        var childIndex = 0;
-
-        for (i = 0; i < childElements.length; i++) {
-            this._surfaceRoots[childIndex++] = childElements[i];
-
-            while (i < childElements.length && childElements[i].textContent != this.id) {
-                i++;
             }
         }
     }

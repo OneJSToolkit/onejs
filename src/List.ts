@@ -43,7 +43,7 @@ class List {
 
         this.array[index] = item;
 
-        if (item) {
+        if (item && EventGroup.isDeclared(item, CHANGE_EVENT)) {
             this.events.on(item, CHANGE_EVENT, this.childChange);
         }
 
@@ -59,7 +59,8 @@ class List {
 
     insertAt(index, item) {
         this.array.splice(index, 0, item);
-        if (item) {
+
+        if (item && EventGroup.isDeclared(item, CHANGE_EVENT)) {
             this.events.on(item, CHANGE_EVENT, this.childChange);
         }
         this.change({ type: 'insert', index: index, item: item });
