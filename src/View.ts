@@ -69,7 +69,6 @@ class View {
     }
 
     public onInitialize() {}
-
     public onRenderElement() { this.element = this._ce('div'); }
     public onResize() {}
     public onActivate() {}
@@ -434,6 +433,8 @@ class View {
 
                 this._lastValues[key] = newValue;
                 this.setValue(binding.attr[source], newValue);
+
+                return false;
             });
         }
     }
