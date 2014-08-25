@@ -2,7 +2,7 @@ define(["require", "exports"], function(require, exports) {
     var EventGroup = (function () {
         function EventGroup(parent) {
             this._id = EventGroup._uniqueId++;
-            this._parent = parent;
+            this._parent = parent || window;
             this._eventRecords = [];
         }
         EventGroup.prototype.dispose = function () {
@@ -11,37 +11,53 @@ define(["require", "exports"], function(require, exports) {
         };
 
         EventGroup.prototype.on = function (target, eventName, callback) {
-            var parent = this._parent;
-            var eventRecord = {
-                target: target,
-                eventName: eventName,
-                parent: parent,
-                callback: callback
-            };
+            if (eventName.indexOf(',') > -1) {
+                var events = eventName.split(/[ ,]+/);
 
-            // Initialize and wire up the record on the target, so that it can call the callback if the event fires.
-            target.__events = target.__events || {};
-            target.__events[eventName] = target.__events[eventName] || {
-                count: 0
-            };
-            target.__events[eventName][this._id] = target.__events[eventName][this._id] || [];
-            target.__events[eventName][this._id].push(eventRecord);
-            target.__events[eventName].count++;
+                for (var i = 0; i < events.length; i++) {
+                    this.on(target, events[i], callback);
+                }
+            } else {
+                var parent = this._parent;
+                var eventRecord = {
+                    target: target,
+                    eventName: eventName,
+                    parent: parent,
+                    callback: callback,
+                    elementCallback: null
+                };
 
-            if (target.addEventListener) {
-                target.addEventListener(eventName, function () {
-                    var result = callback.apply(parent, arguments);
+                // Initialize and wire up the record on the target, so that it can call the callback if the event fires.
+                target.__events = target.__events || {};
+                target.__events[eventName] = target.__events[eventName] || {
+                    count: 0
+                };
+                target.__events[eventName][this._id] = target.__events[eventName][this._id] || [];
+                target.__events[eventName][this._id].push(eventRecord);
+                target.__events[eventName].count++;
 
-                    if (result === false && arguments[0] && arguments[0].preventDefault) {
-                        arguments[0].preventDefault();
+                if (target.addEventListener) {
+                    eventRecord.elementCallback = processElementEvent;
+
+                    target.addEventListener(eventName, processElementEvent);
+
+                    if (eventName === 'click') {
+                        target.addEventListener('touchstart', processElementEvent);
                     }
 
-                    return result;
-                });
-            }
+                    function processElementEvent() {
+                        var result = callback.apply(parent, arguments);
+                        if (result === false && arguments[0] && arguments[0].preventDefault) {
+                            arguments[0].preventDefault();
+                        }
 
-            // Remember the record locally, so that it can be removed.
-            this._eventRecords.push(eventRecord);
+                        return result;
+                    }
+                }
+
+                // Remember the record locally, so that it can be removed.
+                this._eventRecords.push(eventRecord);
+            }
         };
 
         EventGroup.prototype.off = function (target, eventName, callback) {
@@ -62,7 +78,11 @@ define(["require", "exports"], function(require, exports) {
                     }
 
                     if (eventRecord.target.removeEventListener) {
-                        eventRecord.target.removeEventListener(eventRecord.eventName, eventRecord.callback);
+                        eventRecord.target.removeEventListener(eventRecord.eventName, eventRecord.elementCallback);
+
+                        if (eventName === 'click') {
+                            target.removeEventListener('touchstart', eventRecord.elementCallback);
+                        }
                     }
 
                     this._eventRecords.splice(i, 1);

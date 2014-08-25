@@ -65,6 +65,8 @@ class View {
                 this.element['control'] = null;
                 this.element = null;
             }
+
+            this.subElements = null;
         }
     }
 
@@ -122,20 +124,7 @@ class View {
             this._state = ViewState.ACTIVE;
 
             this._bindEvents();
-            // this.updateView(true);
-
             this.onActivate();
-        }
-    }
-
-    public resize() {
-        if (this._state === ViewState.ACTIVE) {
-
-            this.onResize();
-
-            for (var i = 0; i < this.children.length; i++) {
-                this.children[i].resize();
-            }
         }
     }
 
@@ -149,8 +138,18 @@ class View {
 
             this.onDeactivate();
 
-            this.subElements = null;
             this.activeEvents.off();
+        }
+    }
+
+    public resize() {
+        if (this._state === ViewState.ACTIVE) {
+
+            this.onResize();
+
+            for (var i = 0; i < this.children.length; i++) {
+                this.children[i].resize();
+            }
         }
     }
 

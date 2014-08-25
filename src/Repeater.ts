@@ -14,12 +14,14 @@ class Repeater extends View {
     itemName = 'item';
     indexName = 'index';
     childViewType = View;
+    baseClass = '';
     currentList = new List();
     _endComment: string;
     _surfaceRoots = [];
 
+
     onRenderElement(): HTMLElement {
-        return(this.element = this._ce('div', [], null, this.getChildElements()));
+        return (this.element = this._ce('div', ['class', this.baseClass], null, this.getChildElements()));
     }
 
     getChildElements(): HTMLElement[] {
@@ -41,10 +43,11 @@ class Repeater extends View {
 
     onViewModelChanged(changeArgs) {
         // evaluate new set of items
-        if (this._state === 2 && changeArgs) {
-            var surfaceElement = this.subElements.surface;
+        if (this._state === 2) {
+            var surfaceElement = this.element;
+            var changeType = changeArgs ? changeArgs.type : 'reset';
 
-            switch (changeArgs.type) {
+            switch (changeType) {
                 case 'insert':
                     var div = document.createElement('div');
                     var frag = document.createDocumentFragment();
@@ -64,26 +67,69 @@ class Repeater extends View {
 
                 case'remove':
                     var element = surfaceElement.childNodes[changeArgs.index];
+                    var control = element['control'];
 
-                    element['control'].dispose();
+                    control.dispose();
+                    this.removeChild(control);
                     surfaceElement.removeChild(element);
+
+                    break;
+
+                default:
+                    this._diffChildren();
                     break;
             }
         }
     }
 
+    _diffChildren() {
+        var items = new List(this.getValue(this.collectionName));
+        var surfaceElement = this.element;
+        var element;
+        var control;
+
+        for (var i = 0; items && i < items.getCount(); i++) {
+            var item = items.getAt(i);
+            element = surfaceElement.childNodes[i];
+            control = element ? element['control'] : null;
+
+            if (!control) {
+                control = this._createChild(item, i);
+                surfaceElement.appendChild(control.renderElement());
+                control.activate();
+            }
+            else {
+                this._updateChildData(control, item, i);
+            }
+        }
+
+        while  (surfaceElement.childNodes.length > (items ? items.getCount() : 0)) {
+            element = surfaceElement.childNodes[surfaceElement.childNodes.length - 1];
+            control = element['control'];
+
+            control.dispose();
+            this.removeChild(control);
+            surfaceElement.removeChild(element);
+        }
+    }
+
     _createChild(item, index) {
             var newChild = this.addChild(new this.childViewType(), this.owner);
-            var childData;
 
-            childData = {};
-            // childData[this.collectionName] = items;
-            childData[this.itemName] = item;
-            childData[this.indexName] = index;
-
-            newChild.setData(childData);
+            this._updateChildData(newChild, item, index);
 
             return newChild;
+    }
+
+    _updateChildData(control, item, index) {
+        var childData;
+
+        childData = {};
+        // childData[this.collectionName] = items;
+        childData[this.itemName] = item;
+        childData[this.indexName] = index;
+
+        control.setData(childData);
     }
 
     _bindings = [

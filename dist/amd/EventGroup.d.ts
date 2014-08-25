@@ -3,7 +3,7 @@ declare class EventGroup {
     private _parent;
     private _eventRecords;
     private _id;
-    constructor(parent: any);
+    constructor(parent?: any);
     public dispose(): void;
     public on(target: any, eventName: string, callback: (args?: any) => void): void;
     public off(target?: any, eventName?: string, callback?: (args?: any) => void): void;

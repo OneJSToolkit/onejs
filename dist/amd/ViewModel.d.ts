@@ -1,13 +1,15 @@
 import EventGroup = require('EventGroup');
 declare class ViewModel {
-    public data: any;
-    public events: EventGroup;
-    private static _instanceCount;
-    private id;
+    public isViewModel: boolean;
+    public __events: EventGroup;
+    private static __instanceCount;
+    private __id;
     constructor(data?: any);
-    public dispose(): void;
-    public setData(data: any, shouldFireChange?: boolean): void;
+    public initialize(): void;
     public onInitialize(): void;
-    public change(args: any): void;
+    public dispose(): void;
+    public onDispose(): void;
+    public setData(data: any, shouldFireChange?: boolean, forceListen?: boolean): void;
+    public change(args?: any): void;
 }
 export = ViewModel;
