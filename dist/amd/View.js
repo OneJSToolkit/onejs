@@ -199,7 +199,7 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
                 if (!updateValuesOnly) {
                     var el = this.subElements[binding.id];
 
-                    console.log('Updating "' + binding.id + '" because "' + sourcePropertyName + '" changed to "' + currentValue + '"');
+                    console.log('Updating "' + this.id + '" because "' + sourcePropertyName + '" changed to "' + currentValue + '"');
 
                     switch (bindingType) {
                         case 'text':
@@ -282,6 +282,10 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
                     view = this._getRoot();
                     propTarget = view.getViewModel();
                 } else if (propertyPart === '$view') {
+                    view = this;
+                    propTarget = view;
+                    viewModel = null;
+                } else if (propertyPart === '$owner') {
                     view = this.owner || this;
                     propTarget = view;
                     viewModel = null;
