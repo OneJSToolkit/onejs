@@ -257,12 +257,10 @@ class View {
     public getValue(propertyName: string): any {
         var targetObject = this._getPropTarget(propertyName);
 
-        propertyName = this._getPropName(propertyName);
-
-        var targetValue = (targetObject && targetObject.target) ? targetObject.target[propertyName] : '';
+        var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
 
         if (typeof targetValue === 'function') {
-            targetValue = targetValue.call(targetObject.target, this._viewModel, propertyName);
+            targetValue = targetValue.call(targetObject.target, this._viewModel, targetObject.propertyName);
         }
 
         return targetValue;
@@ -284,16 +282,6 @@ class View {
         }
     }
 
-    _getPropName(propertyName) {
-        var periodIndex = propertyName.lastIndexOf('.');
-
-        if (periodIndex > -1) {
-            propertyName = propertyName.substr(periodIndex + 1);
-        }
-
-        return propertyName;
-    }
-
     _getPropTarget(propertyName) {
         var view = this;
         var viewModel = view.getViewModel();
@@ -304,15 +292,17 @@ class View {
         while (periodIndex > -1 && propTarget) {
             propertyPart = propertyName.substr(0, periodIndex);
 
-            if (propertyPart === '$parent') {
+            if (propertyPart === '$debug') {
+                debugger;
+            } else if (propertyPart === '$parent') {
                 view = this.parent.owner || this.parent;
                 propTarget = view ? view.getViewModel() : null;
             } else if (propertyPart === '$root') {
                 view = this._getRoot();
                 propTarget = view.getViewModel();
             } else if (propertyPart === '$view') {
-                view = this;
-                propTarget = this;
+                view = this.owner || this;
+                propTarget = view;
                 viewModel = null;
             } else {
                 propTarget = propTarget[propertyPart];

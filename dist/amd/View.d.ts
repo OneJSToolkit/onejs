@@ -42,7 +42,6 @@ declare class View {
     public getViewModel(): any;
     public getValue(propertyName: string): any;
     public setValue(propertyName: string, propertyValue: any): void;
-    public _getPropName(propertyName: any): any;
     public _getPropTarget(propertyName: any): {
         originView: View;
         view: View;
