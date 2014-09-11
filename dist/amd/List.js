@@ -26,6 +26,18 @@ define(["require", "exports", 'EventGroup'], function(require, exports, EventGro
             return this.array.indexOf(item);
         };
 
+        List.prototype.findBy = function (propertyName, propertyValue) {
+            for (var i = 0; i < this.array.length; i++) {
+                var item = this.getAt(i);
+
+                if (item && item[propertyName] == propertyValue) {
+                    return i;
+                }
+            }
+
+            return -1;
+        };
+
         List.prototype.getAt = function (index) {
             return this.array[index];
         };

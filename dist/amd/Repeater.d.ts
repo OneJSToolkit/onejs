@@ -7,13 +7,15 @@ declare class Repeater extends View {
     public indexName: string;
     public childViewType: typeof View;
     public baseClass: string;
-    public currentList: List;
+    public _currentList: List;
     public _endComment: string;
     public _surfaceRoots: any[];
     public onRenderElement(): HTMLElement;
     public getChildElements(): HTMLElement[];
     public onViewModelChanged(changeArgs: any): void;
     public _diffChildren(): void;
+    public _insertChild(item: any, i: any): void;
+    public _removeChild(i: any): void;
     public _createChild(item: any, index: any): View;
     public _updateChildData(control: any, item: any, index: any): void;
     public _bindings: {

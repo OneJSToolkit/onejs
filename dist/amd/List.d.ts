@@ -8,6 +8,7 @@ declare class List {
     public getCount(): number;
     public setCount(count: number): void;
     public indexOf(item: any): number;
+    public findBy(propertyName: any, propertyValue: any): number;
     public getAt(index: any): any;
     public setAt(index: any, item: any): void;
     public setRange(index: any, items: any): void;

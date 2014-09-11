@@ -15,13 +15,15 @@ class Repeater extends View {
     indexName = 'index';
     childViewType = View;
     baseClass = '';
-    currentList = new List();
-    _endComment: string;
-    _surfaceRoots = [];
+    removeDelay = 0;
 
+    _currentList = new List();
 
-    onRenderElement(): HTMLElement {
-        return (this.element = this._ce('div', ['class', this.baseClass], null, this.getChildElements()));
+    onRender(): HTMLElement {
+        this.element = this._ce('div', ['class', this.baseClass]);
+        this._diffChildren();
+
+        return this.element;
     }
 
     getChildElements(): HTMLElement[] {
@@ -35,7 +37,7 @@ class Repeater extends View {
         this.clearChildren();
 
         for (var i = 0; items && i < items.getCount(); i++) {
-            childElements.push(this._createChild(items.getAt(i), i).renderElement());
+            childElements.push(this._createChild(items.getAt(i), i).render());
         }
 
         return childElements;
@@ -49,30 +51,11 @@ class Repeater extends View {
 
             switch (changeType) {
                 case 'insert':
-                    var div = document.createElement('div');
-                    var frag = document.createDocumentFragment();
-                    var child = this._createChild(changeArgs.item, changeArgs.index);
-                    var elementAtPosition = surfaceElement.childNodes[changeArgs.index];
-                    var childElement = child.renderElement();
-
-                    if (elementAtPosition) {
-                        surfaceElement.insertBefore(childElement, elementAtPosition);
-                    }
-                    else {
-                        surfaceElement.appendChild(childElement);
-                    }
-
-                    child.activate();
+                    this._insertChild(changeArgs.item, changeArgs.index);
                     break;
 
-                case'remove':
-                    var element = surfaceElement.childNodes[changeArgs.index];
-                    var control = element['control'];
-
-                    control.dispose();
-                    this.removeChild(control);
-                    surfaceElement.removeChild(element);
-
+                case 'remove':
+                    this._removeChild(changeArgs.index);
                     break;
 
                 default:
@@ -83,61 +66,116 @@ class Repeater extends View {
     }
 
     _diffChildren() {
-        var items = new List(this.getValue(this.collectionName));
+        var newList: List = < List > this.getValue(this.collectionName);
+        var currentList = this._currentList;
         var surfaceElement = this.element;
         var element;
         var control;
 
-        for (var i = 0; items && i < items.getCount(); i++) {
-            var item = items.getAt(i);
-            element = surfaceElement.childNodes[i];
-            control = element ? element['control'] : null;
+        if (newList && !newList.isList) {
+            newList = new List( < any > newList);
+        }
 
-            if (!control) {
-                control = this._createChild(item, i);
-                surfaceElement.appendChild(control.renderElement());
-                control.activate();
-            }
-            else {
-                this._updateChildData(control, item, i);
+        var count = newList.getCount();
+
+        for (var i = 0; newList && i < count; i++) {
+            var newItem = newList.getAt(i);
+            var currentItem = currentList.getAt(i);
+
+            var newKey = newItem ? (newItem.key = newItem.key || i) : null;
+            var currentKey = currentItem ? (currentItem.key = currentItem.key || i) : null;
+
+            if (newItem && !currentItem) {
+                this._insertChild(newItem, i);
+            } else if (newKey !== currentKey) {
+                if (currentList.findBy('key', newKey) == -1) {
+                    this._insertChild(newItem, i);
+                } else {
+                    this._removeChild(i--);
+                }
+            } else {
+                this._updateChildData(this.children[i], newItem, i);
             }
         }
 
-        while  (surfaceElement.childNodes.length > (items ? items.getCount() : 0)) {
-            element = surfaceElement.childNodes[surfaceElement.childNodes.length - 1];
-            control = element['control'];
+        while (currentList.getCount() > newList.getCount()) {
+            this._removeChild(i);
+        }
 
-            control.dispose();
-            this.removeChild(control);
-            surfaceElement.removeChild(element);
+        //this._currentList = newList;
+    }
+
+    _insertChild(item, i) {
+        var currentControl = this.children[i];
+        var control = this._createChild(item, i);
+        var element = control.render();
+
+        this._updateChildData(control, item, i);
+
+        if (currentControl) {
+            this.element.insertBefore(element, currentControl.element);
+        } else {
+            this.element.appendChild(element);
+        }
+
+        if (this._state === 2) {
+            control.activate();
         }
     }
 
+    _removeChild(i) {
+        var _this = this;
+        var control = _this.children[i];
+        var element = control.element;
+        var timeToRemove = 0;
+
+        // Delay dom cleanup if indicated by callback.
+        if (control['onRepeaterRemove']) {
+            timeToRemove = control['onRepeaterRemove'](i);
+        }
+
+        _this.removeChild(control);
+        _this._currentList.removeAt(i);
+
+        if (timeToRemove) {
+            setTimeout(_removeDOM, timeToRemove);
+        } else {
+            _removeDOM();
+        }
+
+        function _removeDOM() {
+            control.dispose();
+            if (_this.element) {
+                _this.element.removeChild(element);
+            }
+        }
+    }
+
+
     _createChild(item, index) {
-            var newChild = this.addChild(new this.childViewType(), this.owner);
+        var newChild = this.addChild(new this.childViewType(), this.owner, index);
 
-            this._updateChildData(newChild, item, index);
+        this._updateChildData(newChild, item, index);
+        this._currentList.insertAt(index, item);
 
-            return newChild;
+        return newChild;
     }
 
     _updateChildData(control, item, index) {
         var childData;
 
         childData = {};
-        // childData[this.collectionName] = items;
+        // childData[this.collectionName] = currentList;
         childData[this.itemName] = item;
         childData[this.indexName] = index;
 
         control.setData(childData);
     }
 
-    _bindings = [
-        {
-            "id": "0",
-            "childId": "surface"
-        }
-    ];
+    _bindings = [{
+        "id": "0",
+        "childId": "surface"
+    }];
 }
 
 export = Repeater;

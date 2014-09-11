@@ -33,7 +33,7 @@ class View {
 
     static _instanceCount = 0;
 
-    constructor(viewModel? : ViewModel) {
+    constructor(viewModel ? : ViewModel) {
         this.events = new EventGroup(this);
         this.activeEvents = new EventGroup(this);
         this.children = [];
@@ -71,11 +71,13 @@ class View {
     }
 
     public onInitialize() {}
-    public onRenderElement() { this.element = this._ce('div'); }
+    public onRender() {
+        this.element = this._ce('div');
+    }
     public onResize() {}
     public onActivate() {}
     public onDeactivate() {}
-    public onViewModelChanged(changeArgs?) {}
+    public onViewModelChanged(changeArgs ? ) {}
 
     public setData(data: any, forceUpdate ? : boolean) {
         if (this._state !== ViewState.DISPOSED) {
@@ -103,11 +105,11 @@ class View {
         }
     }
 
-    public renderElement(): HTMLElement {
+    public render(): HTMLElement {
 
         if (this._state !== ViewState.DISPOSED) {
             this.initialize();
-            this.onRenderElement();
+            this.onRender();
             this.updateView();
             this.element['control'] = this;
         }
@@ -153,11 +155,15 @@ class View {
         }
     }
 
-    public addChild(view: View, owner ? : View): View {
+    public addChild(view: View, owner ? : View, index ? : number): View {
         view.parent = this;
         view.owner = owner;
 
-        this.children.push(view);
+        if (index !== undefined) {
+            this.children.splice(index, 0, view);
+        } else {
+            this.children.push(view);
+        }
 
         return view;
     }
@@ -179,23 +185,24 @@ class View {
         }
     }
 
-    public evaluateView(changeArgs?) {
+    public evaluateView(changeArgs ? ) {
         this.onViewModelChanged(changeArgs);
         this.updateView();
     }
 
     public updateView(updateValuesOnly ? : boolean) {
         if (this._bindings && this.element) {
-             for (var i = 0; this._bindings && i < this._bindings.length; i++) {
+            for (var i = 0; this._bindings && i < this._bindings.length; i++) {
                 var binding = this._bindings[i];
-
-                for (var bindingType in binding) {
-                    if (bindingType != 'id' && bindingType != 'events' && bindingType != 'childId' && bindingType != 'element') {
-                        if (bindingType === 'text' || bindingType === 'html') {
-                            this._updateViewValue(binding, bindingType, binding[bindingType], updateValuesOnly);
-                        } else {
-                            for (var bindingDest in binding[bindingType]) {
-                                this._updateViewValue(binding, bindingType, binding[bindingType][bindingDest], updateValuesOnly, bindingDest);
+                if (binding.element) {
+                    for (var bindingType in binding) {
+                        if (bindingType != 'id' && bindingType != 'events' && bindingType != 'childId' && bindingType != 'element') {
+                            if (bindingType === 'text' || bindingType === 'html') {
+                                this._updateViewValue(binding, bindingType, binding[bindingType], updateValuesOnly);
+                            } else {
+                                for (var bindingDest in binding[bindingType]) {
+                                    this._updateViewValue(binding, bindingType, binding[bindingType][bindingDest], updateValuesOnly, bindingDest);
+                                }
                             }
                         }
                     }
@@ -204,7 +211,7 @@ class View {
         }
     }
 
-    _updateViewValue(binding, bindingType, sourcePropertyName, updateValuesOnly? : boolean, bindingDest?) {
+    _updateViewValue(binding, bindingType, sourcePropertyName, updateValuesOnly ? : boolean, bindingDest ? ) {
         var key = binding.id + bindingType + (bindingDest ? ('.' + bindingDest) : '');
         var lastValue = this._lastValues[key];
         var currentValue = this.getValue(sourcePropertyName);
@@ -339,7 +346,7 @@ class View {
         return root;
     }
 
-    _ce(tagName: string, attributes?: string[], binding?: any, children?: any[]) : HTMLElement {
+    _ce(tagName: string, attributes ? : string[], binding ? : any, children ? : any[]): HTMLElement {
         var element = document.createElement(tagName);
         var i;
         var val;
@@ -375,7 +382,7 @@ class View {
         return element;
     }
 
-    _ct(val:string): Text {
+    _ct(val: string): Text {
         return document.createTextNode(val);
     }
 
@@ -415,7 +422,8 @@ class View {
             }
 
             this._bindInputEvent(targetElement, binding);
-        }    }
+        }
+    }
 
     _bindInputEvent(element, binding) {
         if (binding.attr && (binding.attr.value || binding.attr.checked)) {
@@ -435,10 +443,15 @@ class View {
     _bindEvent(element, eventName, targetList) {
         var _this = this;
 
+        if (eventName.indexOf('$view.') == 0) {
+            eventName = eventName.substr(6);
+            element = this;
+        }
+
         this.activeEvents.on(element, eventName, function(ev) {
             for (var targetIndex = 0; targetIndex < targetList.length; targetIndex++) {
                 var target = targetList[targetIndex];
-                var args = <any>arguments;
+                var args = < any > arguments;
 
                 var paramsPosition = target.indexOf('(');
 
