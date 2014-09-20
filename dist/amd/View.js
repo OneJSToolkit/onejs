@@ -51,7 +51,7 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
 
         View.prototype.onInitialize = function () {
         };
-        View.prototype.onRenderElement = function () {
+        View.prototype.onRender = function () {
             this.element = this._ce('div');
         };
         View.prototype.onResize = function () {
@@ -88,10 +88,10 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
             }
         };
 
-        View.prototype.renderElement = function () {
+        View.prototype.render = function () {
             if (this._state !== 3 /* DISPOSED */) {
                 this.initialize();
-                this.onRenderElement();
+                this.onRender();
                 this.updateView();
                 this.element['control'] = this;
             }
@@ -136,11 +136,15 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
             }
         };
 
-        View.prototype.addChild = function (view, owner) {
+        View.prototype.addChild = function (view, owner, index) {
             view.parent = this;
             view.owner = owner;
 
-            this.children.push(view);
+            if (index !== undefined) {
+                this.children.splice(index, 0, view);
+            } else {
+                this.children.push(view);
+            }
 
             return view;
         };
@@ -171,14 +175,15 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
             if (this._bindings && this.element) {
                 for (var i = 0; this._bindings && i < this._bindings.length; i++) {
                     var binding = this._bindings[i];
-
-                    for (var bindingType in binding) {
-                        if (bindingType != 'id' && bindingType != 'events' && bindingType != 'childId' && bindingType != 'element') {
-                            if (bindingType === 'text' || bindingType === 'html') {
-                                this._updateViewValue(binding, bindingType, binding[bindingType], updateValuesOnly);
-                            } else {
-                                for (var bindingDest in binding[bindingType]) {
-                                    this._updateViewValue(binding, bindingType, binding[bindingType][bindingDest], updateValuesOnly, bindingDest);
+                    if (binding.element) {
+                        for (var bindingType in binding) {
+                            if (bindingType != 'id' && bindingType != 'events' && bindingType != 'childId' && bindingType != 'element') {
+                                if (bindingType === 'text' || bindingType === 'html') {
+                                    this._updateViewValue(binding, bindingType, binding[bindingType], updateValuesOnly);
+                                } else {
+                                    for (var bindingDest in binding[bindingType]) {
+                                        this._updateViewValue(binding, bindingType, binding[bindingType][bindingDest], updateValuesOnly, bindingDest);
+                                    }
                                 }
                             }
                         }
@@ -238,11 +243,10 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
 
         View.prototype.getValue = function (propertyName) {
             var targetObject = this._getPropTarget(propertyName);
-
-            var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
+            var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.shortName] : '';
 
             if (typeof targetValue === 'function') {
-                targetValue = targetValue.call(targetObject.target, this._viewModel, targetObject.propertyName);
+                targetValue = this._getValueFromFunction(propertyName);
             }
 
             return targetValue;
@@ -301,12 +305,20 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
                 periodIndex = propertyName.indexOf('.');
             }
 
+            var shortPropertyName = propertyName;
+            var methodIndex = propertyName.indexOf('(');
+
+            if (methodIndex > -1) {
+                shortPropertyName = propertyName.substr(0, methodIndex);
+            }
+
             return {
                 originView: this,
                 view: view,
                 viewModel: viewModel,
                 target: propTarget,
-                propertyName: propertyName
+                propertyName: propertyName,
+                shortName: shortPropertyName
             };
         };
 
@@ -413,35 +425,64 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
         View.prototype._bindEvent = function (element, eventName, targetList) {
             var _this = this;
 
+            if (eventName.indexOf('$view.') == 0) {
+                eventName = eventName.substr(6);
+                element = this;
+            }
+
             this.activeEvents.on(element, eventName, function (ev) {
+                var returnValue;
+
                 for (var targetIndex = 0; targetIndex < targetList.length; targetIndex++) {
                     var target = targetList[targetIndex];
                     var args = arguments;
 
-                    var paramsPosition = target.indexOf('(');
+                    returnValue = this._getValueFromFunction(target, args);
+                }
 
-                    if (paramsPosition > -1) {
-                        var providedArgs = target.substr(paramsPosition + 1, target.length - paramsPosition - 2).split(/[\s,]+/);
+                return returnValue;
+            });
+        };
 
-                        args = [];
-                        for (var i = 0; i < providedArgs.length; i++) {
-                            var arg = providedArgs[i];
+        View.prototype._getValueFromFunction = function (target, existingArgs) {
+            var paramsPosition = target.indexOf('(');
+            var args = [];
+            var returnValue = '';
 
-                            // pass in literal or value.
-                            args.push(arg[0] == "'" ? arg.substr(1, arg.length - 2) : this.getValue(providedArgs[i]));
-                        }
-                        target = target.substr(0, paramsPosition);
-                    }
+            if (paramsPosition > -1) {
+                var providedArgs = target.substr(paramsPosition + 1, target.length - paramsPosition - 2).split(/[\s,]+/);
 
-                    var propTarget = _this._getPropTarget(target);
-                    var parentObject = propTarget.target;
-                    var propertyName = propTarget.propertyName;
+                for (var i = 0; i < providedArgs.length; i++) {
+                    var arg = providedArgs[i];
 
-                    if (parentObject && parentObject[propertyName]) {
-                        return parentObject[propertyName].apply(parentObject, args);
+                    // pass in literal or resolved property.
+                    if (arg[0] == "'") {
+                        args.push(arg.substr(1, arg.length - 2));
+                    } else if (arg === 'true' || arg === 'false') {
+                        args.push(Boolean(arg));
+                    } else if (arg.length > 0 && !isNaN(Number(arg))) {
+                        args.push(Number(arg));
+                    } else {
+                        args.push(this.getValue(providedArgs[i]));
                     }
                 }
-            });
+
+                target = target.substr(0, paramsPosition);
+            }
+
+            if (existingArgs) {
+                args = args.concat(existingArgs);
+            }
+
+            var propTarget = this._getPropTarget(target);
+            var parentObject = propTarget.target;
+            var propertyName = propTarget.propertyName;
+
+            if (parentObject && parentObject[propertyName]) {
+                returnValue = parentObject[propertyName].apply(parentObject, args);
+            }
+
+            return returnValue;
         };
 
         View.prototype.toggle = function (propertyName) {
