@@ -2,6 +2,8 @@ import EventGroup = require('EventGroup');
 
 class ViewModel {
     isViewModel = true;
+    
+    parentValues = [];
 
     __events: EventGroup;
 
@@ -16,6 +18,22 @@ class ViewModel {
 
     public initialize() {
         this.setData(this, false, true);
+
+        for (var i = 0; i < this.parentValues.length; i++) {
+            var args = { name: this.parentValues[i], val: null };
+
+            this.__events.raise('findValue', args, true);
+
+            if (args.val !== null) {
+                var data = {};
+                data[args.name] = args.val;
+                this.setData(data, false, true);
+            }
+            else {
+                throw "Unable to find value: " + args.name;
+            }
+        }
+
         this.onInitialize();
     }
 

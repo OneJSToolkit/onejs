@@ -1,6 +1,7 @@
 import EventGroup = require('EventGroup');
 declare class ViewModel {
     public isViewModel: boolean;
+    public parentValues: any[];
     public __events: EventGroup;
     private static __instanceCount;
     private __id;

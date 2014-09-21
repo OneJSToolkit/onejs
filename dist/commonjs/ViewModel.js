@@ -3,6 +3,7 @@ var EventGroup = require('EventGroup');
 var ViewModel = (function () {
     function ViewModel(data) {
         this.isViewModel = true;
+        this.parentValues = [];
         this.__id = ViewModel.__instanceCount++;
         this.__events = new EventGroup(this);
         this.__events.declare('change');
@@ -10,6 +11,21 @@ var ViewModel = (function () {
     }
     ViewModel.prototype.initialize = function () {
         this.setData(this, false, true);
+
+        for (var i = 0; i < this.parentValues.length; i++) {
+            var args = { name: this.parentValues[i], val: null };
+
+            this.__events.raise('findValue', args, true);
+
+            if (args.val !== null) {
+                var data = {};
+                data[args.name] = args.val;
+                this.setData(data, false, true);
+            } else {
+                throw "Unable to find value: " + args.name;
+            }
+        }
+
         this.onInitialize();
     };
 

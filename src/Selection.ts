@@ -1,24 +1,31 @@
 import EventGroup = require('EventGroup');
+import List = require('List');
 
 class Selection {
-    selectedItem = null;
+    selectedKey = null;
 
     _selectedItems = {};
+    _selectedCount = 0;
 
-    _singleSelect = true;
+    isMultiSelectEnabled = true;
 
+    _isAllSelected = false;
     _events: EventGroup = new EventGroup(this);
+    _list: List;
 
-    constructor() {
+    constructor(isMultiSelectEnabled?: boolean) {
         this._events.declare('change');
+
+        this.isMultiSelectEnabled = isMultiSelectEnabled;
     }
 
     clear() {
         this._selectedItems = {};
+        this._selectedCount = 0;
     }
 
 
-    getSelectedItems() {
+    getSelectedKeys() {
         var selected = [];
 
         for (var key in this._selectedItems) {
@@ -28,8 +35,19 @@ class Selection {
         return selected;
     }
 
-    setSelected(item, isSelected?: boolean) {
-        var key = item.key;
+    toggle(key) {
+        this.setSelected(key, !this.isSelected(key));
+    }
+
+    toggleAllSelected() {
+        if (this._selectedCount == 0) {
+            this._isAllSelected = !this._isAllSelected;
+        }
+        this.clear();
+        this.change();
+    }
+
+    setSelected(key, isSelected?: boolean) {
 
         isSelected = (isSelected === false) ? false : true;
 
@@ -37,22 +55,36 @@ class Selection {
             throw "Items used with Selection must have keys.";
         }
 
-        if (this._singleSelect) {
+        if (!this.isMultiSelectEnabled) {
             this.clear();
         }
 
-        if (isSelected) {
-            this.selectedItem = this._selectedItems[key] = item;
+        if ((this._isAllSelected && !isSelected) || (!this._isAllSelected && isSelected)) {
+            if (!this._selectedItems[key]) {
+                this.selectedKey = this._selectedItems[key] = key;
+                this._selectedCount++;
+            }
         }
         else {
-            delete this._selectedItems[key];
+            if (this._selectedItems[key]) {
+                delete this._selectedItems[key];
+                this._selectedCount--;
+            }
         }
 
-        this._events.raise('change');
+        this.change();
     }
 
-    isSelected(item) {
-        return !!this._selectedItems[item.key];
+    isAllSelected() {
+        return this._isAllSelected && (this._selectedCount == 0);
+    }
+
+    isSelected(key) {
+        return (this._isAllSelected && !this._selectedItems[key]) || (!this._isAllSelected && this._selectedItems[key]);
+    }
+
+    change() {
+        this._events.raise('change');
     }
 }
 

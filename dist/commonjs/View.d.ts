@@ -41,6 +41,7 @@ declare class View {
     public _updateViewValue(binding: any, bindingType: any, sourcePropertyName: any, updateValuesOnly?: boolean, bindingDest?: any): void;
     public getViewModel(): any;
     public getValue(propertyName: string): any;
+    public findValue(args: any): void;
     public setValue(propertyName: string, propertyValue: any): void;
     public _getPropTarget(propertyName: any): {
         originView: View;
@@ -48,7 +49,7 @@ declare class View {
         viewModel: any;
         target: any;
         propertyName: any;
-        shortName: any;
+        args: any;
     };
     public _getRoot(): View;
     public _ce(tagName: string, attributes?: string[], binding?: any, children?: any[]): HTMLElement;

@@ -78,6 +78,7 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
 
                 this._viewModel = this._inheritedModel ? this._inheritedModel : new this.viewModelType();
                 this.events.on(this._viewModel, 'change', this.evaluateView);
+                this.events.on(this._viewModel, 'findValue', this.findValue);
                 this._viewModel.initialize();
                 this.onViewModelChanged();
                 this.onInitialize();
@@ -243,13 +244,23 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
 
         View.prototype.getValue = function (propertyName) {
             var targetObject = this._getPropTarget(propertyName);
-            var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.shortName] : '';
+            var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
 
             if (typeof targetValue === 'function') {
                 targetValue = this._getValueFromFunction(propertyName);
             }
 
             return targetValue;
+        };
+
+        View.prototype.findValue = function (args) {
+            var resource = this.getValue(args.name);
+
+            if (resource === undefined && this.parent) {
+                this.parent.findValue(args);
+            } else {
+                args.val = resource;
+            }
         };
 
         View.prototype.setValue = function (propertyName, propertyValue) {
@@ -271,8 +282,16 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
             var view = this;
             var viewModel = view.getViewModel();
             var propTarget = viewModel;
-            var periodIndex = propertyName.indexOf('.');
             var propertyPart;
+            var methodIndex = propertyName.indexOf('(');
+            var args = null;
+
+            if (methodIndex > -1) {
+                args = propertyName.substr(methodIndex + 1, propertyName.length - methodIndex - 2);
+                propertyName = propertyName.substr(0, methodIndex);
+            }
+
+            var periodIndex = propertyName.indexOf('.');
 
             while (periodIndex > -1 && propTarget) {
                 propertyPart = propertyName.substr(0, periodIndex);
@@ -305,20 +324,13 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
                 periodIndex = propertyName.indexOf('.');
             }
 
-            var shortPropertyName = propertyName;
-            var methodIndex = propertyName.indexOf('(');
-
-            if (methodIndex > -1) {
-                shortPropertyName = propertyName.substr(0, methodIndex);
-            }
-
             return {
                 originView: this,
                 view: view,
                 viewModel: viewModel,
                 target: propTarget,
                 propertyName: propertyName,
-                shortName: shortPropertyName
+                args: args
             };
         };
 
@@ -445,12 +457,12 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
         };
 
         View.prototype._getValueFromFunction = function (target, existingArgs) {
-            var paramsPosition = target.indexOf('(');
+            var propTarget = this._getPropTarget(target);
             var args = [];
             var returnValue = '';
 
-            if (paramsPosition > -1) {
-                var providedArgs = target.substr(paramsPosition + 1, target.length - paramsPosition - 2).split(/[\s,]+/);
+            if (propTarget.args && propTarget.args.length > 0) {
+                var providedArgs = propTarget.args.split(/[\s,]+/);
 
                 for (var i = 0; i < providedArgs.length; i++) {
                     var arg = providedArgs[i];
@@ -466,15 +478,12 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
                         args.push(this.getValue(providedArgs[i]));
                     }
                 }
-
-                target = target.substr(0, paramsPosition);
             }
 
             if (existingArgs) {
                 args = args.concat(existingArgs);
             }
 
-            var propTarget = this._getPropTarget(target);
             var parentObject = propTarget.target;
             var propertyName = propTarget.propertyName;
 
