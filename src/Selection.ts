@@ -43,6 +43,10 @@ class Selection {
         if (this._selectedCount == 0) {
             this._isAllSelected = !this._isAllSelected;
         }
+        else {
+            this._isAllSelected = true;
+        }
+
         this.clear();
         this.change();
     }
@@ -76,11 +80,11 @@ class Selection {
     }
 
     isAllSelected() {
-        return this._isAllSelected && (this._selectedCount == 0);
+        return !!(this._isAllSelected && (this._selectedCount == 0));
     }
 
     isSelected(key) {
-        return (this._isAllSelected && !this._selectedItems[key]) || (!this._isAllSelected && this._selectedItems[key]);
+        return !!((this._isAllSelected && !this._selectedItems[key]) || (!this._isAllSelected && this._selectedItems[key]));
     }
 
     change() {

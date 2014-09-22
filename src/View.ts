@@ -505,8 +505,8 @@ class View {
             }
         }
 
-        if (existingArgs) {
-            args = args.concat(existingArgs);
+        if (args.length == 0 && existingArgs) {
+            args = existingArgs;
         }
 
         var parentObject = propTarget.target;

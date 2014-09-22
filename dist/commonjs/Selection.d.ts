@@ -15,7 +15,7 @@ declare class Selection {
     public toggleAllSelected(): void;
     public setSelected(key: any, isSelected?: boolean): void;
     public isAllSelected(): boolean;
-    public isSelected(key: any): any;
+    public isSelected(key: any): boolean;
     public change(): void;
 }
 export = Selection;

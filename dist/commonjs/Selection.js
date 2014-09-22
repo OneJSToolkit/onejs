@@ -34,7 +34,10 @@ var Selection = (function () {
     Selection.prototype.toggleAllSelected = function () {
         if (this._selectedCount == 0) {
             this._isAllSelected = !this._isAllSelected;
+        } else {
+            this._isAllSelected = true;
         }
+
         this.clear();
         this.change();
     };
@@ -66,11 +69,11 @@ var Selection = (function () {
     };
 
     Selection.prototype.isAllSelected = function () {
-        return this._isAllSelected && (this._selectedCount == 0);
+        return !!(this._isAllSelected && (this._selectedCount == 0));
     };
 
     Selection.prototype.isSelected = function (key) {
-        return (this._isAllSelected && !this._selectedItems[key]) || (!this._isAllSelected && this._selectedItems[key]);
+        return !!((this._isAllSelected && !this._selectedItems[key]) || (!this._isAllSelected && this._selectedItems[key]));
     };
 
     Selection.prototype.change = function () {
