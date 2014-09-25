@@ -1,6 +1,6 @@
-var ViewModel = require('ViewModel');
-var EventGroup = require('EventGroup');
-var DomUtils = require('DomUtils');
+var ViewModel = require('./ViewModel');
+var EventGroup = require('./EventGroup');
+var DomUtils = require('./DomUtils');
 
 var ViewState;
 (function (ViewState) {

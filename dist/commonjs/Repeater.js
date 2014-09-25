@@ -4,8 +4,8 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-var View = require('View');
-var List = require('List');
+var View = require('./View');
+var List = require('./List');
 
 /// <summary>
 /// The Repeater view renders a given child view (provided by the overridable getChildControlType function) for

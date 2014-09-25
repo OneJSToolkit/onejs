@@ -1,4 +1,4 @@
-import EventGroup = require('EventGroup');
+import EventGroup = require('./EventGroup');
 declare class ViewModel {
     public isViewModel: boolean;
     public parentValues: any[];

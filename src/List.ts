@@ -1,4 +1,4 @@
-import EventGroup = require('EventGroup');
+import EventGroup = require('./EventGroup');
 
 var CHANGE_EVENT ='change';
 var CHILD_CHANGE_EVENT ='change';

@@ -1,5 +1,5 @@
-import View = require('View');
-import List = require('List');
+import View = require('./View');
+import List = require('./List');
 declare class Repeater extends View {
     public viewName: string;
     public collectionName: string;

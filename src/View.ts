@@ -1,6 +1,6 @@
-import ViewModel = require('ViewModel');
-import EventGroup = require('EventGroup');
-import DomUtils = require('DomUtils');
+import ViewModel = require('./ViewModel');
+import EventGroup = require('./EventGroup');
+import DomUtils = require('./DomUtils');
 
 enum ViewState {
     CREATED = 0,

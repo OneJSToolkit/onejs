@@ -1,5 +1,5 @@
-import EventGroup = require('EventGroup');
-import List = require('List');
+import EventGroup = require('./EventGroup');
+import List = require('./List');
 
 class Selection {
     selectedKey = null;

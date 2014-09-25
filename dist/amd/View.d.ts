@@ -1,5 +1,5 @@
-import ViewModel = require('ViewModel');
-import EventGroup = require('EventGroup');
+import ViewModel = require('./ViewModel');
+import EventGroup = require('./EventGroup');
 declare class View {
     public viewName: string;
     public viewModelType: any;

@@ -1,4 +1,4 @@
-import EventGroup = require('EventGroup');
+import EventGroup = require('./EventGroup');
 declare class List {
     public isList: boolean;
     public array: any[];
@@ -10,7 +10,7 @@ declare class List {
     public indexOf(item: any): number;
     public findBy(propertyName: any, propertyValue: any): number;
     public getAt(index: any): any;
-    public setAt(index: any, item: any): void;
+    public setAt(index: any, item: any, suppressChange?: boolean): void;
     public setRange(index: any, items: any): void;
     public insertAt(index: any, item: any): void;
     public push(item: any): any;

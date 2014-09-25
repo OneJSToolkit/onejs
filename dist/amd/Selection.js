@@ -1,4 +1,4 @@
-define(["require", "exports", 'EventGroup'], function(require, exports, EventGroup) {
+define(["require", "exports", './EventGroup'], function(require, exports, EventGroup) {
     var Selection = (function () {
         function Selection(isMultiSelectEnabled) {
             this.selectedKey = null;

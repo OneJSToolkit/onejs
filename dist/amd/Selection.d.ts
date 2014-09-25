@@ -1,5 +1,5 @@
-import EventGroup = require('EventGroup');
-import List = require('List');
+import EventGroup = require('./EventGroup');
+import List = require('./List');
 declare class Selection {
     public selectedKey: any;
     public _selectedItems: {};
