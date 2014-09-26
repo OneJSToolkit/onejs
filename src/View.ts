@@ -52,6 +52,7 @@ class View {
 
             this._state = ViewState.DISPOSED;
 
+            this.onDispose();
             this.clearChildren();
             this.events.dispose();
             this.activeEvents.dispose();
@@ -76,6 +77,7 @@ class View {
     public onResize() {}
     public onActivate() {}
     public onDeactivate() {}
+    public onDispose() {}
     public onViewModelChanged(changeArgs ? ) {}
 
     public setData(data: any, forceUpdate ? : boolean) {

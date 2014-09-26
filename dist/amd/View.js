@@ -32,6 +32,7 @@ define(["require", "exports", './ViewModel', './EventGroup', './DomUtils'], func
 
                 this._state = 3 /* DISPOSED */;
 
+                this.onDispose();
                 this.clearChildren();
                 this.events.dispose();
                 this.activeEvents.dispose();
@@ -59,6 +60,8 @@ define(["require", "exports", './ViewModel', './EventGroup', './DomUtils'], func
         View.prototype.onActivate = function () {
         };
         View.prototype.onDeactivate = function () {
+        };
+        View.prototype.onDispose = function () {
         };
         View.prototype.onViewModelChanged = function (changeArgs) {
         };

@@ -35,6 +35,7 @@ var View = (function () {
 
             this._state = 3 /* DISPOSED */;
 
+            this.onDispose();
             this.clearChildren();
             this.events.dispose();
             this.activeEvents.dispose();
@@ -62,6 +63,8 @@ var View = (function () {
     View.prototype.onActivate = function () {
     };
     View.prototype.onDeactivate = function () {
+    };
+    View.prototype.onDispose = function () {
     };
     View.prototype.onViewModelChanged = function (changeArgs) {
     };

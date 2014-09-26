@@ -26,6 +26,7 @@ declare class View {
     public onResize(): void;
     public onActivate(): void;
     public onDeactivate(): void;
+    public onDispose(): void;
     public onViewModelChanged(changeArgs?: any): void;
     public setData(data: any, forceUpdate?: boolean): void;
     public initialize(): void;
