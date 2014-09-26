@@ -1,4 +1,4 @@
-var EventGroup = require('EventGroup');
+var EventGroup = require('./EventGroup');
 
 var CHANGE_EVENT = 'change';
 var CHILD_CHANGE_EVENT = 'change';
@@ -43,7 +43,7 @@ var List = (function () {
         return this.array[index];
     };
 
-    List.prototype.setAt = function (index, item) {
+    List.prototype.setAt = function (index, item, suppressChange) {
         if (this.array[index]) {
             this.events.off(this.array[index]);
         }
@@ -54,12 +54,14 @@ var List = (function () {
             this.events.on(item, CHANGE_EVENT, this.childChange);
         }
 
-        this.change({ type: 'update', index: index, item: item });
+        if (!suppressChange) {
+            this.change({ type: 'update', index: index, item: item });
+        }
     };
 
     List.prototype.setRange = function (index, items) {
         for (var i = 0; i < items.length; i++) {
-            this.setAt(index++, items[i]);
+            this.setAt(index++, items[i], true);
         }
         this.change({ type: 'insertRange', index: index, items: items });
     };
@@ -74,7 +76,7 @@ var List = (function () {
     };
 
     List.prototype.push = function (item) {
-        this.setAt(this.array.length, item);
+        this.setAt(this.array.length, item, true);
 
         this.change({ type: 'insert', index: this.array.length - 1, item: item });
 

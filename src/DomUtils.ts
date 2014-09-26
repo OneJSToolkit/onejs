@@ -1,4 +1,4 @@
-import Encode = require('Encode');
+import Encode = require('./Encode');
 
 var TEXT_SETTING_METHOD;
 

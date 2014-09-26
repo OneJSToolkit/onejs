@@ -1,4 +1,4 @@
-define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(require, exports, ViewModel, EventGroup, DomUtils) {
+define(["require", "exports", './ViewModel', './EventGroup', './DomUtils'], function(require, exports, ViewModel, EventGroup, DomUtils) {
     var ViewState;
     (function (ViewState) {
         ViewState[ViewState["CREATED"] = 0] = "CREATED";
@@ -32,6 +32,7 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
 
                 this._state = 3 /* DISPOSED */;
 
+                this.onDispose();
                 this.clearChildren();
                 this.events.dispose();
                 this.activeEvents.dispose();
@@ -59,6 +60,8 @@ define(["require", "exports", 'ViewModel', 'EventGroup', 'DomUtils'], function(r
         View.prototype.onActivate = function () {
         };
         View.prototype.onDeactivate = function () {
+        };
+        View.prototype.onDispose = function () {
         };
         View.prototype.onViewModelChanged = function (changeArgs) {
         };

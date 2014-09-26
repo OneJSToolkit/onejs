@@ -1,4 +1,4 @@
-import EventGroup = require('EventGroup');
+import EventGroup = require('./EventGroup');
 
 class ViewModel {
     isViewModel = true;

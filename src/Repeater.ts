@@ -1,5 +1,5 @@
-import View = require('View');
-import List = require('List');
+import View = require('./View');
+import List = require('./List');
 
 
 /// <summary>

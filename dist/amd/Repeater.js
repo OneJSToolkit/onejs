@@ -4,7 +4,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports", 'View', 'List'], function(require, exports, View, List) {
+define(["require", "exports", './View', './List'], function(require, exports, View, List) {
     /// <summary>
     /// The Repeater view renders a given child view (provided by the overridable getChildControlType function) for
     /// each item in an array. It keeps the DOM updated as the array changes. Each item in

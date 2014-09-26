@@ -1,4 +1,4 @@
-var EventGroup = require('EventGroup');
+var EventGroup = require('./EventGroup');
 
 var Selection = (function () {
     function Selection(isMultiSelectEnabled) {
