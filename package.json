@@ -1,6 +1,6 @@
 {
     "name": "onejs",
-    "version": "1.1.43",
+    "version": "1.1.5",
     "description": "",
     "main": "gulpfile.js",
     "scripts": {
@@ -19,7 +19,7 @@
     "devDependencies": {
         "requirejs": "^2.1.14",
         "gulp": "^3.8.5",
-        "gulp-tsc": "^0.9.1",
+        "gulp-typescript": "^2.0.0",
         "gulp-clean": "^0.3.1",
         "gulp-jasmine": "^0.2.0",
         "karma-chrome-launcher": "^0.1.4",

@@ -29,6 +29,8 @@ var Selection = (function () {
 
     Selection.prototype.toggle = function (key) {
         this.setSelected(key, !this.isSelected(key));
+
+        return false;
     };
 
     Selection.prototype.toggleAllSelected = function () {
@@ -40,6 +42,8 @@ var Selection = (function () {
 
         this.clear();
         this.change();
+
+        return false;
     };
 
     Selection.prototype.setSelected = function (key, isSelected) {

@@ -146,7 +146,7 @@ class Promise {
         _this._callPromiseCallbacks();
     }
 
-    done(onComplete, onError, onProgress) {
+    done(onComplete, onError?, onProgress?) {
         /// <summary>Allows the caller to provide callbacks that should execute when the chain is complete.</summary>
         /// <param name="onComplete" type="Function">Complete handler.</param>
         /// <param name="onError" type="Function" optional="true">Error handler.</param>

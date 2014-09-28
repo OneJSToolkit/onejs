@@ -47,7 +47,10 @@ var EventGroup = (function () {
                 function processElementEvent() {
                     var result = callback.apply(parent, arguments);
                     if (result === false && arguments[0] && arguments[0].preventDefault) {
-                        arguments[0].preventDefault();
+                        var e = arguments[0];
+
+                        e.preventDefault();
+                        e.cancelBubble = true;
                     }
 
                     return result;
