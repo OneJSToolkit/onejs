@@ -61,7 +61,7 @@ define(["require", "exports", './EventGroup'], function(require, exports, EventG
             }
 
             if ((hasChanged && shouldFireChange !== false) || shouldFireChange === true) {
-                this.__events.raise('change');
+                this.change();
             }
         };
 

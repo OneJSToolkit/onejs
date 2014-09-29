@@ -73,7 +73,7 @@ class ViewModel {
         }
 
         if ((hasChanged && shouldFireChange !== false) || shouldFireChange === true) {
-            this.__events.raise('change');
+            this.change();
         }
     }
 
