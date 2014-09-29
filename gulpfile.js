@@ -1,6 +1,6 @@
 var gulp = require('gulp');
 var clean = require('gulp-clean');
-var tsc = require('gulp-tsc');
+var tsc = require('gulp-typescript');
 
 var paths = {
     source: ['src/*.ts']
@@ -12,21 +12,29 @@ gulp.task('clean', function() {
 });
 
 gulp.task('tscAMD', ['clean'], function() {
-    return gulp.src(paths.source)
+    var tsResult = gulp.src(paths.source)
         .pipe(tsc({
             module: 'amd',
-            declaration: true
-        }))
-        .pipe(gulp.dest('dist/amd'));
+            declarationFiles: true
+        }));
+
+    tsResult.js.pipe(gulp.dest('dist/amd'));
+    tsResult.dts.pipe(gulp.dest('dist/amd'));
+
+    return tsResult;
 });
 
 gulp.task('tscCommonJS', ['clean'], function() {
-    return gulp.src(paths.source)
+    var tsResult = gulp.src(paths.source)
         .pipe(tsc({
             module: 'commonjs',
-            declaration: true
-        }))
-        .pipe(gulp.dest('dist/commonjs'));
+            declarationFiles: true
+        }));
+
+    tsResult.js.pipe(gulp.dest('dist/commonjs'));
+    tsResult.dts.pipe(gulp.dest('dist/commonjs'));
+
+    return tsResult;
 });
 
 gulp.task('default', ['tscAMD', 'tscCommonJS']);
