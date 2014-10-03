@@ -85,12 +85,6 @@ var ViewModel = (function () {
 
             if (key.indexOf('__') === 0) {
                 valid = false;
-            } else if (key === 'setData') {
-                valid = false;
-            } else if (key === 'dispose') {
-                valid = false;
-            } else if (key === 'change') {
-                valid = false;
             }
 
             return valid;

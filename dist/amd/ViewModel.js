@@ -84,12 +84,6 @@ define(["require", "exports", './EventGroup'], function(require, exports, EventG
 
                 if (key.indexOf('__') === 0) {
                     valid = false;
-                } else if (key === 'setData') {
-                    valid = false;
-                } else if (key === 'dispose') {
-                    valid = false;
-                } else if (key === 'change') {
-                    valid = false;
                 }
 
                 return valid;
