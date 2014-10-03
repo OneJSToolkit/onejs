@@ -37,6 +37,8 @@ class Selection {
 
     toggle(key) {
         this.setSelected(key, !this.isSelected(key));
+
+        return false;
     }
 
     toggleAllSelected() {
@@ -49,6 +51,8 @@ class Selection {
 
         this.clear();
         this.change();
+
+        return false;
     }
 
     setSelected(key, isSelected?: boolean) {

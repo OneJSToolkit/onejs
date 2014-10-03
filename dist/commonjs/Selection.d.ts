@@ -11,8 +11,8 @@ declare class Selection {
     constructor(isMultiSelectEnabled?: boolean);
     public clear(): void;
     public getSelectedKeys(): any[];
-    public toggle(key: any): void;
-    public toggleAllSelected(): void;
+    public toggle(key: any): boolean;
+    public toggleAllSelected(): boolean;
     public setSelected(key: any, isSelected?: boolean): void;
     public isAllSelected(): boolean;
     public isSelected(key: any): boolean;

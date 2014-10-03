@@ -16,7 +16,7 @@ declare class Promise {
     public then(onComplete?: any, onError?: any, onProgress?: any): Promise;
     public wait(milliseconds: any): Promise;
     public cancel(): void;
-    public done(onComplete: any, onError: any, onProgress: any): Promise;
+    public done(onComplete: any, onError?: any, onProgress?: any): Promise;
     public _callPromiseCallbacks(): any;
     public _executePromise(): void;
     static timeout(duration: any): Promise;
