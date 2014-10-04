@@ -16,6 +16,7 @@ gulp.task('tscAMD', ['clean'], function() {
     var tsResult = gulp.src(paths.source)
         .pipe(tsc({
             module: 'amd',
+            target: 'ES5',
             declarationFiles: true
         }));
 
@@ -29,6 +30,7 @@ gulp.task('tscCommonJS', ['clean'], function() {
     var tsResult = gulp.src(paths.source)
         .pipe(tsc({
             module: 'commonjs',
+            target: 'ES5',
             declarationFiles: true
         }));
 
@@ -51,7 +53,8 @@ gulp.task('copyDist', ['tscAMD', 'tscCommonJS'], function() {
 gulp.task('tscTest', ['cleanTest', 'copyDist'], function() {
     var tsResult = gulp.src('test/*.ts')
         .pipe(tsc({
-            module: 'commonjs'
+            module: 'commonjs',
+            target: 'ES5'
         }));
 
     return tsResult.js.pipe(gulp.dest('bin/test'));
