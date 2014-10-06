@@ -73,6 +73,7 @@ var running = false;
 var _setImmediate = setImmediate || function (callback) {
     setTimeout(callback, 16);
 };
+var _now = Date.now.bind(Date);
 
 function scheduleRunner() {
     if (!running && !scheduled) {
@@ -102,11 +103,11 @@ function nextTask() {
 function run() {
     scheduled = false;
     running = true;
-    var end = Date.now() + TIME_SLICE;
+    var end = _now() + TIME_SLICE;
     var moreItems = true;
 
     try  {
-        while (moreItems && (Date.now() <= end)) {
+        while (moreItems && (_now() <= end)) {
             var next = nextTask();
             if (next) {
                 next.execute();

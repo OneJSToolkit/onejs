@@ -34,6 +34,7 @@
     "karma-requirejs": "^0.2.2",
     "phantomjs": "^1.9.7-12",
     "requirejs": "^2.1.14",
-    "typescript": "^1.0.1"
+    "typescript": "^1.0.1",
+    "rewire": "^2.1.0"
   }
 }
