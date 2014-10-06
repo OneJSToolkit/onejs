@@ -210,4 +210,94 @@ describe('Scheduler', function () {
 
         });
     });
+
+    describe('#retrieveState', function () {
+
+        it('should report empty when no tasks are scheduled', function () {
+            var state = Scheduler.retrieveState();
+            assert.strictEqual(state.tasks.length, 0);
+        });
+
+        it('should show scheduled tasks', function (done) {
+            Scheduler.main.schedule(done, false, "xyzzy");
+            var state = Scheduler.retrieveState();
+            assert.strictEqual(state.tasks.length, 1);
+            var task = state.tasks[0];
+            assert.strictEqual(task.name, "xyzzy");
+        });
+
+        it('should provide accurate ids for cancellation', function (done) {
+            Scheduler.main.schedule(function () {
+                assert.fail();
+            });
+            var state = Scheduler.retrieveState();
+            assert.strictEqual(state.tasks.length, 1);
+            var task = state.tasks[0];
+            Scheduler.cancel(task.id);
+            assert.strictEqual(task.cancelled, false);
+
+            state = Scheduler.retrieveState();
+            assert.strictEqual(state.tasks.length, 1);
+            task = state.tasks[0];
+            assert.strictEqual(task.cancelled, true);
+
+            Scheduler.main.schedule(done);
+        });
+
+        it('should show the active task', function (done) {
+            var id = Scheduler.main.schedule(function () {
+                var state = Scheduler.retrieveState();
+                assert.strictEqual(state.activeTask.id, id);
+                assert.strictEqual(state.activeTask.name, "activeTask");
+                assert.strictEqual(state.tasks.length, 0);
+                done();
+            }, false, "activeTask");
+            
+        });
+
+        it('should show multiple queues in order', function (done) {
+
+            var count = 0;
+
+            Scheduler.main.after.schedule(function () {
+                assert.strictEqual(count, 2);
+                done();
+            }, false, "third");
+
+            Scheduler.main.schedule(function () {
+                assert.strictEqual(count, 1);
+                count++;
+            }, false, "second");
+
+            Scheduler.main.before.schedule(function () {
+                assert.strictEqual(count, 0);
+                count++;
+            }, false, "first");
+
+            var state = Scheduler.retrieveState();
+            assert.strictEqual(state.tasks.length, 3);
+            var taskNames = state.tasks.map(function (task) {
+                return task.name;
+            });
+            assert.deepEqual(taskNames, ["first", "second", "third"]);
+
+        });
+
+    });
+
+    describe('#activeQueue', function () {
+
+        it('should default to the main queue', function () {
+            assert.strictEqual(Scheduler.activeQueue, Scheduler.main);
+        });
+
+        it('should reflect the queue of the current task', function (done) {
+            var beforeQueue = Scheduler.main.before;
+
+            beforeQueue.schedule(function () {
+                assert.strictEqual(Scheduler.activeQueue, beforeQueue);
+                done();
+            });
+        });
+    });
 });

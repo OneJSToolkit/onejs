@@ -62,14 +62,12 @@ define(["require", "exports"], function(require, exports) {
 
             return task.id;
         };
-
-        Queue.prototype.retrieveState = function () {
-        };
         return Queue;
     })();
 
     var scheduled = false;
     var running = false;
+    var activeTask = null;
 
     var _setImmediate = setImmediate || function (callback) {
         setTimeout(callback, 16);
@@ -94,6 +92,7 @@ define(["require", "exports"], function(require, exports) {
             } else {
                 queue = parents.pop();
                 if (queue._work.length) {
+                    exports.activeQueue = queue;
                     return queue._work.shift();
                 }
                 queue = queue._after;
@@ -111,6 +110,7 @@ define(["require", "exports"], function(require, exports) {
             while (moreItems && (_now() <= end)) {
                 var next = nextTask();
                 if (next) {
+                    activeTask = next;
                     next.execute();
                 } else {
                     moreItems = false;
@@ -118,6 +118,8 @@ define(["require", "exports"], function(require, exports) {
             }
         } finally {
             running = false;
+            activeTask = null;
+            exports.activeQueue = exports.main;
 
             if (moreItems) {
                 scheduleRunner();
@@ -133,5 +135,35 @@ define(["require", "exports"], function(require, exports) {
     }
     exports.cancel = cancel;
 
+    function retrieveState() {
+        var state = {
+            tasks: [],
+            activeTask: activeTask
+        };
+        var queue = exports.main;
+        var parents = [];
+
+        while (parents.length || queue) {
+            if (queue) {
+                parents.push(queue);
+                queue = queue._before;
+            } else {
+                queue = parents.pop();
+                queue._work.forEach(function (task) {
+                    state.tasks.push({
+                        id: task.id,
+                        name: task.name,
+                        cancelled: task.cancelled
+                    });
+                });
+                queue = queue._after;
+            }
+        }
+
+        return state;
+    }
+    exports.retrieveState = retrieveState;
+
     exports.main = new Queue();
+    exports.activeQueue = exports.main;
 });
