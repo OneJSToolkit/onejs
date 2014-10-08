@@ -1,184 +1,38 @@
-var ViewModel = require('./ViewModel');
-var EventGroup = require('./EventGroup');
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var BaseView = require('./BaseView');
+
 var DomUtils = require('./DomUtils');
 
-var ViewState;
-(function (ViewState) {
-    ViewState[ViewState["CREATED"] = 0] = "CREATED";
-    ViewState[ViewState["INACTIVE"] = 1] = "INACTIVE";
-    ViewState[ViewState["ACTIVE"] = 2] = "ACTIVE";
-    ViewState[ViewState["DISPOSED"] = 3] = "DISPOSED";
-})(ViewState || (ViewState = {}));
-
-var View = (function () {
-    function View(viewModel) {
-        this.viewName = 'View';
-        this.viewModelType = ViewModel;
-        this.subElements = {};
+var View = (function (_super) {
+    __extends(View, _super);
+    function View() {
+        _super.apply(this, arguments);
         this._bindings = [];
         this._lastValues = {};
-        this._state = 0 /* CREATED */;
-        this.events = new EventGroup(this);
-        this.activeEvents = new EventGroup(this);
-        this.children = [];
-        this._inheritedModel = viewModel;
     }
-    View.prototype.dispose = function () {
-        for (var i = 0; i < this.children.length; i++) {
-            this.children[i].dispose();
-        }
-
-        if (this._state !== 3 /* DISPOSED */) {
-            if (this._state == 2 /* ACTIVE */) {
-                this.deactivate();
-            }
-
-            this._state = 3 /* DISPOSED */;
-
-            this.onDispose();
-            this.clearChildren();
-            this.events.dispose();
-            this.activeEvents.dispose();
-
-            if (!this._inheritedModel) {
-                this._viewModel.dispose();
-            }
-
-            if (this.element) {
-                this.element['control'] = null;
-                this.element = null;
-            }
-
-            this.subElements = null;
-        }
+    View.prototype.onPostRender = function () {
+        this.onUpdate();
     };
 
-    View.prototype.onInitialize = function () {
-    };
-    View.prototype.onRender = function () {
-        this.element = this._ce('div');
-    };
-    View.prototype.onResize = function () {
-    };
     View.prototype.onActivate = function () {
-    };
-    View.prototype.onDeactivate = function () {
-    };
-    View.prototype.onDispose = function () {
-    };
-    View.prototype.onViewModelChanged = function (changeArgs) {
+        this._bindEvents();
+        _super.prototype.onActivate.call(this);
     };
 
-    View.prototype.setData = function (data, forceUpdate) {
-        if (this._state !== 3 /* DISPOSED */) {
-            this.initialize();
-            this._viewModel.setData(data, forceUpdate);
-        }
-    };
-
-    View.prototype.initialize = function () {
-        if (this._state === 0 /* CREATED */) {
-            this._state = 1 /* INACTIVE */;
-
-            this.id = this.viewName + '-' + (View._instanceCount++);
-
-            this._viewModel = this._inheritedModel ? this._inheritedModel : new this.viewModelType();
-            this.events.on(this._viewModel, 'change', this.evaluateView);
-            this.events.on(this._viewModel, 'findValue', this.findValue);
-            this._viewModel.initialize();
-            this.onViewModelChanged();
-            this.onInitialize();
-
-            for (var i = 0; i < this.children.length; i++) {
-                this.children[i].initialize();
-            }
-        }
-    };
-
-    View.prototype.render = function () {
-        if (this._state !== 3 /* DISPOSED */) {
-            this.initialize();
-            this.onRender();
-            this.updateView();
-            this.element['control'] = this;
+    View.prototype.onViewModelInitialized = function (viewModel, oldViewModel) {
+        if (oldViewModel) {
+            this.events.off(oldViewModel);
         }
 
-        return this.element;
+        this.events.on(viewModel, 'findValue', this.findValue);
     };
 
-    View.prototype.activate = function () {
-        for (var i = 0; i < this.children.length; i++) {
-            this.children[i].activate();
-        }
-
-        if (this._state === 1 /* INACTIVE */) {
-            this._state = 2 /* ACTIVE */;
-
-            this._bindEvents();
-            this.onActivate();
-        }
-    };
-
-    View.prototype.deactivate = function () {
-        for (var i = 0; i < this.children.length; i++) {
-            this.children[i].deactivate();
-        }
-
-        if (this._state === 2 /* ACTIVE */) {
-            this._state = 1 /* INACTIVE */;
-
-            this.onDeactivate();
-
-            this.activeEvents.off();
-        }
-    };
-
-    View.prototype.resize = function () {
-        if (this._state === 2 /* ACTIVE */) {
-            this.onResize();
-
-            for (var i = 0; i < this.children.length; i++) {
-                this.children[i].resize();
-            }
-        }
-    };
-
-    View.prototype.addChild = function (view, owner, index) {
-        view.parent = this;
-        view.owner = owner;
-
-        if (index !== undefined) {
-            this.children.splice(index, 0, view);
-        } else {
-            this.children.push(view);
-        }
-
-        return view;
-    };
-
-    View.prototype.removeChild = function (view) {
-        var childIndex = this.children.indexOf(view);
-        var child = this.children[childIndex];
-
-        if (childIndex > -1) {
-            this.children.splice(childIndex, 1)[0].parent = null;
-        }
-
-        return view;
-    };
-
-    View.prototype.clearChildren = function () {
-        while (this.children.length > 0) {
-            this.removeChild(this.children[0]);
-        }
-    };
-
-    View.prototype.evaluateView = function (changeArgs) {
-        this.onViewModelChanged(changeArgs);
-        this.updateView();
-    };
-
-    View.prototype.updateView = function (updateValuesOnly) {
+    View.prototype.onUpdate = function () {
         if (this._bindings && this.element) {
             for (var i = 0; this._bindings && i < this._bindings.length; i++) {
                 var binding = this._bindings[i];
@@ -186,10 +40,10 @@ var View = (function () {
                     for (var bindingType in binding) {
                         if (bindingType != 'id' && bindingType != 'events' && bindingType != 'childId' && bindingType != 'element') {
                             if (bindingType === 'text' || bindingType === 'html') {
-                                this._updateViewValue(binding, bindingType, binding[bindingType], updateValuesOnly);
+                                this._updateViewValue(binding, bindingType, binding[bindingType]);
                             } else {
                                 for (var bindingDest in binding[bindingType]) {
-                                    this._updateViewValue(binding, bindingType, binding[bindingType][bindingDest], updateValuesOnly, bindingDest);
+                                    this._updateViewValue(binding, bindingType, binding[bindingType][bindingDest], bindingDest);
                                 }
                             }
                         }
@@ -199,53 +53,16 @@ var View = (function () {
         }
     };
 
-    View.prototype._updateViewValue = function (binding, bindingType, sourcePropertyName, updateValuesOnly, bindingDest) {
-        var key = binding.id + bindingType + (bindingDest ? ('.' + bindingDest) : '');
-        var lastValue = this._lastValues[key];
-        var currentValue = this.getValue(sourcePropertyName);
-
-        if (lastValue != currentValue) {
-            this._lastValues[key] = currentValue;
-
-            // TODO: enqueue for renderframe update.
-            if (!updateValuesOnly) {
-                var el = this.subElements[binding.id];
-
-                console.log('Updating "' + this.id + '" because "' + sourcePropertyName + '" changed to "' + currentValue + '"');
-
-                switch (bindingType) {
-                    case 'text':
-                        el.textContent = currentValue;
-                        break;
-
-                    case 'html':
-                        el.innerHTML = currentValue;
-                        break;
-
-                    case 'css':
-                        el.style[bindingDest] = currentValue;
-                        break;
-
-                    case 'className':
-                        DomUtils.toggleClass(el, bindingDest, currentValue);
-                        break;
-
-                    case 'attr':
-                        if (bindingDest === "value" || bindingDest === 'checked') {
-                            el[bindingDest] = currentValue;
-                        } else if (currentValue) {
-                            el.setAttribute(bindingDest, currentValue);
-                        } else {
-                            el.removeAttribute(bindingDest);
-                        }
-                        break;
-                }
-            }
+    View.prototype.onDispose = function () {
+        if (this.viewModel) {
+            this.viewModel.dispose();
+            this.viewModel = null;
         }
-    };
 
-    View.prototype.getViewModel = function () {
-        return this._viewModel;
+        this.events.dispose();
+        this.activeEvents.dispose();
+
+        _super.prototype.onDispose.call(this);
     };
 
     View.prototype.getValue = function (propertyName) {
@@ -262,8 +79,8 @@ var View = (function () {
     View.prototype.findValue = function (args) {
         var resource = this.getValue(args.name);
 
-        if (resource === undefined && this.parent) {
-            this.parent.findValue(args);
+        if (resource === undefined && this.parent && this.parent['findValue']) {
+            this.parent['findValue'](args);
         } else {
             args.val = resource;
         }
@@ -284,9 +101,62 @@ var View = (function () {
         }
     };
 
+    View.prototype.toggle = function (propertyName, allowPropogation) {
+        this.setValue(propertyName, !this.getValue(propertyName));
+
+        allowPropogation = allowPropogation || false;
+
+        return allowPropogation;
+    };
+
+    View.prototype.send = function (sourcePropertyName, destinationPropertyName) {
+        this.setValue(destinationPropertyName, this.getValue(sourcePropertyName));
+    };
+
+    View.prototype._updateViewValue = function (binding, bindingType, sourcePropertyName, bindingDest) {
+        var key = binding.id + bindingType + (bindingDest ? ('.' + bindingDest) : '');
+        var lastValue = this._lastValues[key];
+        var currentValue = this.getValue(sourcePropertyName);
+
+        if (lastValue != currentValue) {
+            this._lastValues[key] = currentValue;
+
+            // TODO: enqueue for renderframe update.
+            var el = binding.element;
+
+            switch (bindingType) {
+                case 'text':
+                    el.textContent = currentValue;
+                    break;
+
+                case 'html':
+                    el.innerHTML = currentValue;
+                    break;
+
+                case 'css':
+                    el.style[bindingDest] = currentValue;
+                    break;
+
+                case 'className':
+                    DomUtils.toggleClass(el, bindingDest, currentValue);
+                    break;
+
+                case 'attr':
+                    if (bindingDest === "value" || bindingDest === 'checked') {
+                        el[bindingDest] = currentValue;
+                    } else if (currentValue) {
+                        el.setAttribute(bindingDest, currentValue);
+                    } else {
+                        el.removeAttribute(bindingDest);
+                    }
+                    break;
+            }
+        }
+    };
+
     View.prototype._getPropTarget = function (propertyName) {
         var view = this;
-        var viewModel = view.getViewModel();
+        var viewModel = view.viewModel;
         var propTarget = viewModel;
         var propertyPart;
         var methodIndex = propertyName.indexOf('(');
@@ -306,10 +176,10 @@ var View = (function () {
                 debugger;
             } else if (propertyPart === '$parent') {
                 view = this.parent.owner || this.parent;
-                propTarget = view ? view.getViewModel() : null;
+                propTarget = view ? view.viewModel : null;
             } else if (propertyPart === '$root') {
                 view = this._getRoot();
-                propTarget = view.getViewModel();
+                propTarget = view.viewModel;
             } else if (propertyPart === '$view') {
                 view = this;
                 propTarget = view;
@@ -350,44 +220,6 @@ var View = (function () {
         return root;
     };
 
-    View.prototype._ce = function (tagName, attributes, binding, children) {
-        var element = document.createElement(tagName);
-        var i;
-        var val;
-
-        for (i = 0; attributes && i < attributes.length; i += 2) {
-            element.setAttribute(attributes[i], attributes[i + 1]);
-        }
-
-        if (binding) {
-            this.subElements[binding.id] = binding.element = element;
-            if (binding.childId) {
-                this.subElements[binding.childId] = element;
-            }
-
-            for (var attrName in binding.attr) {
-                val = this.getValue(binding.attr[attrName]);
-
-                if (val) {
-                    element.setAttribute(attrName, val);
-                }
-            }
-        }
-
-        // Append children.
-        if (children) {
-            for (i = 0; i < children.length; i++) {
-                element.appendChild(children[i]);
-            }
-        }
-
-        return element;
-    };
-
-    View.prototype._ct = function (val) {
-        return document.createTextNode(val);
-    };
-
     View.prototype._bindEvents = function () {
         var _this = this;
 
@@ -395,18 +227,22 @@ var View = (function () {
             var binding = this._bindings[i];
             var targetElement = binding.element;
 
+            if (!targetElement) {
+                targetElement = binding.element = this[binding.id];
+            }
+
             for (var bindingType in binding) {
                 if (bindingType != 'id' && bindingType != 'events' && bindingType != 'element') {
                     for (var bindingDest in binding[bindingType]) {
                         var source = binding[bindingType][bindingDest];
                         if (source.indexOf('$parent') > -1) {
-                            this._viewModel.setData({
-                                '$parent': (this.owner || this.parent).getViewModel()
+                            this.viewModel.setData({
+                                '$parent': (this.owner || this.parent).viewModel
                             }, false);
                         }
                         if (source.indexOf('$root') > -1) {
-                            this._viewModel.setData({
-                                '$root': this._getRoot().getViewModel()
+                            this.viewModel.setData({
+                                '$root': this._getRoot().viewModel
                             }, false);
                         }
                     }
@@ -499,18 +335,7 @@ var View = (function () {
 
         return returnValue;
     };
-
-    View.prototype.toggle = function (propertyName) {
-        this.setValue(propertyName, !this.getValue(propertyName));
-
-        return false;
-    };
-
-    View.prototype.send = function (sourcePropertyName, destinationPropertyName) {
-        this.setValue(destinationPropertyName, this.getValue(sourcePropertyName));
-    };
-    View._instanceCount = 0;
     return View;
-})();
+})(BaseView);
 
 module.exports = View;

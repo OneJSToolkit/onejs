@@ -1,6 +1,7 @@
 import View = require('./View');
+import IView = require('./IView');
 import List = require('./List');
-
+import DomUtils = require('./DomUtils');
 
 /// <summary>
 /// The Repeater view renders a given child view (provided by the overridable getChildControlType function) for
@@ -20,7 +21,7 @@ class Repeater extends View {
     _currentList = new List();
 
     onRender(): HTMLElement {
-        this.element = this._ce('div', ['class', this.baseClass]);
+        this.element = DomUtils.ce('div', ['class', this.baseClass]);
         this._diffChildren();
 
         return this.element;
@@ -45,7 +46,7 @@ class Repeater extends View {
 
     onViewModelChanged(changeArgs) {
         // evaluate new set of items
-        if (this._state === 2) {
+        if (this.state === 2) {
             var surfaceElement = this.element;
             var changeType = changeArgs ? changeArgs.type : 'reset';
 
@@ -118,7 +119,7 @@ class Repeater extends View {
             this.element.appendChild(element);
         }
 
-        if (this._state === 2) {
+        if (this.state === 2) {
             control.activate();
         }
     }
@@ -151,8 +152,7 @@ class Repeater extends View {
         }
     }
 
-
-    _createChild(item, index) {
+    _createChild(item, index) : IView {
         var newChild = this.addChild(new this.childViewType(), this.owner, index);
 
         this._updateChildData(newChild, item, index);

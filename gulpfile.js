@@ -38,3 +38,7 @@ gulp.task('tscCommonJS', ['clean'], function() {
 });
 
 gulp.task('default', ['tscAMD', 'tscCommonJS']);
+
+gulp.task('watch', ['default'], function() {
+    return gulp.watch('src/**/*', ['default']);
+});

@@ -11,9 +11,40 @@ define(["require", "exports", './EventGroup'], function(require, exports, EventG
 
             this.isMultiSelectEnabled = isMultiSelectEnabled;
         }
-        Selection.prototype.clear = function () {
+        Selection.prototype.setList = function (list) {
+            if (this._list) {
+                this._events.off(this._list);
+            }
+
+            this._list = list;
+
+            if (this._list) {
+                this._events.on(this._list, 'change', this._onListChanged);
+            }
+        };
+
+        Selection.prototype.clear = function (suppressChange) {
             this._selectedItems = {};
             this._selectedCount = 0;
+            this._isAllSelected = false;
+
+            if (!suppressChange) {
+                this.change();
+            }
+        };
+
+        Selection.prototype.getCount = function () {
+            var count = 0;
+
+            if (this._list) {
+                if (this._isAllSelected) {
+                    count = this._list.getCount() - this._selectedCount;
+                } else {
+                    count = this._selectedCount;
+                }
+            }
+
+            return count;
         };
 
         Selection.prototype.getSelectedKeys = function () {
@@ -37,9 +68,10 @@ define(["require", "exports", './EventGroup'], function(require, exports, EventG
                 this._isAllSelected = !this._isAllSelected;
             } else {
                 this._isAllSelected = true;
+                this._selectedItems = {};
+                this._selectedCount = 0;
             }
 
-            this.clear();
             this.change();
 
             return false;
@@ -53,7 +85,7 @@ define(["require", "exports", './EventGroup'], function(require, exports, EventG
             }
 
             if (!this.isMultiSelectEnabled) {
-                this.clear();
+                this.clear(true);
             }
 
             if ((this._isAllSelected && !isSelected) || (!this._isAllSelected && isSelected)) {
@@ -81,6 +113,12 @@ define(["require", "exports", './EventGroup'], function(require, exports, EventG
 
         Selection.prototype.change = function () {
             this._events.raise('change');
+        };
+
+        Selection.prototype._onListChanged = function (ev) {
+        };
+
+        Selection.prototype._evaluateSelection = function () {
         };
         return Selection;
     })();

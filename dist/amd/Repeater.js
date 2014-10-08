@@ -4,7 +4,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-define(["require", "exports", './View', './List'], function(require, exports, View, List) {
+define(["require", "exports", './View', './List', './DomUtils'], function(require, exports, View, List, DomUtils) {
     /// <summary>
     /// The Repeater view renders a given child view (provided by the overridable getChildControlType function) for
     /// each item in an array. It keeps the DOM updated as the array changes. Each item in
@@ -29,7 +29,7 @@ define(["require", "exports", './View', './List'], function(require, exports, Vi
                 }];
         }
         Repeater.prototype.onRender = function () {
-            this.element = this._ce('div', ['class', this.baseClass]);
+            this.element = DomUtils.ce('div', ['class', this.baseClass]);
             this._diffChildren();
 
             return this.element;
@@ -54,7 +54,7 @@ define(["require", "exports", './View', './List'], function(require, exports, Vi
 
         Repeater.prototype.onViewModelChanged = function (changeArgs) {
             // evaluate new set of items
-            if (this._state === 2) {
+            if (this.state === 2) {
                 var surfaceElement = this.element;
                 var changeType = changeArgs ? changeArgs.type : 'reset';
 
@@ -126,7 +126,7 @@ define(["require", "exports", './View', './List'], function(require, exports, Vi
                 this.element.appendChild(element);
             }
 
-            if (this._state === 2) {
+            if (this.state === 2) {
                 control.activate();
             }
         };
