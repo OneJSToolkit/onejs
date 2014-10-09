@@ -1,4 +1,5 @@
 var gulp = require('gulp');
+var mocha = require('gulp-mocha');
 var clean = require('gulp-clean');
 var tsc = require('gulp-typescript');
 
@@ -18,10 +19,10 @@ gulp.task('tscAMD', ['clean'], function() {
             declarationFiles: true
         }));
 
-    tsResult.js.pipe(gulp.dest('dist/amd'));
+    
     tsResult.dts.pipe(gulp.dest('dist/amd'));
 
-    return tsResult;
+    return tsResult.js.pipe(gulp.dest('dist/amd'));
 });
 
 gulp.task('tscCommonJS', ['clean'], function() {
@@ -31,10 +32,34 @@ gulp.task('tscCommonJS', ['clean'], function() {
             declarationFiles: true
         }));
 
-    tsResult.js.pipe(gulp.dest('dist/commonjs'));
+    
     tsResult.dts.pipe(gulp.dest('dist/commonjs'));
 
-    return tsResult;
+    return tsResult.js.pipe(gulp.dest('dist/commonjs'));
+});
+
+gulp.task('cleanTest', function() {
+    return gulp.src(['bin'])
+        .pipe(clean());
+});
+
+gulp.task('copyDist', ['tscAMD', 'tscCommonJS'], function() {
+    return gulp.src('dist/commonjs/*.js')
+        .pipe(gulp.dest('bin/src'));
+});
+
+gulp.task('tscTest', ['cleanTest', 'copyDist'], function() {
+    var tsResult = gulp.src('test/*.ts')
+        .pipe(tsc({
+            module: 'commonjs'
+        }));
+
+    return tsResult.js.pipe(gulp.dest('bin/test'));
+});
+
+gulp.task('test', ['tscTest'], function() {
+    return gulp.src('bin/test/*.js', {read: false})
+        .pipe(mocha());
 });
 
 gulp.task('default', ['tscAMD', 'tscCommonJS']);
