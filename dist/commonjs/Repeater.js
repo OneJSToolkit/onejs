@@ -5,7 +5,9 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 var View = require('./View');
+
 var List = require('./List');
+var DomUtils = require('./DomUtils');
 
 /// <summary>
 /// The Repeater view renders a given child view (provided by the overridable getChildControlType function) for
@@ -31,7 +33,7 @@ var Repeater = (function (_super) {
             }];
     }
     Repeater.prototype.onRender = function () {
-        this.element = this._ce('div', ['class', this.baseClass]);
+        this.element = DomUtils.ce('div', ['class', this.baseClass]);
         this._diffChildren();
 
         return this.element;
@@ -56,7 +58,7 @@ var Repeater = (function (_super) {
 
     Repeater.prototype.onViewModelChanged = function (changeArgs) {
         // evaluate new set of items
-        if (this._state === 2) {
+        if (this.state === 2) {
             var surfaceElement = this.element;
             var changeType = changeArgs ? changeArgs.type : 'reset';
 
@@ -128,7 +130,7 @@ var Repeater = (function (_super) {
             this.element.appendChild(element);
         }
 
-        if (this._state === 2) {
+        if (this.state === 2) {
             control.activate();
         }
     };

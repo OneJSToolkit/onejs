@@ -9,7 +9,9 @@ declare class Selection {
     public _events: EventGroup;
     public _list: List;
     constructor(isMultiSelectEnabled?: boolean);
-    public clear(): void;
+    public setList(list?: List): void;
+    public clear(suppressChange?: boolean): void;
+    public getCount(): number;
     public getSelectedKeys(): any[];
     public toggle(key: any): boolean;
     public toggleAllSelected(): boolean;
@@ -17,5 +19,7 @@ declare class Selection {
     public isAllSelected(): boolean;
     public isSelected(key: any): boolean;
     public change(): void;
+    public _onListChanged(ev: any): void;
+    public _evaluateSelection(): void;
 }
 export = Selection;

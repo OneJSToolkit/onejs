@@ -63,3 +63,7 @@ gulp.task('test', ['tscTest'], function() {
 });
 
 gulp.task('default', ['tscAMD', 'tscCommonJS']);
+
+gulp.task('watch', ['default'], function() {
+    return gulp.watch('src/**/*', ['default']);
+});

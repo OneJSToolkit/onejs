@@ -1,198 +1,37 @@
+import BaseView = require('./BaseView');
 import ViewModel = require('./ViewModel');
 import EventGroup = require('./EventGroup');
 import DomUtils = require('./DomUtils');
+import IView = require('./IView');
 
-enum ViewState {
-    CREATED = 0,
-    INACTIVE = 1,
-    ACTIVE = 2,
-    DISPOSED = 3
-}
+class View extends BaseView {
+	owner;
 
-class View {
-    public viewName: string = 'View';
-    public viewModelType: any = ViewModel;
-
-    public id: string;
-    public element: HTMLElement;
-    public parent: View;
-    public owner: View; // used in repeater cases where "parent" is repeater, but "owner" is host with repeat blocks.
-    public children: View[];
-    public events: EventGroup;
-    public activeEvents: EventGroup;
-    public subElements: any = {};
-
-    _viewModel: ViewModel;
-    _inheritedModel: ViewModel;
     _bindings: any[] = [];
     _lastValues = {};
-    _hasChanged: boolean;
+    
+    _hasChanged: boolean;  
     _isEvaluatingView: boolean;
-    _state: number = ViewState.CREATED;
 
-    static _instanceCount = 0;
-
-    constructor(viewModel ? : ViewModel) {
-        this.events = new EventGroup(this);
-        this.activeEvents = new EventGroup(this);
-        this.children = [];
-        this._inheritedModel = viewModel;
+    onPostRender() {
+    	this.onUpdate();
     }
 
-    public dispose(): void {
-        for (var i = 0; i < this.children.length; i++) {
-            this.children[i].dispose();
-        }
-
-        if (this._state !== ViewState.DISPOSED) {
-
-            if (this._state == ViewState.ACTIVE) {
-                this.deactivate();
-            }
-
-            this._state = ViewState.DISPOSED;
-
-            this.onDispose();
-            this.clearChildren();
-            this.events.dispose();
-            this.activeEvents.dispose();
-
-            if (!this._inheritedModel) {
-                this._viewModel.dispose();
-            }
-
-            if (this.element) {
-                this.element['control'] = null;
-                this.element = null;
-            }
-
-            this.subElements = null;
-        }
+    onActivate(): void {
+        this._bindEvents();
+        super.onActivate();
     }
 
-    public onInitialize() {}
-    public onRender() {
-        this.element = this._ce('div');
-    }
-    public onResize() {}
-    public onActivate() {}
-    public onDeactivate() {}
-    public onDispose() {}
-    public onViewModelChanged(changeArgs ? ) {}
+    onViewModelInitialized(viewModel, oldViewModel) {
 
-    public setData(data: any, forceUpdate ? : boolean) {
-        if (this._state !== ViewState.DISPOSED) {
-            this.initialize();
-            this._viewModel.setData(data, forceUpdate);
-        }
-    }
-
-    public initialize(): void {
-        if (this._state === ViewState.CREATED) {
-            this._state = ViewState.INACTIVE;
-
-            this.id = this.viewName + '-' + (View._instanceCount++);
-
-            this._viewModel = this._inheritedModel ? this._inheritedModel : new this.viewModelType();
-            this.events.on(this._viewModel, 'change', this.evaluateView);
-            this.events.on(this._viewModel, 'findValue', this.findValue);
-            this._viewModel.initialize();
-            this.onViewModelChanged();
-            this.onInitialize();
-
-
-            for (var i = 0; i < this.children.length; i++) {
-                this.children[i].initialize();
-            }
-        }
-    }
-
-    public render(): HTMLElement {
-
-        if (this._state !== ViewState.DISPOSED) {
-            this.initialize();
-            this.onRender();
-            this.updateView();
-            this.element['control'] = this;
+        if (oldViewModel) {
+            this.events.off(oldViewModel);
         }
 
-        return this.element;
+        this.events.on(viewModel, 'findValue', this.findValue);
     }
 
-    public activate(): void {
-        for (var i = 0; i < this.children.length; i++) {
-            this.children[i].activate();
-        }
-
-        if (this._state === ViewState.INACTIVE) {
-            this._state = ViewState.ACTIVE;
-
-            this._bindEvents();
-            this.onActivate();
-        }
-    }
-
-    public deactivate() {
-        for (var i = 0; i < this.children.length; i++) {
-            this.children[i].deactivate();
-        }
-
-        if (this._state === ViewState.ACTIVE) {
-            this._state = ViewState.INACTIVE;
-
-            this.onDeactivate();
-
-            this.activeEvents.off();
-        }
-    }
-
-    public resize() {
-        if (this._state === ViewState.ACTIVE) {
-
-            this.onResize();
-
-            for (var i = 0; i < this.children.length; i++) {
-                this.children[i].resize();
-            }
-        }
-    }
-
-    public addChild(view: View, owner ? : View, index ? : number): View {
-        view.parent = this;
-        view.owner = owner;
-
-        if (index !== undefined) {
-            this.children.splice(index, 0, view);
-        } else {
-            this.children.push(view);
-        }
-
-        return view;
-    }
-
-    public removeChild(view: View): View {
-        var childIndex = this.children.indexOf(view);
-        var child = this.children[childIndex];
-
-        if (childIndex > -1) {
-            this.children.splice(childIndex, 1)[0].parent = null;
-        }
-
-        return view;
-    }
-
-    public clearChildren() {
-        while (this.children.length > 0) {
-            this.removeChild(this.children[0]);
-        }
-    }
-
-    public evaluateView(changeArgs ? ) {
-        this.onViewModelChanged(changeArgs);
-        this.updateView();
-    }
-
-    public updateView(updateValuesOnly ? : boolean) {
+    onUpdate() {
         if (this._bindings && this.element) {
             for (var i = 0; this._bindings && i < this._bindings.length; i++) {
                 var binding = this._bindings[i];
@@ -200,10 +39,10 @@ class View {
                     for (var bindingType in binding) {
                         if (bindingType != 'id' && bindingType != 'events' && bindingType != 'childId' && bindingType != 'element') {
                             if (bindingType === 'text' || bindingType === 'html') {
-                                this._updateViewValue(binding, bindingType, binding[bindingType], updateValuesOnly);
+                                this._updateViewValue(binding, bindingType, binding[bindingType]);
                             } else {
                                 for (var bindingDest in binding[bindingType]) {
-                                    this._updateViewValue(binding, bindingType, binding[bindingType][bindingDest], updateValuesOnly, bindingDest);
+                                    this._updateViewValue(binding, bindingType, binding[bindingType][bindingDest], bindingDest);
                                 }
                             }
                         }
@@ -213,57 +52,19 @@ class View {
         }
     }
 
-    _updateViewValue(binding, bindingType, sourcePropertyName, updateValuesOnly ? : boolean, bindingDest ? ) {
-        var key = binding.id + bindingType + (bindingDest ? ('.' + bindingDest) : '');
-        var lastValue = this._lastValues[key];
-        var currentValue = this.getValue(sourcePropertyName);
+	onDispose(): void {
+		if (this.viewModel) {
+			this.viewModel.dispose();
+			this.viewModel = null;
+		}
 
-        if (lastValue != currentValue) {
-            this._lastValues[key] = currentValue;
+        this.events.dispose();
+        this.activeEvents.dispose();
 
-            // TODO: enqueue for renderframe update.
-            if (!updateValuesOnly) {
-
-                var el = this.subElements[binding.id];
-
-                console.log('Updating "' + this.id + '" because "' + sourcePropertyName + '" changed to "' + currentValue + '"');
-
-                switch (bindingType) {
-                    case 'text':
-                        el.textContent = currentValue;
-                        break;
-
-                    case 'html':
-                        el.innerHTML = currentValue;
-                        break;
-
-                    case 'css':
-                        el.style[bindingDest] = currentValue;
-                        break;
-
-                    case 'className':
-                        DomUtils.toggleClass(el, bindingDest, currentValue);
-                        break;
-
-                    case 'attr':
-                        if (bindingDest === "value" || bindingDest === 'checked') {
-                            el[bindingDest] = currentValue;
-                        } else if (currentValue) {
-                            el.setAttribute(bindingDest, currentValue);
-                        } else {
-                            el.removeAttribute(bindingDest);
-                        }
-                        break;
-                }
-            }
-        }
+    	super.onDispose();
     }
 
-    public getViewModel(): any {
-        return this._viewModel;
-    }
-
-    public getValue(propertyName: string): any {
+    getValue(propertyName: string): any {
         var targetObject = this._getPropTarget(propertyName);
         var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
 
@@ -274,18 +75,18 @@ class View {
         return targetValue;
     }
 
-    public findValue(args) {
+    findValue(args) {
         var resource = this.getValue(args.name);
 
-        if (resource === undefined && this.parent) {
-            this.parent.findValue(args);
+        if (resource === undefined && this.parent && this.parent['findValue']) {
+            this.parent['findValue'](args);
         }
         else {
             args.val = resource;
         }
     }
 
-    public setValue(propertyName: string, propertyValue: any) {
+    setValue(propertyName: string, propertyValue: any) {
         var targetObject = this._getPropTarget(propertyName);
         var targetViewModel = targetObject.viewModel;
     
@@ -301,9 +102,62 @@ class View {
         }
     }
 
+    toggle(propertyName: string, allowPropogation?: boolean) {
+        this.setValue(propertyName, !this.getValue(propertyName));
+
+        allowPropogation = allowPropogation || false;
+
+        return allowPropogation;
+    }
+
+    send(sourcePropertyName, destinationPropertyName) {
+        this.setValue(destinationPropertyName, this.getValue(sourcePropertyName));
+    }
+
+    _updateViewValue(binding, bindingType, sourcePropertyName, bindingDest ? ) {
+        var key = binding.id + bindingType + (bindingDest ? ('.' + bindingDest) : '');
+        var lastValue = this._lastValues[key];
+        var currentValue = this.getValue(sourcePropertyName);
+
+        if (lastValue != currentValue) {
+            this._lastValues[key] = currentValue;
+
+        // TODO: enqueue for renderframe update.
+            var el = binding.element; // this.subElements[binding.id];
+
+            switch (bindingType) {
+                case 'text':
+                    el.textContent = currentValue;
+                    break;
+
+                case 'html':
+                    el.innerHTML = currentValue;
+                    break;
+
+                case 'css':
+                    el.style[bindingDest] = currentValue;
+                    break;
+
+                case 'className':
+                    DomUtils.toggleClass(el, bindingDest, currentValue);
+                    break;
+
+                case 'attr':
+                    if (bindingDest === "value" || bindingDest === 'checked') {
+                        el[bindingDest] = currentValue;
+                    } else if (currentValue) {
+                        el.setAttribute(bindingDest, currentValue);
+                    } else {
+                        el.removeAttribute(bindingDest);
+                    }
+                    break;
+            }
+        }
+    }
+
     _getPropTarget(propertyName) {
-        var view = this;
-        var viewModel = view.getViewModel();
+        var view: IView = this;
+        var viewModel = view.viewModel;
         var propTarget: any = viewModel;
         var propertyPart;
         var methodIndex = propertyName.indexOf('(');
@@ -323,10 +177,10 @@ class View {
                 debugger;
             } else if (propertyPart === '$parent') {
                 view = this.parent.owner || this.parent;
-                propTarget = view ? view.getViewModel() : null;
+                propTarget = view ? view.viewModel : null;
             } else if (propertyPart === '$root') {
                 view = this._getRoot();
-                propTarget = view.getViewModel();
+                propTarget = view.viewModel;
             } else if (propertyPart === '$view') {
                 view = this;
                 propTarget = view;
@@ -357,54 +211,14 @@ class View {
         };
     }
 
-    _getRoot() {
-        var root = this;
+    _getRoot(): IView {
+        var root: IView = this;
 
         while (root.parent) {
             root = root.parent;
         }
 
         return root;
-    }
-
-    _ce(tagName: string, attributes ? : string[], binding ? : any, children ? : any[]): HTMLElement {
-        var element = document.createElement(tagName);
-        var i;
-        var val;
-
-        // Set default attributes.
-        for (i = 0; attributes && i < attributes.length; i += 2) {
-            element.setAttribute(attributes[i], attributes[i + 1]);
-        }
-
-        if (binding) {
-            this.subElements[binding.id] = binding.element = element;
-            if (binding.childId) {
-                this.subElements[binding.childId] = element;
-            }
-
-            // Update bound attributes.
-            for (var attrName in binding.attr) {
-                val = this.getValue(binding.attr[attrName]);
-
-                if (val) {
-                    element.setAttribute(attrName, val);
-                }
-            }
-        }
-
-        // Append children.
-        if (children) {
-            for (i = 0; i < children.length; i++) {
-                element.appendChild(children[i]);
-            }
-        }
-
-        return element;
-    }
-
-    _ct(val: string): Text {
-        return document.createTextNode(val);
     }
 
     _bindEvents() {
@@ -414,6 +228,10 @@ class View {
             var binding = this._bindings[i];
             var targetElement = binding.element;
 
+            if (!targetElement) {
+                targetElement = binding.element = this[binding.id];
+            }
+
             // Observe parent if bindings reference parent.
             // TODO: This should be moved/removed.
             for (var bindingType in binding) {
@@ -421,13 +239,13 @@ class View {
                     for (var bindingDest in binding[bindingType]) {
                         var source = binding[bindingType][bindingDest];
                         if (source.indexOf('$parent') > -1) {
-                            this._viewModel.setData({
-                                '$parent': (this.owner || this.parent).getViewModel()
+                            this.viewModel.setData({
+                                '$parent': (this.owner || this.parent).viewModel
                             }, false);
                         }
                         if (source.indexOf('$root') > -1) {
-                            this._viewModel.setData({
-                                '$root': this._getRoot().getViewModel()
+                            this.viewModel.setData({
+                                '$root': this._getRoot().viewModel
                             }, false);
                         }
                     }
@@ -519,16 +337,6 @@ class View {
         }
 
         return returnValue;
-    }
-
-    toggle(propertyName: string) {
-        this.setValue(propertyName, !this.getValue(propertyName));
-
-        return false;
-    }
-
-    send(sourcePropertyName, destinationPropertyName) {
-        this.setValue(destinationPropertyName, this.getValue(sourcePropertyName));
     }
 }
 

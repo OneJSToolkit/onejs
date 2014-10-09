@@ -1,4 +1,6 @@
-import Encode = require('./Encode');
+/// <summary>
+/// DOM utilities, including helpers for injecting styles, creating elements, toggling classes.
+/// </summary>
 
 var TEXT_SETTING_METHOD;
 
@@ -27,16 +29,40 @@ class DomUtils {
     }
 
     static setText(el, text) {
-        // Hope that we don't run setText before document.body?
-        if (!document.body) {
-            throw "setText can't be called before body is available.";
-        }
-
         if (TEXT_SETTING_METHOD === undefined) {
-            TEXT_SETTING_METHOD = document.body.hasOwnProperty('textContent') ? 'textContent' : 'innerText';
+            TEXT_SETTING_METHOD = (DomUtils.ce('div').textContent !== void(0)) ? 'textContent' : 'innerText';
         }
 
         el[TEXT_SETTING_METHOD] = text;
+    }
+
+    static ce(tagName: string, attributes? : string[], children? : any[], parent?: any): HTMLElement {
+        var element = document.createElement(tagName);
+        var i;
+        var val;
+
+        // Set default attributes.
+        for (i = 0; attributes && i < attributes.length; i += 2) {
+            element.setAttribute(attributes[i], attributes[i + 1]);
+        }
+
+        // Set element on parent if appropriate.
+        if (parent) {
+            parent.element = element;
+        }
+
+        // Append children.
+        if (children) {
+            for (i = 0; i < children.length; i++) {
+                element.appendChild(children[i]);
+            }
+        }
+
+        return element;
+    }
+
+    static ct(val: string): Text {
+        return document.createTextNode(val);
     }
 }
 

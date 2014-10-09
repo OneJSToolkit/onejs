@@ -19,12 +19,43 @@ class Selection {
         this.isMultiSelectEnabled = isMultiSelectEnabled;
     }
 
-    clear() {
-        this._selectedItems = {};
-        this._selectedCount = 0;
+    setList(list?: List) {
+        if (this._list) {
+            this._events.off(this._list);
+        }
+
+        this._list = list;
+
+        if (this._list) {
+            this._events.on(this._list, 'change', this._onListChanged);
+        }
     }
 
+    clear(suppressChange?: boolean) {
+        this._selectedItems = {};
+        this._selectedCount = 0;
+        this._isAllSelected = false;
 
+        if (!suppressChange) {
+            this.change();
+        }
+    }
+
+    getCount() {
+        var count = 0;
+
+        if (this._list) {
+            if (this._isAllSelected) {
+                count = this._list.getCount() - this._selectedCount;
+            }            
+            else {
+                count = this._selectedCount;
+            }
+        }
+
+        return count;
+    }
+    
     getSelectedKeys() {
         var selected = [];
 
@@ -47,9 +78,10 @@ class Selection {
         }
         else {
             this._isAllSelected = true;
+            this._selectedItems = {};
+            this._selectedCount = 0;
         }
 
-        this.clear();
         this.change();
 
         return false;
@@ -64,7 +96,7 @@ class Selection {
         }
 
         if (!this.isMultiSelectEnabled) {
-            this.clear();
+            this.clear(true);
         }
 
         if ((this._isAllSelected && !isSelected) || (!this._isAllSelected && isSelected)) {
@@ -93,6 +125,14 @@ class Selection {
 
     change() {
         this._events.raise('change');
+    }
+
+    _onListChanged(ev) {
+
+    }
+    
+    _evaluateSelection() {
+
     }
 }
 

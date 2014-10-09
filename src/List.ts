@@ -9,7 +9,7 @@ class List {
     array: any[];
     events = new EventGroup(this);
 
-    constructor(array?: any[]) {
+    constructor(array?) {
         this.array = array || [];
         this.events.declare([ CHANGE_EVENT, CHILD_CHANGE_EVENT ]);
     }

@@ -3,7 +3,7 @@ declare class List {
     public isList: boolean;
     public array: any[];
     public events: EventGroup;
-    constructor(array?: any[]);
+    constructor(array?: any);
     public clear(): void;
     public getCount(): number;
     public setCount(count: number): void;
