@@ -22,9 +22,7 @@ describe('ViewModel', function () {
             var dataKeys = vm.__getDataKeys(vm);
             assert.sameMembers(dataKeys, ['isViewModel', 'parentValues']);
         });
-    });
 
-    describe('#__getDataKeys()', function() {
         it('should return an empty array for non-objects', function() {
             var vm = new ViewModel();
             var dataKeys = vm.__getDataKeys(123);
