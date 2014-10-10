@@ -80,15 +80,24 @@ var ViewModel = (function () {
     };
 
     ViewModel.prototype.__getDataKeys = function (data) {
-        return Object.keys(data).filter(function (key) {
-            var valid = true;
+        var dataKeys = [];
+        try  {
+            dataKeys = Object.keys(data).filter(function (key) {
+                var valid = true;
 
-            if (key.indexOf('__') === 0) {
-                valid = false;
+                if (key.indexOf('__') === 0) {
+                    valid = false;
+                }
+
+                return valid;
+            });
+        } catch (e) {
+            if (e instanceof TypeError) {
+                // Object.keys called on non-object
+                // can just return the empty dataKeys array in this scenario
             }
-
-            return valid;
-        });
+        }
+        return dataKeys;
     };
 
     ViewModel.prototype.change = function (args) {

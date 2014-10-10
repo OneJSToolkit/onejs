@@ -84,16 +84,25 @@ class ViewModel {
         }
     }
 
-    public __getDataKeys(data: any):string[] {
-        return Object.keys(data).filter(function (key) {
-            var valid = true;
+    public __getDataKeys(data: Object):string[] {
+        var dataKeys = [];
+        try {
+            dataKeys = Object.keys(data).filter(function (key) {
+                var valid = true;
 
-            if (key.indexOf('__') === 0) {
-                valid = false;
+                if (key.indexOf('__') === 0) {
+                    valid = false;
+                }
+
+                return valid;
+            });
+        } catch (e) {
+            if (e instanceof TypeError) {
+                // Object.keys called on non-object
+                // can just return the empty dataKeys array in this scenario
             }
-
-            return valid;
-        });
+        }
+        return dataKeys;
     }
 
 
