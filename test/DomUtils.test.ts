@@ -42,4 +42,16 @@ describe('DomUtils', function() {
         });
     });
 
+    describe('ce', () => {
+        it('creates a basic element', () => {
+            var tag = DomUtils.ce('span');
+            expect(tag.tagName.toLowerCase()).to.equal('span');
+        });
+
+        describe('when called with bad arguments', () => {
+            it('throws when called with an uneven number of attributes', () => {
+                expect(() => { DomUtils.ce('p', ['class', 'foo', 'id']) }).to.throw('Expected even number of atttributes')
+            });
+        });
+    });
 });
