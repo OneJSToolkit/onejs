@@ -1,40 +1,32 @@
 /// <reference path="../definitions/definitions.d.ts" />
 
-import chai = require('chai');
-import ViewModel = require('../src/ViewModel');
-import EventGroup = require('../src/EventGroup');
+import chai = require("chai");
+import ViewModel = require("../src/ViewModel");
 
 var assert = chai.assert;
 
 describe('ViewModel', function () {
-    
-    describe('constructor()', function () {
-        it('should set data', function () {
+
+    describe('#initialize()', function () {
+        it('should set data from the constructor', function () {
             var vm = new ViewModel({ a: 42 });
+            assert.isUndefined(vm['a'], 'Assignment should be deferred until after initialization');
+            vm.initialize();
             assert.strictEqual(vm['a'], 42);
         });
     });
 
-    describe('initialize()', function() {
-    	it('should find values', function() {
-    		var vm = new ViewModel();
-    		var expectedFoo = 'hi';
-    		var events = new EventGroup({});
-    	
-    		vm.parentValues = ['foo'];
+    describe('#__getDataKeys()', function() {
+        it('should get the data keys from the object', function() {
+            var vm = new ViewModel();
+            var dataKeys = vm.__getDataKeys(vm);
+            assert.sameMembers(dataKeys, ['isViewModel', 'parentValues']);
+        });
 
-    		events.on(vm, 'findValue', function(args) { 
-    			args.val = expectedFoo; 
-    			return false;
-    			});
-
-    		vm.initialize();
-    		
-    		events.off();
-
-    		assert.strictEqual(vm['foo'], expectedFoo);
-    	});
+        it('should return an empty array for non-objects', function() {
+            var vm = new ViewModel();
+            var dataKeys = vm.__getDataKeys(123);
+            assert.sameMembers([], []);
+        });
     });
-
-
 });

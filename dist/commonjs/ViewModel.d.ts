@@ -12,7 +12,7 @@ declare class ViewModel {
     public dispose(): void;
     public onDispose(): void;
     public setData(data: any, shouldFireChange?: boolean, forceListen?: boolean): void;
-    public __getDataKeys(data: any): string[];
+    public __getDataKeys(data: Object): string[];
     public change(args?: any): void;
 }
 export = ViewModel;
