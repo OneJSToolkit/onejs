@@ -4,18 +4,18 @@
   "description": "",
   "main": "gulpfile.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "gulp ciTest"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/dzearing/onejs.git"
+    "url": "https://github.com/OneJSToolkit/onejs.git"
   },
   "author": "David Zearing",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/dzearing/onejs/issues"
+    "url": "https://github.com/OneJSToolkit/onejs/issues"
   },
-  "homepage": "https://github.com/dzearing/onejs",
+  "homepage": "https://github.com/OneJSToolkit/onejs",
   "devDependencies": {
     "chai": "^1.9.2",
     "gulp": "^3.8.5",
