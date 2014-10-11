@@ -2,6 +2,7 @@ var gulp = require('gulp');
 var mocha = require('gulp-mocha');
 var clean = require('gulp-clean');
 var tsc = require('gulp-typescript');
+var karma = require('karma').server;
 
 var paths = {
     source: ['src/*.ts']
@@ -20,7 +21,7 @@ gulp.task('tscAMD', ['clean'], function() {
             declarationFiles: true
         }));
 
-
+    
     tsResult.dts.pipe(gulp.dest('dist/amd'));
 
     return tsResult.js.pipe(gulp.dest('dist/amd'));
@@ -34,7 +35,7 @@ gulp.task('tscCommonJS', ['clean'], function() {
             declarationFiles: true
         }));
 
-
+    
     tsResult.dts.pipe(gulp.dest('dist/commonjs'));
 
     return tsResult.js.pipe(gulp.dest('dist/commonjs'));
@@ -60,12 +61,29 @@ gulp.task('tscTest', ['cleanTest', 'copyDist'], function() {
     return tsResult.js.pipe(gulp.dest('bin/test'));
 });
 
-gulp.task('test', ['tscTest'], function() {
-    return gulp.src('bin/test/*.js', {
-            read: false
-        })
-        .pipe(mocha());
+gulp.task('test', ['tscTest'], function (done) {
+  karma.start({
+    configFile: __dirname + '/karma.conf.js',
+    singleRun: true
+  }, done);
 });
+
+gulp.task('tdd', ['tscTest'], function (done) {
+  karma.start({
+    configFile: __dirname + '/karma.conf.js'
+  }, done);
+});
+
+gulp.task('ciTest', ['tscTest'], function (done) {
+  karma.start({
+    configFile: __dirname + '/karma-ci.conf.js'
+  }, done);
+});
+
+// karma blocks gulp from exiting without this
+gulp.doneCallback = function(err) {
+    process.exit(err? 1: 0);
+}
 
 gulp.task('default', ['tscAMD', 'tscCommonJS']);
 
