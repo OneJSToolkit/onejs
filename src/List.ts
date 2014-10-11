@@ -23,14 +23,19 @@ class List {
         return this.array.length;
     }
 
-    setCount(count: number) {
-        this.array.length = count;
+    setCount(count: number): boolean {
+        try {
+            this.array.length = count;
+            return true;
+        } catch (ex) {
+            return false
+        }
     }
 
     indexOf(item) {
         return this.array.indexOf(item);
     }
-    
+
     findBy(propertyName, propertyValue) {
         for (var i = 0; i < this.array.length; i++) {
             var item = this.getAt(i);

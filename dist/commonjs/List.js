@@ -20,7 +20,12 @@ var List = (function () {
     };
 
     List.prototype.setCount = function (count) {
-        this.array.length = count;
+        try  {
+            this.array.length = count;
+            return true;
+        } catch (ex) {
+            return false;
+        }
     };
 
     List.prototype.indexOf = function (item) {
