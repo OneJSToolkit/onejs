@@ -82,7 +82,7 @@ gulp.task('ciTest', ['tscTest'], function (done) {
 });
 
 gulp.task('covertest', ['ciTest'], function() {
-    gulp.src('bin/coverage/**/lcov.info')
+    return gulp.src('bin/coverage/**/lcov.info')
         .pipe(coveralls());
 });
 
