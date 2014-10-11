@@ -88,7 +88,7 @@ var scheduled = false;
 var running = false;
 var activeTask: Task = null;
 
-var _setImmediate = setImmediate || function (callback) { setTimeout(callback, 16); };
+var _setImmediate = (typeof setImmediate !== 'undefined') ? setImmediate : function (callback) { setTimeout(callback, 16); };
 var _now = Date.now.bind(Date);
 
 function scheduleRunner() {

@@ -69,7 +69,7 @@ define(["require", "exports"], function(require, exports) {
     var running = false;
     var activeTask = null;
 
-    var _setImmediate = setImmediate || function (callback) {
+    var _setImmediate = (typeof setImmediate !== 'undefined') ? setImmediate : function (callback) {
         setTimeout(callback, 16);
     };
     var _now = Date.now.bind(Date);

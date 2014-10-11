@@ -3,11 +3,15 @@
 import chai = require("chai");
 import rewire = require("rewire");
 import _Scheduler = require('../src/Scheduler');
-var Scheduler = rewire<typeof _Scheduler>('../src/Scheduler');
+var Scheduler:typeof _Scheduler;
 
 var assert = chai.assert;
 
 describe('Scheduler', function () {
+
+    beforeEach(function () {
+       Scheduler = rewire<typeof _Scheduler>('../src/Scheduler');
+    });
 
     describe('#main', function () {
         it('should schedule tasks', function (done) {
