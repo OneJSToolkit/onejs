@@ -201,7 +201,6 @@ class BaseView implements IView {
 
     removeChild(view: IView): IView {
         var childIndex = this.children.indexOf(view);
-        var child = this.children[childIndex];
 
         if (childIndex > -1) {
             this.children.splice(childIndex, 1)[0].parent = null;
@@ -211,8 +210,8 @@ class BaseView implements IView {
     }
 
     clearChildren() {
-        while (this.children.length > 0) {
-            this.removeChild(this.children[0]);
+        while (this.children.length) {
+            this.children.pop().parent = null;
         }
     }
 }

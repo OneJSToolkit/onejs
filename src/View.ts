@@ -3,11 +3,12 @@ import ViewModel = require('./ViewModel');
 import EventGroup = require('./EventGroup');
 import DomUtils = require('./DomUtils');
 import IView = require('./IView');
+import IBinding = require('./IBinding');
 
 class View extends BaseView {
 	owner;
 
-    _bindings: any[] = [];
+    _bindings: IBinding[] = [];
     _lastValues = {};
     
     _hasChanged: boolean;  
