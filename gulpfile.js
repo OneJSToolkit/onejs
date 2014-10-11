@@ -47,7 +47,7 @@ gulp.task('cleanTest', function() {
         .pipe(clean());
 });
 
-gulp.task('copyDist', ['tscAMD', 'tscCommonJS'], function() {
+gulp.task('copyDist', ['tscCommonJS'], function() {
     return gulp.src('dist/commonjs/*.js')
         .pipe(gulp.dest('bin/src'));
 });
