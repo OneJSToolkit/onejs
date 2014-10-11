@@ -38,7 +38,14 @@ module.exports = function(config) {
         devtool: 'inline-source-map',
         plugins: [
             new RewirePlugin()
-        ]
+        ],
+        module: {
+            postLoaders: [ {
+                test: /\.js$/,
+                exclude: /(test|node_modules|bower_components)(\/|\\)/,
+                loader: 'istanbul-instrumenter'
+            } ]
+        }
     },
 
     webpackServer: {
@@ -51,7 +58,12 @@ module.exports = function(config) {
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['progress'],
+    reporters: ['progress', 'coverage'],
+
+    coverageReporter: {
+      type: 'lcov',
+      dir: 'bin/coverage'
+    },
 
 
     // web server port

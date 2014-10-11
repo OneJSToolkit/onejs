@@ -1,6 +1,7 @@
 var gulp = require('gulp');
 var mocha = require('gulp-mocha');
 var clean = require('gulp-clean');
+var coveralls = require('gulp-coveralls');
 var tsc = require('gulp-typescript');
 var karma = require('karma').server;
 
@@ -78,6 +79,11 @@ gulp.task('ciTest', ['tscTest'], function (done) {
   karma.start({
     configFile: __dirname + '/karma-ci.conf.js'
   }, done);
+});
+
+gulp.task('covertest', ['ciTest'], function() {
+    gulp.src('bin/coverage/**/lcov.info')
+        .pipe(coveralls());
 });
 
 // karma blocks gulp from exiting without this
