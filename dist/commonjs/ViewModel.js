@@ -7,14 +7,12 @@ var ViewModel = (function () {
         this.__id = ViewModel.__instanceCount++;
         this.__events = new EventGroup(this);
         this.__events.declare('change');
-        this.__initializationData = data;
+
+        if (data) {
+            this.setData(data, false);
+        }
     }
     ViewModel.prototype.initialize = function () {
-        var _this = this;
-        if (this.__initializationData) {
-            this.setData(this.__initializationData);
-        }
-
         this.setData(this, false, true);
 
         for (var i = 0; i < this.parentValues.length; i++) {
@@ -31,15 +29,6 @@ var ViewModel = (function () {
             }
         }
 
-        this.__getDataKeys(this).forEach(function (key) {
-            var value = _this[key];
-
-            // ensure nested ViewModels are initialized
-            if (value && (typeof value.initialize === 'function')) {
-                value.initialize();
-            }
-        });
-
         this.onInitialize();
     };
 
@@ -55,49 +44,29 @@ var ViewModel = (function () {
     };
 
     ViewModel.prototype.setData = function (data, shouldFireChange, forceListen) {
-        var _this = this;
         var hasChanged = false;
 
-        this.__getDataKeys(data).forEach(function (key) {
-            var oldValue = _this[key];
-            var newValue = data[key];
+        for (var key in data) {
+            if (key[0] !== '_') {
+                var oldValue = this[key];
+                var newValue = data[key];
 
-            if (oldValue !== newValue || forceListen) {
-                if (oldValue && EventGroup.isDeclared(oldValue, 'change')) {
-                    _this.__events.off(oldValue);
-                }
-                _this[key] = newValue;
-                hasChanged = true;
-                if (newValue && EventGroup.isDeclared(newValue, 'change')) {
-                    _this.__events.on(newValue, 'change', _this.change);
+                if (oldValue !== newValue || forceListen) {
+                    if (oldValue && EventGroup.isDeclared(oldValue, 'change')) {
+                        this.__events.off(oldValue);
+                    }
+                    this[key] = newValue;
+                    hasChanged = true;
+                    if (newValue && EventGroup.isDeclared(newValue, 'change')) {
+                        this.__events.on(newValue, 'change', this.change);
+                    }
                 }
             }
-        });
+        }
 
         if ((hasChanged && shouldFireChange !== false) || shouldFireChange === true) {
             this.change();
         }
-    };
-
-    ViewModel.prototype.__getDataKeys = function (data) {
-        var dataKeys = [];
-        try  {
-            dataKeys = Object.keys(data).filter(function (key) {
-                var valid = true;
-
-                if (key.indexOf('__') === 0) {
-                    valid = false;
-                }
-
-                return valid;
-            });
-        } catch (e) {
-            if (e instanceof TypeError) {
-                // Object.keys called on non-object
-                // can just return the empty dataKeys array in this scenario
-            }
-        }
-        return dataKeys;
     };
 
     ViewModel.prototype.change = function (args) {
