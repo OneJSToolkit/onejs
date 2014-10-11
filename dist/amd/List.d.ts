@@ -6,7 +6,7 @@ declare class List {
     constructor(array?: any);
     public clear(): void;
     public getCount(): number;
-    public setCount(count: number): void;
+    public setCount(count: number): boolean;
     public indexOf(item: any): number;
     public findBy(propertyName: any, propertyValue: any): number;
     public getAt(index: any): any;
