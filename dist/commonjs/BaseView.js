@@ -197,7 +197,6 @@ var BaseView = (function () {
 
     BaseView.prototype.removeChild = function (view) {
         var childIndex = this.children.indexOf(view);
-        var child = this.children[childIndex];
 
         if (childIndex > -1) {
             this.children.splice(childIndex, 1)[0].parent = null;
@@ -207,8 +206,8 @@ var BaseView = (function () {
     };
 
     BaseView.prototype.clearChildren = function () {
-        while (this.children.length > 0) {
-            this.removeChild(this.children[0]);
+        while (this.children.length) {
+            this.children.pop().parent = null;
         }
     };
     return BaseView;

@@ -4,8 +4,8 @@
 
 var TEXT_SETTING_METHOD;
 
-class DomUtils {
-    static toggleClass(element, className, isEnabled) {
+module DomUtils {
+    export function toggleClass(element, className, isEnabled) {
         var classList = element._classes = element._classes || (element.className ? element.className.split(' ') : []);
         var index = classList.indexOf(className);
 
@@ -20,7 +20,7 @@ class DomUtils {
         element.className = classList.join(' ');
     }
 
-    static loadStyles(rules) {
+    export function loadStyles(rules) {
         var styleEl = document.createElement('style');
 
         styleEl.type = "text/css";
@@ -28,7 +28,7 @@ class DomUtils {
         document.head.appendChild(styleEl);
     }
 
-    static setText(el, text) {
+    export function setText(el, text) {
         if (TEXT_SETTING_METHOD === undefined) {
             TEXT_SETTING_METHOD = (DomUtils.ce('div').textContent !== void(0)) ? 'textContent' : 'innerText';
         }
@@ -36,7 +36,7 @@ class DomUtils {
         el[TEXT_SETTING_METHOD] = text;
     }
 
-    static ce(tagName: string, attributes? : string[], children? : any[], parent?: any): HTMLElement {
+    export function ce(tagName: string, attributes? : string[], children? : any[], parent?: any): HTMLElement {
         var element = document.createElement(tagName);
         var i;
         var val;
@@ -61,7 +61,7 @@ class DomUtils {
         return element;
     }
 
-    static ct(val: string): Text {
+    export function ct(val: string): Text {
         return document.createTextNode(val);
     }
 }

@@ -2,7 +2,7 @@ import IBindingMap = require('./IBindingMap');
 import IBindingEventMap = require('./IBindingEventMap');
 
 interface IBinding {
-  id: number;
+  id: string;
   className?: IBindingMap;
   css?: IBindingMap;
   text?: string;

@@ -1,8 +1,9 @@
 import BaseView = require('./BaseView');
 import IView = require('./IView');
+import IBinding = require('./IBinding');
 declare class View extends BaseView {
     public owner: any;
-    public _bindings: any[];
+    public _bindings: IBinding[];
     public _lastValues: {};
     public _hasChanged: boolean;
     public _isEvaluatingView: boolean;

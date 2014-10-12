@@ -3,10 +3,9 @@
 /// </summary>
 var TEXT_SETTING_METHOD;
 
-var DomUtils = (function () {
-    function DomUtils() {
-    }
-    DomUtils.toggleClass = function (element, className, isEnabled) {
+var DomUtils;
+(function (DomUtils) {
+    function toggleClass(element, className, isEnabled) {
         var classList = element._classes = element._classes || (element.className ? element.className.split(' ') : []);
         var index = classList.indexOf(className);
 
@@ -19,25 +18,28 @@ var DomUtils = (function () {
         }
 
         element.className = classList.join(' ');
-    };
+    }
+    DomUtils.toggleClass = toggleClass;
 
-    DomUtils.loadStyles = function (rules) {
+    function loadStyles(rules) {
         var styleEl = document.createElement('style');
 
         styleEl.type = "text/css";
         styleEl.appendChild(document.createTextNode(rules));
         document.head.appendChild(styleEl);
-    };
+    }
+    DomUtils.loadStyles = loadStyles;
 
-    DomUtils.setText = function (el, text) {
+    function setText(el, text) {
         if (TEXT_SETTING_METHOD === undefined) {
             TEXT_SETTING_METHOD = (DomUtils.ce('div').textContent !== void (0)) ? 'textContent' : 'innerText';
         }
 
         el[TEXT_SETTING_METHOD] = text;
-    };
+    }
+    DomUtils.setText = setText;
 
-    DomUtils.ce = function (tagName, attributes, children, parent) {
+    function ce(tagName, attributes, children, parent) {
         var element = document.createElement(tagName);
         var i;
         var val;
@@ -59,12 +61,13 @@ var DomUtils = (function () {
         }
 
         return element;
-    };
+    }
+    DomUtils.ce = ce;
 
-    DomUtils.ct = function (val) {
+    function ct(val) {
         return document.createTextNode(val);
-    };
-    return DomUtils;
-})();
+    }
+    DomUtils.ct = ct;
+})(DomUtils || (DomUtils = {}));
 
 module.exports = DomUtils;
