@@ -19,12 +19,7 @@ define(["require", "exports", './EventGroup'], function(require, exports, EventG
         };
 
         List.prototype.setCount = function (count) {
-            try  {
-                this.array.length = count;
-                return true;
-            } catch (ex) {
-                return false;
-            }
+            this.array.length = count;
         };
 
         List.prototype.indexOf = function (item) {
