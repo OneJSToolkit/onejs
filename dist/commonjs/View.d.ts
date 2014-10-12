@@ -12,16 +12,15 @@ declare class View extends BaseView {
     public onUpdate(): void;
     public onDispose(): void;
     public getValue(propertyName: string): any;
+    public resolveValue(propertyName: string): any;
     public findValue(args: any): void;
     public setValue(propertyName: string, propertyValue: any): void;
     public toggle(propertyName: string, allowPropogation?: boolean): boolean;
     public send(sourcePropertyName: any, destinationPropertyName: any): void;
     public _updateViewValue(binding: any, bindingType: any, sourcePropertyName: any, bindingDest?: any): void;
     public _getPropTarget(propertyName: any): {
-        originView: View;
-        view: IView;
-        viewModel: any;
         target: any;
+        viewModel: any;
         propertyName: any;
         args: any;
     };

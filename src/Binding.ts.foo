@@ -1,0 +1,129 @@
+
+class Binding {
+	_targetView: IView;
+	_sourcePath: string;
+	_pathParts: string[];
+	_propertyName: string;
+	_args: string[];
+	
+	constructor(targetView, sourcePath) {
+		this._targetview = targetView;
+		this._sourcePath = sourcePath;
+	}
+
+	getValue() : any {		
+		var targetObject = this._getPropTarget(propertyName);
+        var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
+
+        if (typeof targetValue === 'function') {
+            targetValue = this._getValueFromFunction(propertyName);
+        }
+
+        return targetValue;
+	}
+
+	_getPathParts(path) : string[] {
+		// Takes in path, returns the parts array.
+
+		return path.match(/([\w]+[\(][\w.,\(\)\'\" ]*[\)]|[\w]+)/g);
+	}
+
+	_getPropertyName(propertyName) {
+	}
+
+	_getPropTarget(propertyName) {
+		var path = this._pathParts || this._getPathParts(this._sourcePath);
+
+        // Default scope is the view's view model.
+		var targetObject = <any> this.targetView.targetViewModel;
+
+        // Walk the path.
+        for (var i = 0; targetObject && i < path.length - 1) {
+        	var pathPart = path[i];
+
+        	if (pathPart[0] == '$') {
+        		switch (pathPart) {
+        			case '$debug':
+        				debugger;
+        				break;
+        			
+        			case '$view':
+        				targetObject = this.targetView;
+        				break;
+
+        			default:
+        				targetObject = this.targetView[pathPart.substr(1)];
+        				
+        				if (targetObject && targetObject.viewModel) {
+        					targetObject = targetObject.viewModel;
+        				}
+
+        				break;
+        		}
+        	}
+        	else {
+	        	targetObject = targetObject[pathPart];
+        	}
+        }
+
+        return {
+        	target: targetObject,
+        	propertyName: this._getPropertyName(path[path.length - 1]),
+
+        }
+
+		var propertyName = targetView.      
+        var propTarget: any = viewModel;
+        var propertyPart;
+        var methodIndex = propertyName.indexOf('(');
+        var args = null;
+
+        if (methodIndex > -1) {
+            args = propertyName.substr(methodIndex + 1, propertyName.length - methodIndex - 2);
+            propertyName = propertyName.substr(0, methodIndex);
+        }
+
+        var periodIndex = propertyName.indexOf('.');
+
+        while (periodIndex > -1 && propTarget) {
+            propertyPart = propertyName.substr(0, periodIndex);
+
+            if (propertyPart === '$debug') {
+                debugger;
+            } else if (propertyPart === '$parent') {
+                view = this.parent.owner || this.parent;
+                propTarget = view ? view.viewModel : null;
+            } else if (propertyPart === '$root') {
+                view = this._getRoot();
+                propTarget = view.viewModel;
+            } else if (propertyPart === '$view') {
+                view = this;
+                propTarget = view;
+                viewModel = null;
+            } else if (propertyPart === '$owner') {
+                view = this.owner || this;
+                propTarget = view;
+                viewModel = null;
+            } else {
+                propTarget = propTarget[propertyPart];
+            }
+
+            if (propTarget && propTarget.isViewModel) {
+                viewModel = propTarget;
+            }
+
+            propertyName = propertyName.substr(periodIndex + 1);
+            periodIndex = propertyName.indexOf('.');
+        }
+
+        return {
+            originView: this,
+            view: view,
+            viewModel: viewModel,
+            target: propTarget,
+            propertyName: propertyName,
+            args: args
+        };
+    }
+
+}

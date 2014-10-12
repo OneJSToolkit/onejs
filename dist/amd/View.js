@@ -64,10 +64,19 @@ define(["require", "exports", './BaseView', './DomUtils'], function(require, exp
 
         View.prototype.getValue = function (propertyName) {
             var targetObject = this._getPropTarget(propertyName);
-            var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
 
-            if (typeof targetValue === 'function') {
-                targetValue = this._getValueFromFunction(propertyName);
+            return (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
+        };
+
+        View.prototype.resolveValue = function (propertyName) {
+            var targetValue = this.getValue(propertyName);
+
+            if (targetValue) {
+                if (targetValue.isObservable) {
+                    targetValue = targetValue.getValue();
+                } else if (typeof targetValue === 'function') {
+                    targetValue = this._getValueFromFunction(propertyName);
+                }
             }
 
             return targetValue;
@@ -85,21 +94,28 @@ define(["require", "exports", './BaseView', './DomUtils'], function(require, exp
 
         View.prototype.setValue = function (propertyName, propertyValue) {
             var targetObject = this._getPropTarget(propertyName);
-            var targetViewModel = targetObject.viewModel;
+            var target = targetObject.target;
 
             // TODO, this is a temp fix, less than ideal. If we set command.isExpanded
             // as the property name, we'd have to do what we have below which is to reach
             // in and set the value on the the target. We shouldn't do this.
             // But viewmodel.setData is shallow, so if we passed in { command: { isExpanded: true }},
             // it would stomp on the existing value as it's a new command object.
-            if (targetViewModel && typeof targetObject.target[targetObject.propertyName] !== 'function') {
-                targetObject.target[targetObject.propertyName] = propertyValue;
-                targetViewModel.change();
+            var targetObjectValue = target[targetObject.propertyName];
+
+            if (targetObjectValue && targetObjectValue.isObservable) {
+                targetObjectValue.setValue(propertyValue);
+            } else if (typeof target[targetObject.propertyName] !== 'function') {
+                target[targetObject.propertyName] = propertyValue;
+
+                if (target.change) {
+                    target.change();
+                }
             }
         };
 
         View.prototype.toggle = function (propertyName, allowPropogation) {
-            this.setValue(propertyName, !this.getValue(propertyName));
+            this.setValue(propertyName, !this.resolveValue(propertyName));
 
             allowPropogation = allowPropogation || false;
 
@@ -107,13 +123,13 @@ define(["require", "exports", './BaseView', './DomUtils'], function(require, exp
         };
 
         View.prototype.send = function (sourcePropertyName, destinationPropertyName) {
-            this.setValue(destinationPropertyName, this.getValue(sourcePropertyName));
+            this.setValue(destinationPropertyName, this.resolveValue(sourcePropertyName));
         };
 
         View.prototype._updateViewValue = function (binding, bindingType, sourcePropertyName, bindingDest) {
             var key = binding.id + bindingType + (bindingDest ? ('.' + bindingDest) : '');
             var lastValue = this._lastValues[key];
-            var currentValue = this.getValue(sourcePropertyName);
+            var currentValue = this.resolveValue(sourcePropertyName);
 
             if (lastValue != currentValue) {
                 this._lastValues[key] = currentValue;
@@ -152,57 +168,47 @@ define(["require", "exports", './BaseView', './DomUtils'], function(require, exp
         };
 
         View.prototype._getPropTarget = function (propertyName) {
-            var view = this;
-            var viewModel = view.viewModel;
-            var propTarget = viewModel;
+            // [$scope].prop.prop.func(...)
+            // $toggle
+            // $member.foo
+            var propTarget = this.viewModel;
             var propertyPart;
-            var methodIndex = propertyName.indexOf('(');
-            var args = null;
+            var args;
+            var viewModel;
 
-            if (methodIndex > -1) {
-                args = propertyName.substr(methodIndex + 1, propertyName.length - methodIndex - 2);
-                propertyName = propertyName.substr(0, methodIndex);
+            // If $ is provided, default the target to 'this'. this allows for sub views to be accessed
+            // and helpers as well.
+            if (propertyName[0] == '$') {
+                propTarget = this;
+                propertyName = propertyName.substr(1);
             }
 
-            var periodIndex = propertyName.indexOf('.');
+            var props = propertyName.match(/([\w]+[\(][\w.,\(\)\'\" ]*[\)]|[\w]+)/g);
 
-            while (periodIndex > -1 && propTarget) {
-                propertyPart = propertyName.substr(0, periodIndex);
+            for (var i = 0; i < props.length; i++) {
+                var prop = props[i];
+                var parenIndex = prop.indexOf('(');
 
-                if (propertyPart === '$debug') {
-                    debugger;
-                } else if (propertyPart === '$parent') {
-                    view = this.parent.owner || this.parent;
-                    propTarget = view ? view.viewModel : null;
-                } else if (propertyPart === '$root') {
-                    view = this._getRoot();
-                    propTarget = view.viewModel;
-                } else if (propertyPart === '$view') {
-                    view = this;
-                    propTarget = view;
-                    viewModel = null;
-                } else if (propertyPart === '$owner') {
-                    view = this.owner || this;
-                    propTarget = view;
-                    viewModel = null;
-                } else {
-                    propTarget = propTarget[propertyPart];
+                // strip functions.
+                if (parenIndex > -1) {
+                    args = prop.substr(parenIndex + 1, prop.length - 2 - parenIndex);
+                    prop = props[i] = prop.substr(0, parenIndex);
                 }
 
-                if (propTarget && propTarget.isViewModel) {
-                    viewModel = propTarget;
-                }
+                if (i < (props.length - 1)) {
+                    propTarget = propTarget[prop];
 
-                propertyName = propertyName.substr(periodIndex + 1);
-                periodIndex = propertyName.indexOf('.');
+                    if (propTarget && propTarget.viewModel) {
+                        // this vm should be observed.
+                        propTarget = viewModel = propTarget.viewModel;
+                    }
+                }
             }
 
             return {
-                originView: this,
-                view: view,
-                viewModel: viewModel,
                 target: propTarget,
-                propertyName: propertyName,
+                viewModel: viewModel,
+                propertyName: props[props.length - 1],
                 args: args
             };
         };
@@ -231,16 +237,20 @@ define(["require", "exports", './BaseView', './DomUtils'], function(require, exp
                 for (var bindingType in binding) {
                     if (bindingType != 'id' && bindingType != 'events' && bindingType != 'element') {
                         for (var bindingDest in binding[bindingType]) {
-                            var source = binding[bindingType][bindingDest];
-                            if (source.indexOf('$parent') > -1) {
-                                this.viewModel.setData({
-                                    '$parent': (this.owner || this.parent).viewModel
-                                }, false);
+                            var source = binding[bindingType];
+
+                            if (typeof source !== 'string') {
+                                source = source[bindingDest];
                             }
-                            if (source.indexOf('$root') > -1) {
-                                this.viewModel.setData({
-                                    '$root': this._getRoot().viewModel
-                                }, false);
+
+                            var target = this._getPropTarget(source);
+
+                            if (target.viewModel) {
+                                var data = {};
+
+                                data[source.replace('.', '-')] = target.viewModel;
+
+                                this.viewModel.setData(data, false);
                             }
                         }
                     }
@@ -314,7 +324,7 @@ define(["require", "exports", './BaseView', './DomUtils'], function(require, exp
                     } else if (arg.length > 0 && !isNaN(Number(arg))) {
                         args.push(Number(arg));
                     } else {
-                        args.push(this.getValue(providedArgs[i]));
+                        args.push(this.resolveValue(providedArgs[i]));
                     }
                 }
             }
