@@ -307,8 +307,10 @@ export class IfBlock extends Block {
     insert() {
         if (!this.inserted) {
             this.inserted = true;
+            var lastElement:Node = this.placeholder;
             this.elements.forEach((element) => {
-                insertAfter(element, this.placeholder);
+                insertAfter(element, lastElement);
+                lastElement = element;
             });
         }
     }
