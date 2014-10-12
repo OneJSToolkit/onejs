@@ -9,6 +9,8 @@ var paths = {
     source: ['src/*.ts']
 };
 
+var shouldExit = true;
+
 gulp.task('clean', function() {
     return gulp.src(['dist'])
         .pipe(clean());
@@ -88,11 +90,14 @@ gulp.task('covertest', ['ciTest'], function() {
 
 // karma blocks gulp from exiting without this
 gulp.doneCallback = function(err) {
-    process.exit(err? 1: 0);
+    if(shouldExit) {
+        process.exit(err? 1: 0);
+    }
 }
 
 gulp.task('default', ['tscAMD', 'tscCommonJS']);
 
 gulp.task('watch', ['default'], function() {
+    shouldExit = false;
     return gulp.watch('src/**/*', ['default']);
 });
