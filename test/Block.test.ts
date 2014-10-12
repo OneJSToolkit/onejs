@@ -139,25 +139,147 @@ describe('Block', function () {
     });
 
     describe('#Block binding', function () {
-        it("should bind to the view's ViewModel", function () {
+        
+        it("should bind text", function () {
+            view.setData({ pet: 'dog' });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                binding: {
+                    text: 'pet'
+                }
+            });
+
+            block.render();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, 'dog');
+            block.dispose();
         });
 
         it('should bind className', function () {
+            view.setData({ error: true });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                binding: {
+                    className: { 'alert': 'error' }
+                }
+            });
+
+            block.render();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.classList.contains('alert'), true);
+            block.dispose();
         });
 
         it('should bind css', function () {
-        });
+            view.setData({ display: 'none' });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                binding: {
+                    css: { 'display': 'display' }
+                }
+            });
 
-        it('should bind text', function () {
+            block.render();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.style.display, 'none');
+            block.dispose();
         });
 
         it('should bind html', function () {
+            view.setData({ markup: '<span>dog</span>' });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                binding: {
+                    html: 'markup'
+                }
+            });
+
+            block.render();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, 'dog');
+            assert.strictEqual(div.children.length, 1);
+            assert.strictEqual(div.children[0].tagName, 'SPAN');
+            block.dispose();
         });
 
         it('should bind attributes', function () {
+            view.setData({ value: 'hello', readonly: true });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "input",
+                binding: {
+                    attr: {
+                        value: 'value',
+                        readonly: 'readonly'
+                    }
+                }
+            });
+
+            block.render();
+            block.update();
+            var input = <HTMLInputElement>block.elements[0];
+            assert.strictEqual(input.value, 'hello');
+            assert.strictEqual(input.readOnly, true);
+            block.dispose();
         });
 
         it('should bind events', function () {
+            var callbackValue;
+            view.setData({
+                customMethod: function (arg) {
+                    callbackValue = arg;
+                }
+            });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                binding: {
+                    events: { 'click': ["customMethod('dog')"]}
+                }
+            });
+
+            block.render();
+            block.bind();
+            var div = block.elements[0];
+            var event = document.createEvent('MouseEvents');
+            event.initEvent('click', true, true);
+            div.dispatchEvent(event);
+            assert.strictEqual(callbackValue, 'dog');
+            block.dispose();
+        });
+
+        it('should perform two-way binding', function () {
+            view.setData({ value: 'hello'});
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "input",
+                binding: {
+                    attr: {
+                        value: 'value',
+                    }
+                }
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var input = <HTMLInputElement>block.elements[0];
+            assert.strictEqual(input.value, 'hello');
+            input.value = 'good bye';
+            var event = document.createEvent('HTMLEvents');
+            event.initEvent('change', true, true);
+            input.dispatchEvent(event);
+            assert.strictEqual(view.getValue('value'), 'good bye');
+            block.dispose();
+
         });
     });
 
@@ -230,10 +352,16 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should render sibling ifs in proper order', function () {
+        });
+
         it('should remove elements after source becomes false', function () {
         });
 
-        it('should attach after rendering if parent is attached', function () {
+        it('should bind immediately if already rendered', function () {
+        });
+
+        it('should bind lazily after rendering occurs', function () {
         });
     });
 

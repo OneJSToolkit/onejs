@@ -6,12 +6,14 @@ export interface IBindingEventMap {
 }
 
 export interface IBinding {
+    id?: string;
     className?: IMap;
     css?: IMap;
     text?: string;
     html?: string;
     attr?: IMap;
     events?: IBindingEventMap;
+    element?: HTMLElement;
 };
 
 export enum BlockType {
@@ -49,13 +51,14 @@ export interface IBlockSpec {
     iterator?: string;
 }
 
-
 export class Block {
     elements: HTMLElement[];
     template: IBlockSpec[];
     children: Block[] = [];
     view: View;
     placeholder: Comment;
+    bindings: IBinding[] = [];
+    _lastValues: any = {};
 
     constructor(view: View) {
         this.view = view;
@@ -63,26 +66,39 @@ export class Block {
 
     render() {
         if (!this.elements) {
-            this.elements = <any>renderNodes(this.template);
+            this.elements = <any>renderNodes(this, this.template);
         }
         this.children.forEach((child) => {
             child.render();
         });
     }
 
-    attach() {
-        this.children.forEach((child) => {
-            child.attach();
-        });
-    }
+    bind() {
 
-    detach() {
+        this._bindEvents();
+
         this.children.forEach((child) => {
-            child.detach();
+            child.bind();
         });
     }
 
     update() {
+
+        this.bindings.forEach((binding) => {
+
+            for (var bindingType in binding) {
+                if (bindingType != 'id' && bindingType != 'events' && bindingType != 'element') {
+                    if (bindingType === 'text' || bindingType === 'html') {
+                        this._updateViewValue(binding, bindingType, binding[bindingType]);
+                    } else {
+                        for (var bindingDest in binding[bindingType]) {
+                            this._updateViewValue(binding, bindingType, binding[bindingType][bindingDest], bindingDest);
+                        }
+                    }
+                }
+            }
+        });
+        
         this.children.forEach((child) => {
             child.update();
         });
@@ -93,14 +109,139 @@ export class Block {
             child.dispose();
         });
     }
+
+    _updateViewValue(binding, bindingType, sourcePropertyName, bindingDest?) {
+        var key = binding.id + bindingType + (bindingDest ? ('.' + bindingDest) : '');
+        var lastValue = this._lastValues[key];
+        var currentValue = this.view.getValue(sourcePropertyName);
+
+        if (lastValue != currentValue) {
+            this._lastValues[key] = currentValue;
+
+            var el = binding.element;
+
+            switch (bindingType) {
+                case 'text':
+                    el.textContent = currentValue;
+                    break;
+
+                case 'html':
+                    el.innerHTML = currentValue;
+                    break;
+
+                case 'css':
+                    el.style[bindingDest] = currentValue;
+                    break;
+
+                case 'className':
+                    DomUtils.toggleClass(el, bindingDest, currentValue);
+                    break;
+
+                case 'attr':
+                    if (bindingDest === "value" || bindingDest === 'checked') {
+                        el[bindingDest] = currentValue;
+                    } else if (currentValue) {
+                        el.setAttribute(bindingDest, currentValue);
+                    } else {
+                        el.removeAttribute(bindingDest);
+                    }
+                    break;
+            }
+        }
+    }
+
+    _bindEvents() {
+
+        this.bindings.forEach((binding) => {
+            var targetElement = binding.element;
+
+            // Observe parent if bindings reference parent.
+            // TODO: This should be moved/removed.
+            for (var bindingType in binding) {
+                if (bindingType != 'id' && bindingType != 'events' && bindingType != 'element') {
+                    for (var bindingDest in binding[bindingType]) {
+                        var source = binding[bindingType][bindingDest];
+                        if (source.indexOf('$parent') > -1) {
+                            this.view.viewModel.setData({
+                                '$parent': (this.view.owner || this.view.parent).viewModel
+                            }, false);
+                        }
+                        if (source.indexOf('$root') > -1) {
+                            this.view.viewModel.setData({
+                                '$root': this.view._getRoot().viewModel
+                            }, false);
+                        }
+                    }
+                }
+            }
+
+            if (binding.events) {
+                for (var eventName in binding.events) {
+                    var targetList = binding.events[eventName];
+
+                    this._bindEvent(targetElement, eventName, targetList);
+                }
+            }
+
+            this._bindInputEvent(targetElement, binding);
+        });
+    }
+
+    _bindInputEvent(element, binding) {
+        if (binding.attr && (binding.attr.value || binding.attr.checked)) {
+            this.view.activeEvents.on(element, 'input,change', function () {
+                var source = binding.attr.value ? 'value' : 'checked';
+                var newValue = element[source];
+                var key = binding.id + 'attr.' + source;
+
+                this._lastValues[key] = newValue;
+                this.setValue(binding.attr[source], newValue);
+
+                return false;
+            });
+        }
+    }
+
+    _bindEvent(element, eventName, targetList) {
+        var _this = this;
+
+        if (eventName.indexOf('$view.') == 0) {
+            eventName = eventName.substr(6);
+            element = this;
+        }
+
+        this.view.activeEvents.on(element, eventName, function (ev) {
+            var returnValue;
+
+            for (var targetIndex = 0; targetIndex < targetList.length; targetIndex++) {
+                var target = targetList[targetIndex];
+                var args = < any > arguments;
+
+                returnValue = this._getValueFromFunction(target, args);
+            }
+
+            return returnValue;
+        });
+    }
+
+    _processBinding(spec: IBlockSpec, element: HTMLElement): HTMLElement {
+
+        if (spec.binding) {
+            spec.binding.id = this.bindings.length.toString();
+            spec.binding.element = element;
+            this.bindings.push(spec.binding);
+        }
+
+        return element;
+    }
 }
 
-function renderNodes(nodes: IBlockSpec[]): Node[]{
+function renderNodes(block:Block, nodes: IBlockSpec[]): Node[]{
     if (nodes) {
         return nodes.map((node:IBlockSpec):Node => {
-            var children = renderNodes(node.children);
             if (node.type === BlockType.Element) {
-                return createElement(node.tag, node.attr, children);
+                var children = renderNodes(block, node.children);
+                return block._processBinding(node, createElement(node.tag, node.attr, children));
             } else if (node.type === BlockType.Text) {
                 return createText(node.value);
             } else if (node.type === BlockType.Comment) {
@@ -119,6 +260,7 @@ export class IfBlock extends Block {
     source: string;
     inserted = false;
     rendered = false;
+    bindCalled = false;
 
     constructor(view:View, source: string) {
         super(view);
@@ -131,6 +273,16 @@ export class IfBlock extends Block {
             super.render();
             this.insert();
             this.rendered = true;
+            if (this.bindCalled) {
+                super.bind();
+            }
+        }
+    }
+
+    bind() {
+        this.bindCalled = true;
+        if (this.rendered) {
+            super.bind();
         }
     }
 
@@ -144,8 +296,11 @@ export class IfBlock extends Block {
                 this.render();
             }
         } else if (!condition && this.inserted) {
-            this.detach();
             this.remove();
+        }
+
+        if (condition) {
+            super.update();
         }
     }
 
