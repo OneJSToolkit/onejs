@@ -45,18 +45,6 @@ describe('List', function() {
             var list = new List(arr);
             assert.strictEqual(list.getCount(), 4);
         });
-
-        it('should return the count of a randomly generated array as its constructor argument', function() {
-            var randMax = Math.floor(Math.random() * 100);
-            var arr = [];
-
-            for (var i = 0; i < randMax; i++) {
-                arr.push(i);
-            }
-
-            var list = new List(arr);
-            assert.strictEqual(list.getCount(), randMax);
-        });
     });
 
     describe('setCount()', function() {
