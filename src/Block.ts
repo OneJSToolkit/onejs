@@ -1,4 +1,4 @@
-import IView = require('./IView');
+import View = require('./View');
 import DomUtils = require('./DomUtils');
 
 export interface IBindingEventMap {
@@ -51,19 +51,48 @@ export interface IBlockSpec {
 
 
 export class Block {
-    elements: HTMLElement[] = [];
+    elements: HTMLElement[];
     template: IBlockSpec[];
     children: Block[] = [];
-    view: IView;
+    view: View;
     placeholder: Comment;
 
-    render() {
-        this.elements = <any>renderNodes(this.template);
+    constructor(view: View) {
+        this.view = view;
     }
-    attach() { }
-    detach() { }
-    update() { }
-    dispose() { }
+
+    render() {
+        if (!this.elements) {
+            this.elements = <any>renderNodes(this.template);
+        }
+        this.children.forEach((child) => {
+            child.render();
+        });
+    }
+
+    attach() {
+        this.children.forEach((child) => {
+            child.attach();
+        });
+    }
+
+    detach() {
+        this.children.forEach((child) => {
+            child.detach();
+        });
+    }
+
+    update() {
+        this.children.forEach((child) => {
+            child.update();
+        });
+    }
+
+    dispose() {
+        this.children.forEach((child) => {
+            child.dispose();
+        });
+    }
 }
 
 function renderNodes(nodes: IBlockSpec[]): Node[]{
@@ -87,45 +116,103 @@ function renderNodes(nodes: IBlockSpec[]): Node[]{
 
 export class IfBlock extends Block {
 
-    constructor(source: string) {
-        super();
+    source: string;
+    inserted = false;
+    rendered = false;
+
+    constructor(view:View, source: string) {
+        super(view);
+
+        this.source = source;
     }
+
+    render() {
+        if (!this.rendered && this.view.getValue(this.source)) {
+            super.render();
+            this.insert();
+            this.rendered = true;
+        }
+    }
+
+    update() {
+        var condition = this.view.getValue(this.source);
+
+        if (condition && !this.inserted) {
+            if (this.rendered) {
+                this.insert();
+            } else {
+                this.render();
+            }
+        } else if (!condition && this.inserted) {
+            this.detach();
+            this.remove();
+        }
+    }
+
+    insert() {
+        if (!this.inserted) {
+            this.inserted = true;
+            this.elements.forEach((element) => {
+                insertAfter(element, this.placeholder);
+            });
+        }
+    }
+
+    remove() {
+        if (this.inserted) {
+            this.inserted = false;
+            this.elements.forEach((element) => {
+                element.parentNode.removeChild(element);
+            });
+        }
+    }
+}
+
+function insertAfter(newChild: Node, sibling: Node) {
+    var parent = sibling.parentNode;
+    var next = sibling.nextSibling;
+    if (next) {
+        // IE does not like undefined for refChild
+        parent.insertBefore(newChild, next);
+    } else {
+        parent.appendChild(newChild);
+    } 
 }
 
 export class RepeaterBlock extends Block {
 
-    constructor(source: string, iterator: string) {
-        super();
+    constructor(view:View, source: string, iterator: string) {
+        super(view);
 
     }
 }
 
-export function fromSpec(spec: IBlockSpec): Block {
-    // this needs to become a tree walk that separates out child blocks
+export function fromSpec(view: View, spec: IBlockSpec): Block {
+
     var block: Block;
     if (spec.type === BlockType.Element || spec.type === BlockType.Text) {
-        block = new Block();
+        block = new Block(view);
         block.template = processTemplate(block, [spec]);
     } else {
-        block = createBlock(spec);
+        block = createBlock(view, spec);
         block.template = processTemplate(block, spec.children);
     }
 
     return block;
 }
 
-function createBlock(spec: IBlockSpec): Block {
+function createBlock(view: View, spec: IBlockSpec): Block {
 
     var block: Block;
     switch (spec.type) {
         case BlockType.Block:
-            block = new Block();
+            block = new Block(view);
             break;
         case BlockType.IfBlock:
-            block = new IfBlock(spec.source);
+            block = new IfBlock(view, spec.source);
             break;
         case BlockType.RepeaterBlock:
-            block = new RepeaterBlock(spec.source, spec.iterator);
+            block = new RepeaterBlock(view, spec.source, spec.iterator);
             break;
     }
 
@@ -141,7 +228,7 @@ function processTemplate(parent:Block, template: IBlockSpec[]): IBlockSpec[]{
                 spec.children = processTemplate(parent, spec.children);
             }
         } else {
-            var block = createBlock(spec);
+            var block = createBlock(parent.view, spec);
             block.template = processTemplate(block, spec.children);
             parent.children.push(block);
             spec = {

@@ -3,12 +3,24 @@
 import chai = require("chai");
 var assert = chai.assert;
 import Block = require('../src/Block');
+import View = require('../src/View');
 
 describe('Block', function () {
 
+    var view: View;
+
+    beforeEach(function () {
+        view = new View();
+    });
+
+    afterEach(function () {
+        view.dispose();
+        view = undefined;
+    });
+
     describe('#Block', function () {
         it('should render an element', function () {
-            var block = Block.fromSpec({
+            var block = Block.fromSpec(view, {
                 type: Block.BlockType.Element,
                 tag: "div"
             });
@@ -16,21 +28,23 @@ describe('Block', function () {
             block.render();
             assert.strictEqual(block.elements.length, 1);
             assert.instanceOf(block.elements[0], HTMLDivElement);
+            block.dispose();
         });
 
         it('should not render until called', function () {
-            var block = Block.fromSpec({
+            var block = Block.fromSpec(view, {
                 type: Block.BlockType.Element,
                 tag: "div"
             });
 
-            assert.strictEqual(block.elements.length, 0);
+            assert.isUndefined(block.elements);
             block.render();
             assert.strictEqual(block.elements.length, 1);
+            block.dispose();
         });
 
         it('should render an element with attributes set', function () {
-            var block = Block.fromSpec({
+            var block = Block.fromSpec(view, {
                 type: Block.BlockType.Element,
                 tag: "div",
                 attr: {
@@ -40,10 +54,11 @@ describe('Block', function () {
 
             block.render();
             assert.strictEqual(block.elements[0].className, 'cat');
+            block.dispose();
         });
 
         it('should render an element with children', function () {
-            var block = Block.fromSpec({
+            var block = Block.fromSpec(view, {
                 type: Block.BlockType.Element,
                 tag: "div",
                 children: [
@@ -63,11 +78,12 @@ describe('Block', function () {
             assert.strictEqual(div.children.length, 2);
             assert.strictEqual(div.children[0].tagName, 'SPAN');
             assert.strictEqual(div.children[1].tagName, 'P');
+            block.dispose();
 
         });
 
         it('should render sibling elements', function () {
-            var block = Block.fromSpec({
+            var block = Block.fromSpec(view, {
                 type: Block.BlockType.Block,
                 children: [
                     {
@@ -87,11 +103,12 @@ describe('Block', function () {
             assert.strictEqual(block.elements.length, 2);
             assert.strictEqual(block.elements[0].textContent, '1');
             assert.strictEqual(block.elements[1].textContent, '2');
+            block.dispose();
 
         });
 
         it('should render a text node', function () {
-            var block = Block.fromSpec({
+            var block = Block.fromSpec(view, {
                 type: Block.BlockType.Text,
                 value: "cat"
             });
@@ -99,10 +116,11 @@ describe('Block', function () {
             block.render();
             assert.instanceOf(block.elements[0], Text);
             assert.strictEqual(block.elements[0].textContent, 'cat');
+            block.dispose();
         });
 
         it('should render an element containing a text node', function () {
-            var block = Block.fromSpec({
+            var block = Block.fromSpec(view, {
                 type: Block.BlockType.Element,
                 tag: "div",
                 children: [
@@ -116,6 +134,7 @@ describe('Block', function () {
             block.render();
             var div = block.elements[0];
             assert.strictEqual(div.textContent, 'cat');
+            block.dispose();
         });
     });
 
@@ -145,7 +164,8 @@ describe('Block', function () {
     describe('#IfBlock', function () {
 
         it('should not render when source is false', function () {
-            var block = Block.fromSpec({
+            view.setData({ condition: false });
+            var block = Block.fromSpec(view, {
                 type: Block.BlockType.Element,
                 tag: "div",
                 children: [
@@ -164,12 +184,56 @@ describe('Block', function () {
             assert.strictEqual(block.children.length, 1);
             assert.strictEqual(div.childNodes[0], block.children[0].placeholder);
             assert.strictEqual(div.textContent, '');
+            block.dispose();
         });
 
         it('should render immediately when source is true', function () {
+            view.setData({condition: true});
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.IfBlock,
+                        source: "condition",
+                        children: [{ type: Block.BlockType.Text, value: "cat" }]
+                    }
+                ]
+            });
+
+            block.render();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, 'cat');
+            block.dispose();
         });
 
         it('should render after source becomes true', function () {
+            view.setData({ condition: false });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.IfBlock,
+                        source: "condition",
+                        children: [{ type: Block.BlockType.Text, value: "cat" }]
+                    }
+                ]
+            });
+
+            block.render();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '');
+            view.setData({ condition: true });
+            block.update();
+            assert.strictEqual(div.textContent, 'cat');
+            block.dispose();
+        });
+
+        it('should remove elements after source becomes false', function () {
+        });
+
+        it('should attach after rendering if parent is attached', function () {
         });
     });
 

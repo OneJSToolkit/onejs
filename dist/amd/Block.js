@@ -18,20 +18,41 @@ define(["require", "exports"], function(require, exports) {
     var BlockType = exports.BlockType;
 
     var Block = (function () {
-        function Block() {
-            this.elements = [];
+        function Block(view) {
             this.children = [];
+            this.view = view;
         }
         Block.prototype.render = function () {
-            this.elements = renderNodes(this.template);
+            if (!this.elements) {
+                this.elements = renderNodes(this.template);
+            }
+            this.children.forEach(function (child) {
+                child.render();
+            });
         };
+
         Block.prototype.attach = function () {
+            this.children.forEach(function (child) {
+                child.attach();
+            });
         };
+
         Block.prototype.detach = function () {
+            this.children.forEach(function (child) {
+                child.detach();
+            });
         };
+
         Block.prototype.update = function () {
+            this.children.forEach(function (child) {
+                child.update();
+            });
         };
+
         Block.prototype.dispose = function () {
+            this.children.forEach(function (child) {
+                child.dispose();
+            });
         };
         return Block;
     })();
@@ -58,30 +79,85 @@ define(["require", "exports"], function(require, exports) {
 
     var IfBlock = (function (_super) {
         __extends(IfBlock, _super);
-        function IfBlock(source) {
-            _super.call(this);
+        function IfBlock(view, source) {
+            _super.call(this, view);
+            this.inserted = false;
+            this.rendered = false;
+
+            this.source = source;
         }
+        IfBlock.prototype.render = function () {
+            if (!this.rendered && this.view.getValue(this.source)) {
+                _super.prototype.render.call(this);
+                this.insert();
+                this.rendered = true;
+            }
+        };
+
+        IfBlock.prototype.update = function () {
+            var condition = this.view.getValue(this.source);
+
+            if (condition && !this.inserted) {
+                if (this.rendered) {
+                    this.insert();
+                } else {
+                    this.render();
+                }
+            } else if (!condition && this.inserted) {
+                this.detach();
+                this.remove();
+            }
+        };
+
+        IfBlock.prototype.insert = function () {
+            var _this = this;
+            if (!this.inserted) {
+                this.inserted = true;
+                this.elements.forEach(function (element) {
+                    insertAfter(element, _this.placeholder);
+                });
+            }
+        };
+
+        IfBlock.prototype.remove = function () {
+            if (this.inserted) {
+                this.inserted = false;
+                this.elements.forEach(function (element) {
+                    element.parentNode.removeChild(element);
+                });
+            }
+        };
         return IfBlock;
     })(Block);
     exports.IfBlock = IfBlock;
 
+    function insertAfter(newChild, sibling) {
+        var parent = sibling.parentNode;
+        var next = sibling.nextSibling;
+        if (next) {
+            // IE does not like undefined for refChild
+            parent.insertBefore(newChild, next);
+        } else {
+            parent.appendChild(newChild);
+        }
+    }
+
     var RepeaterBlock = (function (_super) {
         __extends(RepeaterBlock, _super);
-        function RepeaterBlock(source, iterator) {
-            _super.call(this);
+        function RepeaterBlock(view, source, iterator) {
+            _super.call(this, view);
         }
         return RepeaterBlock;
     })(Block);
     exports.RepeaterBlock = RepeaterBlock;
 
-    function fromSpec(spec) {
-        // this needs to become a tree walk that separates out child blocks
+    function fromSpec(view, spec) {
         var block;
         if (spec.type === 0 /* Element */ || spec.type === 1 /* Text */) {
-            block = new Block();
+            block = new Block(view);
             block.template = processTemplate(block, [spec]);
         } else {
-            block = createBlock(spec);
+            block = createBlock(view, spec);
             block.template = processTemplate(block, spec.children);
         }
 
@@ -89,17 +165,17 @@ define(["require", "exports"], function(require, exports) {
     }
     exports.fromSpec = fromSpec;
 
-    function createBlock(spec) {
+    function createBlock(view, spec) {
         var block;
         switch (spec.type) {
             case 3 /* Block */:
-                block = new Block();
+                block = new Block(view);
                 break;
             case 4 /* IfBlock */:
-                block = new IfBlock(spec.source);
+                block = new IfBlock(view, spec.source);
                 break;
             case 5 /* RepeaterBlock */:
-                block = new RepeaterBlock(spec.source, spec.iterator);
+                block = new RepeaterBlock(view, spec.source, spec.iterator);
                 break;
         }
 
@@ -113,7 +189,7 @@ define(["require", "exports"], function(require, exports) {
                     spec.children = processTemplate(parent, spec.children);
                 }
             } else {
-                var block = createBlock(spec);
+                var block = createBlock(parent.view, spec);
                 block.template = processTemplate(block, spec.children);
                 parent.children.push(block);
                 spec = {

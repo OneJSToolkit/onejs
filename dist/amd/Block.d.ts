@@ -1,4 +1,4 @@
-import IView = require('./IView');
+import View = require('./View');
 export interface IBindingEventMap {
     [key: string]: string[];
 }
@@ -36,8 +36,9 @@ export declare class Block {
     public elements: HTMLElement[];
     public template: IBlockSpec[];
     public children: Block[];
-    public view: IView;
+    public view: View;
     public placeholder: Comment;
+    constructor(view: View);
     public render(): void;
     public attach(): void;
     public detach(): void;
@@ -45,9 +46,16 @@ export declare class Block {
     public dispose(): void;
 }
 export declare class IfBlock extends Block {
-    constructor(source: string);
+    public source: string;
+    public inserted: boolean;
+    public rendered: boolean;
+    constructor(view: View, source: string);
+    public render(): void;
+    public update(): void;
+    public insert(): void;
+    public remove(): void;
 }
 export declare class RepeaterBlock extends Block {
-    constructor(source: string, iterator: string);
+    constructor(view: View, source: string, iterator: string);
 }
-export declare function fromSpec(spec: IBlockSpec): Block;
+export declare function fromSpec(view: View, spec: IBlockSpec): Block;
