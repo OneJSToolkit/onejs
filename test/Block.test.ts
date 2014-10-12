@@ -3,6 +3,7 @@
 import chai = require("chai");
 var assert = chai.assert;
 import Block = require('../src/Block');
+import BaseView = require('../src/BaseView');
 import View = require('../src/View');
 
 describe('Block', function () {
@@ -134,6 +135,29 @@ describe('Block', function () {
             block.render();
             var div = block.elements[0];
             assert.strictEqual(div.textContent, 'cat');
+            block.dispose();
+        });
+
+        it('should render a subview', function () {
+            var subView = new BaseView();
+            subView.element = document.createElement("div")
+            view.addChild(subView);
+            view['subView'] = subView;
+
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.View,
+                        name: "subView"
+                    }
+                ]
+            });
+
+            block.render();
+            var div = block.elements[0]
+            assert.strictEqual(div.children[0], subView.element);
             block.dispose();
         });
     });
@@ -349,6 +373,29 @@ describe('Block', function () {
             view.setData({ condition: true });
             block.update();
             assert.strictEqual(div.textContent, 'cat');
+            block.dispose();
+        });
+
+        it('should render child elements in proper order', function () {
+            view.setData({ condition: true });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.IfBlock,
+                        source: "condition",
+                        children: [
+                            { type: Block.BlockType.Text, value: "dog" },
+                            { type: Block.BlockType.Text, value: "cat" }
+                        ]
+                    }
+                ]
+            });
+
+            block.render();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, 'dogcat');
             block.dispose();
         });
 

@@ -22,7 +22,8 @@ export enum BlockType {
     Comment,
     Block,
     IfBlock,
-    RepeaterBlock
+    RepeaterBlock,
+    View
 }
 
 export interface IMap {
@@ -49,6 +50,9 @@ export interface IBlockSpec {
 
     //RepeaterBlock
     iterator?: string;
+
+    //View
+    name?: string;
 }
 
 export class Block {
@@ -250,6 +254,8 @@ function renderNodes(block:Block, nodes: IBlockSpec[]): Node[]{
                     node.owner.placeholder = c;
                 }
                 return c;
+            } else if (node.type === BlockType.View) {
+                return block.view[node.name].render();
             }
         });
     }
@@ -347,7 +353,7 @@ export class RepeaterBlock extends Block {
 export function fromSpec(view: View, spec: IBlockSpec): Block {
 
     var block: Block;
-    if (spec.type === BlockType.Element || spec.type === BlockType.Text) {
+    if (spec.type === BlockType.Element || spec.type === BlockType.Text || spec.type === BlockType.View) {
         block = new Block(view);
         block.template = processTemplate(block, [spec]);
     } else {
@@ -384,7 +390,7 @@ function processTemplate(parent:Block, template: IBlockSpec[]): IBlockSpec[]{
             if (spec.children) {
                 spec.children = processTemplate(parent, spec.children);
             }
-        } else {
+        } else if(spec.type !== BlockType.View) {
             var block = createBlock(parent.view, spec);
             block.template = processTemplate(block, spec.children);
             parent.children.push(block);
