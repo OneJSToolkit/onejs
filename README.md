@@ -2,3 +2,5 @@
 
 > OneJS library, a set of classes to build packagable web controls.
 
+Visit the [wiki](https://github.com/OneJSToolkit/onejs/wiki) for documentation on how OneJS works!
+
