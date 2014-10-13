@@ -68,7 +68,7 @@ class View extends BaseView {
         var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
 
         if (targetValue) {
-            if (targetValue.isObservable) {
+            if (expandObservables && targetValue.isObservable) {
                 targetValue = targetValue.getValue();
             }
             else if (typeof targetValue === 'function') {

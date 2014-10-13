@@ -154,7 +154,7 @@ class EventGroup {
             }
         }
     }
-    
+
     public static isObserved(target: any, eventName: string): boolean {
         return target && target.__events && target.__events[eventName];
     }
