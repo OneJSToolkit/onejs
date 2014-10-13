@@ -65,14 +65,9 @@ var View = (function (_super) {
         _super.prototype.onDispose.call(this);
     };
 
-    View.prototype.getValue = function (propertyName) {
+    View.prototype.getValue = function (propertyName, expandObservables) {
         var targetObject = this._getPropTarget(propertyName);
-
-        return (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
-    };
-
-    View.prototype.resolveValue = function (propertyName) {
-        var targetValue = this.getValue(propertyName);
+        var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
 
         if (targetValue) {
             if (targetValue.isObservable) {
@@ -104,21 +99,25 @@ var View = (function (_super) {
         // in and set the value on the the target. We shouldn't do this.
         // But viewmodel.setData is shallow, so if we passed in { command: { isExpanded: true }},
         // it would stomp on the existing value as it's a new command object.
-        var targetObjectValue = target[targetObject.propertyName];
+        if (target) {
+            var targetObjectValue = target[targetObject.propertyName];
 
-        if (targetObjectValue && targetObjectValue.isObservable) {
-            targetObjectValue.setValue(propertyValue);
-        } else if (typeof target[targetObject.propertyName] !== 'function') {
-            target[targetObject.propertyName] = propertyValue;
+            if (targetObjectValue && targetObjectValue.isObservable) {
+                targetObjectValue.setValue(propertyValue);
+            } else if (typeof target[targetObject.propertyName] !== 'function') {
+                target[targetObject.propertyName] = propertyValue;
 
-            if (target.change) {
-                target.change();
+                if (target.change) {
+                    target.change();
+                } else {
+                    this.update();
+                }
             }
         }
     };
 
     View.prototype.toggle = function (propertyName, allowPropogation) {
-        this.setValue(propertyName, !this.resolveValue(propertyName));
+        this.setValue(propertyName, !this.getValue(propertyName, true));
 
         allowPropogation = allowPropogation || false;
 
@@ -126,13 +125,13 @@ var View = (function (_super) {
     };
 
     View.prototype.send = function (sourcePropertyName, destinationPropertyName) {
-        this.setValue(destinationPropertyName, this.resolveValue(sourcePropertyName));
+        this.setValue(destinationPropertyName, this.getValue(sourcePropertyName, true));
     };
 
     View.prototype._updateViewValue = function (binding, bindingType, sourcePropertyName, bindingDest) {
         var key = binding.id + bindingType + (bindingDest ? ('.' + bindingDest) : '');
         var lastValue = this._lastValues[key];
-        var currentValue = this.resolveValue(sourcePropertyName);
+        var currentValue = this.getValue(sourcePropertyName, true);
 
         if (lastValue != currentValue) {
             this._lastValues[key] = currentValue;
@@ -178,17 +177,26 @@ var View = (function (_super) {
         var propertyPart;
         var args;
         var viewModel;
+        var props = propertyName.match(/([\w]+[\(][\w.,\(\)\'\" ]*[\)]|[\w]+)/g);
 
         // If $ is provided, default the target to 'this'. this allows for sub views to be accessed
         // and helpers as well.
         if (propertyName[0] == '$') {
-            propTarget = this;
-            propertyName = propertyName.substr(1);
+            propTarget = this.owner || this;
+
+            if (props[0] == 'owner') {
+                propTarget = this.owner || this;
+                props.shift();
+            } else {
+                propTarget = this;
+
+                if (props[0] == 'view') {
+                    props.shift();
+                }
+            }
         }
 
-        var props = propertyName.match(/([\w]+[\(][\w.,\(\)\'\" ]*[\)]|[\w]+)/g);
-
-        for (var i = 0; i < props.length; i++) {
+        for (var i = 0; propTarget && i < props.length; i++) {
             var prop = props[i];
             var parenIndex = prop.indexOf('(');
 
@@ -327,7 +335,7 @@ var View = (function (_super) {
                 } else if (arg.length > 0 && !isNaN(Number(arg))) {
                     args.push(Number(arg));
                 } else {
-                    args.push(this.resolveValue(providedArgs[i]));
+                    args.push(this.getValue(providedArgs[i], true));
                 }
             }
         }

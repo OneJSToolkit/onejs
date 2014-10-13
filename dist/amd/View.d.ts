@@ -11,8 +11,7 @@ declare class View extends BaseView {
     public onViewModelInitialized(viewModel: any, oldViewModel: any): void;
     public onUpdate(): void;
     public onDispose(): void;
-    public getValue(propertyName: string): any;
-    public resolveValue(propertyName: string): any;
+    public getValue(propertyName: string, expandObservables?: boolean): any;
     public findValue(args: any): void;
     public setValue(propertyName: string, propertyValue: any): void;
     public toggle(propertyName: string, allowPropogation?: boolean): boolean;
