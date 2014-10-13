@@ -50,22 +50,8 @@ describe('List', function() {
     describe('setCount()', function() {
         it('should set its count to the given non-negative number (int)', function() {
             var list = new List();
-            assert.isTrue(list.setCount(10));
-        });
-
-        it('should not set its count to a negative number (int)', function() {
-            var list = new List();
-            assert.isFalse(list.setCount(-10));
-        });
-
-        it('should not set its count to a non-negative number (float)', function() {
-            var list = new List();
-            assert.isFalse(list.setCount(3.14));
-        });
-
-        it('should not set its count to a negative number (float)', function() {
-            var list = new List();
-            assert.isFalse(list.setCount(-3.14));
+            list.setCount(10)
+            assert.strictEqual(list.getCount(), 10);
         });
     });
 

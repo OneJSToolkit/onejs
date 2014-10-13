@@ -23,13 +23,8 @@ class List {
         return this.array.length;
     }
 
-    setCount(count: number): boolean {
-        try {
-            this.array.length = count;
-            return true;
-        } catch (ex) {
-            return false
-        }
+    setCount(count: number) {
+        this.array.length = count;
     }
 
     indexOf(item) {
