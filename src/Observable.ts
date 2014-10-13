@@ -6,7 +6,7 @@ class Observable {
 	_events = new EventGroup(this);
 	_val;
 
-	constructor(val) {
+	constructor(val?: any) {
 		this._val = val;
 		this._events.declare('change');
 	}
