@@ -57,7 +57,7 @@ You can make other views that include the toggle button:
 
 ```typescript
 <div js-type="RootApp">
-    <toggle-button js-init="value: 'click me', isToggled: true" />
+    <toggle-button js-init="value: 'click me', isToggled: true"></toggle-button>
 </div>
 ```
 
