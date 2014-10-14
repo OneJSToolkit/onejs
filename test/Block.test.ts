@@ -5,6 +5,7 @@ var assert = chai.assert;
 import Block = require('../src/Block');
 import BaseView = require('../src/BaseView');
 import View = require('../src/View');
+import List = require('../src/List');
 
 describe('Block', function () {
 
@@ -563,6 +564,35 @@ describe('Block', function () {
     describe('#RepeaterBlock', function () {
 
         it('should render contents immediately', function () {
+            view.setData({ data: new List([1, 2, 3]) });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.children.length, 3);
+            assert.strictEqual(div.textContent, '123');
+            block.dispose();
+
+
         });
 
         it('should render inserted items', function () {
