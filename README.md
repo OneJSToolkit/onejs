@@ -1,6 +1,8 @@
 
 # The OneJS Toolkit helps you build reuseable web views.
 
+[![Build Status](https://travis-ci.org/OneJSToolkit/onejs.png?branch=master)](https://travis-ci.org/OneJSToolkit/onejs) [![Coverage Status](https://coveralls.io/repos/OneJSToolkit/onejs/badge.png)](https://coveralls.io/r/OneJSToolkit/onejs)
+
 Visit the [wiki documentation](https://github.com/OneJSToolkit/onejs/wiki) to get started working with OneJS!
 
 **Don't think of it as "yet another JavaScript framework."** It's a small set of classes/interfaces that provide a common foundation for producing reusable control libraries that can be bundled and distributed, while minimizing impact on file size.
