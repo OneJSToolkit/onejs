@@ -105,7 +105,7 @@ export class Block {
         this.bindings.forEach((binding) => {
 
             for (var bindingType in binding.desc) {
-                if (bindingType != 'id' && bindingType != 'events' && bindingType != 'element') {
+                if (bindingType != 'events') {
                     if (bindingType === 'text' || bindingType === 'html') {
                         this._updateViewValue(binding, bindingType, binding.desc[bindingType]);
                     } else {
@@ -135,7 +135,7 @@ export class Block {
         } else if (this.parent) {
             return this.parent.getValue(propertyName);
         } else {
-            return this.view.getValue(propertyName);
+            return this.view.getValue(propertyName, true);
         }
     }
 
@@ -187,18 +187,22 @@ export class Block {
             // Observe parent if bindings reference parent.
             // TODO: This should be moved/removed.
             for (var bindingType in binding.desc) {
-                if (bindingType != 'id' && bindingType != 'events' && bindingType != 'element') {
+                if (bindingType != 'events') {
                     for (var bindingDest in binding.desc[bindingType]) {
-                        var source = binding.desc[bindingType][bindingDest];
-                        if (source.indexOf('$parent') > -1) {
-                            this.view.viewModel.setData({
-                                '$parent': (this.view.owner || this.view.parent).viewModel
-                            }, false);
+                        var source = binding.desc[bindingType];
+                        
+                        if (typeof source !== 'string') {
+                            source = source[bindingDest];
                         }
-                        if (source.indexOf('$root') > -1) {
-                            this.view.viewModel.setData({
-                                '$root': this.view._getRoot().viewModel
-                            }, false);
+
+                        var target = this.view._getPropTarget(source);
+
+                        if (target.viewModel) {
+                            var data = {};
+
+                            data[source.replace('.', '-')] = target.viewModel;
+
+                            this.view.viewModel.setData(data, false);
                         }
                     }
                 }
@@ -299,7 +303,7 @@ export class IfBlock extends Block {
     }
 
     render() {
-        if (!this.rendered && this.view.getValue(this.source)) {
+        if (!this.rendered && this.view.getValue(this.source, true)) {
             super.render();
             this.insert();
             this.rendered = true;
@@ -317,7 +321,7 @@ export class IfBlock extends Block {
     }
 
     update() {
-        var condition = this.view.getValue(this.source);
+        var condition = this.view.getValue(this.source, true);
 
         if (condition && !this.inserted) {
             if (this.rendered) {
@@ -392,7 +396,7 @@ export class RepeaterBlock extends Block {
     }
 
     getList(): List {
-        return this.view.getValue(this.source);
+        return this.view.getValue(this.source, true);
     }
 
     _reset() {
