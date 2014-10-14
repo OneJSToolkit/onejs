@@ -45,23 +45,23 @@ describe('Observable', function() {
     });
 
     describe('change event', function() {
-    	it('should fire when the value changes', function() {
-    		var obs = new Observable();
-			var events = new EventGroup({});
-			var wasChanged = false;
+        it('should fire when the value changes', function() {
+            var obs = new Observable();
+            var events = new EventGroup({});
+            var wasChanged = false;
 
-			events.on(obs, 'change', function() { wasChanged = true; });
+            events.on(obs, 'change', function() { wasChanged = true; });
 
-			obs.setValue('foo');
-			assert.isTrue(wasChanged, 'did not change when assigning value foo');
+            obs.setValue('foo');
+            assert.isTrue(wasChanged, 'did not change when assigning value foo');
 
-			wasChanged = false;
-			obs.setValue('foo');
-			assert.isFalse(wasChanged, 'changed when the value didn\'t change');
+            wasChanged = false;
+            obs.setValue('foo');
+            assert.isFalse(wasChanged, 'changed when the value didn\'t change');
 
-			obs.setValue('bar');
-			assert.isTrue(wasChanged, 'did not change when assigning value bar');
-    	});
+            obs.setValue('bar');
+            assert.isTrue(wasChanged, 'did not change when assigning value bar');
+        });
     });
 
 });
