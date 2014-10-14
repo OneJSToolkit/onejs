@@ -26,7 +26,7 @@ You write View templates. The templates are HTML and have bindings similar to wh
 ```html
 <button class="ToggleButton"
     js-type="ToggleButton"
-    js-bind="value:value, className.isTogggled: isToggled"
+    js-bind="value:value, className.isToggled:isToggled"
     js-event="click:$toggle('isToggled')" >
 </button>
 ```
