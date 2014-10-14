@@ -30,7 +30,7 @@ class List {
     indexOf(item) {
         return this.array.indexOf(item);
     }
-    
+
     findBy(propertyName, propertyValue) {
         for (var i = 0; i < this.array.length; i++) {
             var item = this.getAt(i);
