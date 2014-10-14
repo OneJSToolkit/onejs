@@ -1,25 +1,25 @@
 interface IView {
-	element: HTMLElement;
+    element: HTMLElement;
 
-	viewModel: any;
+    viewModel: any;
 
-	parent: IView;
-	owner: IView;
-	children: IView[];
+    parent: IView;
+    owner: IView;
+    children: IView[];
 
-	render() : HTMLElement;
+    render() : HTMLElement;
 
-	activate();
-	
-	resize();
+    activate();
+    
+    resize();
 
-	update();
+    update();
 
-	setData(data: any, forceUpdate?: boolean);
+    setData(data: any, forceUpdate?: boolean);
 
-	deactivate();
+    deactivate();
 
-	dispose();
+    dispose();
 }
 
 export = IView;

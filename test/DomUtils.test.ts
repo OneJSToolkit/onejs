@@ -48,10 +48,11 @@ describe('DomUtils', function() {
             expect(tag.tagName.toLowerCase()).to.equal('span');
         });
 
-        describe('when called with bad arguments', () => {
-            it('throws when called with an uneven number of attributes', () => {
-                expect(() => { DomUtils.ce('p', ['class', 'foo', 'id']) }).to.throw('Expected even number of atttributes')
-            });
+        it('sets attributes', () => {
+            var tag = DomUtils.ce('span', ['data-foo', 'bar', 'data-baz', 'boz']);
+
+            expect(tag.getAttribute('data-foo')).to.equal('bar');
+            expect(tag.getAttribute('data-baz')).to.equal('boz');
         });
     });
 });

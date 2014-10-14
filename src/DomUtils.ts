@@ -42,9 +42,6 @@ class DomUtils {
         var val;
 
         // Set default attributes.
-	if(attributes && attributes.length % 2 !== 0) {
-	    throw new Error('Expected even number of atttributes');
-	}
         for (i = 0; attributes && i < attributes.length; i += 2) {
             element.setAttribute(attributes[i], attributes[i + 1]);
         }
