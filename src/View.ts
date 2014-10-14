@@ -187,8 +187,15 @@ class View extends BaseView {
         if (propertyName[0] == '$') {
             propTarget = this.owner || this;
 
-            if (props[0] == 'owner') {
-                propTarget = this.owner || this;
+            if (props[0] == 'parent') {
+                propTarget = this.parent;
+                props.shift();
+            }
+            else if (props[0] == 'owner') {
+                if (this.owner) {
+                    propTarget = viewModel = (this.owner).viewModel;                    
+                }
+
                 props.shift();
             }
             else {
