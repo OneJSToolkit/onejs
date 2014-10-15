@@ -564,7 +564,7 @@ describe('Block', function () {
     describe('#RepeaterBlock', function () {
 
         it('should render contents immediately', function () {
-            view.setData({ data: new List([1, 2, 3]) });
+            view.setData({ data: new List([{ val: 1 }, { val: 2 }, { val: 3 }]) });
             var block = Block.fromSpec(view, {
                 type: Block.BlockType.Element,
                 tag: "div",
@@ -577,7 +577,7 @@ describe('Block', function () {
                             type: Block.BlockType.Element,
                             tag: "div",
                             binding: {
-                                text: "item"
+                                text: "item.val"
                             }
                         }]
                     }
@@ -591,17 +591,58 @@ describe('Block', function () {
             assert.strictEqual(div.children.length, 3);
             assert.strictEqual(div.textContent, '123');
             block.dispose();
-
-
         });
 
         it('should render inserted items', function () {
+            var list = new List([]);
+            view.setData({ data: list });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '');
+
+            list.push({ val: 1 });
+            assert.strictEqual(div.textContent, '1');
+
+            list.insertAt(0, { val: 2 });
+            assert.strictEqual(div.textContent, '21');
+
+            list.insertAt(1, { val: 3 });
+            assert.strictEqual(div.textContent, '231');
+
+            list.push({ val: 4 });
+            assert.strictEqual(div.textContent, '2314');
+
+            block.dispose();
         });
 
-        it('should dispose removed items', function () {
+        it('should remove removed items', function () {
         });
 
-        it('should allow binding to the iterator', function () {
+        it('should handle changed items', function () {
+        });
+       
+        it('should insert correctly with multiple children', function () {
         });
 
         it('should support nesting repeaters', function () {

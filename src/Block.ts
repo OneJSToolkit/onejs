@@ -128,11 +128,25 @@ export class Block {
         });
     }
 
-    getValue(propertyName) {
-        //TODO: allow scope values to be called as functions, etc
-        if (this._scope && this._scope.hasOwnProperty(propertyName)) {
-            return this._scope[propertyName];
-        } else if (this.parent) {
+    getValue(propertyName: string) {
+        //TODO: allow scope values to be called as functions
+        if (this._scope) {
+            var found = true;
+            var value = propertyName.split('.').reduce((prev:any, current:string):any => {
+                if (prev && prev.hasOwnProperty(current)) {
+                    return prev[current];
+                } else {
+                    found = false;
+                    return null;
+                }
+            }, this._scope);
+
+            if (found) {
+                return value;
+            }
+        }
+
+        if (this.parent) {
             return this.parent.getValue(propertyName);
         } else {
             return this.view.getValue(propertyName, true);
@@ -294,7 +308,7 @@ export class IfBlock extends Block {
     source: string;
     inserted = false;
     rendered = false;
-    bindCalled = false;
+    bound = false;
 
     constructor(view:View, parent:Block, source: string) {
         super(view, parent);
@@ -307,14 +321,14 @@ export class IfBlock extends Block {
             super.render();
             this.insert();
             this.rendered = true;
-            if (this.bindCalled) {
+            if (this.bound) {
                 super.bind();
             }
         }
     }
 
     bind() {
-        this.bindCalled = true;
+        this.bound = true;
         if (this.rendered) {
             super.bind();
         }
@@ -375,6 +389,9 @@ export class RepeaterBlock extends Block {
     source: string;
     iterator: string;
     blockTemplate: IBlockSpec[];
+    bound = false;
+    rendered = false;
+    _currentList = new List();
 
     constructor(view:View, parent: Block, source: string, iterator: string, blockTemplate:IBlockSpec[]) {
         super(view, parent);
@@ -384,36 +401,115 @@ export class RepeaterBlock extends Block {
     }
 
     render() {
-        this._reset();
+        this.rendered = true;
+        this._reload();
     }
 
     bind() {
+        this.bound = true;
         this.view.activeEvents.on(this.getList(), 'change', this.onChange.bind(this));
         super.bind();
     }
 
     onChange(args?) {
+        var changeType = args ? args.type : 'reset';
+
+        switch (changeType) {
+            case 'insert':
+                this._insertChild(args.item, args.index);
+                break;
+
+            case 'remove':
+                this._removeChild(args.index);
+                break;
+
+            default:
+                this._reload();
+                break;
+        }
     }
 
     getList(): List {
         return this.view.getValue(this.source, true);
     }
 
-    _reset() {
-        var lastElement: Node = this.placeholder;
-        this.getList().array.forEach((item) => {
-            var child = new Block(this.view, this);
-            this.children.push(child);
-            child._scope = {};
-            child._scope[this.iterator] = item;
-            child.template = processTemplate(child, this.blockTemplate);
+    _insertChild(item, index: number) {
+
+        var previousIndex = index - 1;
+        var precedingElement: Node;
+        if (previousIndex < 0) {
+            precedingElement = this.placeholder;
+        } else {
+            var previousBlockElements = this.children[previousIndex].elements;
+            precedingElement = previousBlockElements[previousBlockElements.length - 1];
+        }
+
+        this._currentList.insertAt(index, item);
+        var child = new Block(this.view, this);
+        this.children.splice(index, 0, child);
+        child._scope = {};
+        child._scope[this.iterator] = item;
+        child.template = processTemplate(child, this.blockTemplate);
+        if (this.rendered) {
             child.render();
-            
-            child.elements.forEach((element) => {
-                insertAfter(element, lastElement);
-                lastElement = element;
-            });
+            child.update();
+        }
+        if (this.bound) {
+            child.bind();
+        }
+
+        child.elements.forEach((element) => {
+            insertAfter(element, precedingElement);
+            precedingElement = element;
         });
+    }
+
+    _removeChild(index: number) {
+        var child = this.children.splice(index, 1)[0];
+        this._currentList.removeAt(index);
+        child.dispose();
+        child.elements.forEach((element) => {
+            element.parentNode.removeChild(element);
+        });
+        child.parent = null;
+        child.view = null;
+    }
+
+    _updateChild(index: number, item: any) {
+        var child = this.children[index];
+        child._scope[this.iterator] = item;
+        child.update();
+    }
+
+    _reload() {
+        var newList = this.getList();
+        var currentList = this._currentList;
+
+        var count = newList.getCount();
+
+        for (var i = 0; i < count; i++) {
+            var newItem = newList.getAt(i);
+            var currentItem = currentList.getAt(i);
+
+            var newKey = newItem ? (newItem.key = newItem.key || i) : null;
+            var currentKey = currentItem ? (currentItem.key = currentItem.key || i) : null;
+
+            if (newItem && !currentItem) {
+                this._insertChild(newItem, i);
+            } else if (newKey !== currentKey) {
+                if (currentList.findBy('key', newKey) === -1) {
+                    this._insertChild(newItem, i);
+                } else {
+                    this._removeChild(i--);
+                }
+            } else {
+                this._updateChild(i, newItem);
+            }
+        }
+
+        while (currentList.getCount() > newList.getCount()) {
+            this._removeChild(i);
+        }
     }
 
 }
