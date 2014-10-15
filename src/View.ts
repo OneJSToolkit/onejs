@@ -53,14 +53,6 @@ class View extends BaseView {
     }
 
     onDispose(): void {
-        if (this.viewModel) {
-            this.viewModel.dispose();
-            this.viewModel = null;
-        }
-
-        this.events.dispose();
-        this.activeEvents.dispose();
-
         super.onDispose();
     }
 

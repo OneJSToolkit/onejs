@@ -559,6 +559,31 @@ describe('Block', function () {
             assert.strictEqual(view.getValue('checked'), true);
             block.dispose();
         });
+
+        it('should support nested ifs', function () {
+            view.setData({ condition: true });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.IfBlock,
+                        source: "condition",
+                        children: [{
+                            type: Block.BlockType.IfBlock,
+                            source: "condition",
+                            children: [{ type: Block.BlockType.Text, value: "cat" }]
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, 'cat');
+            block.dispose();
+        });
+
     });
 
     describe('#RepeaterBlock', function () {
@@ -637,15 +662,202 @@ describe('Block', function () {
         });
 
         it('should remove removed items', function () {
+            var list = new List([{ val: 1 }, { val: 2 }, { val: 3 }]);
+            view.setData({ data: list });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '123');
+
+            list.removeAt(1);
+            assert.strictEqual(div.textContent, '13');
+
+            list.removeAt(0);
+            assert.strictEqual(div.textContent, '3');
+
+            list.pop();
+            assert.strictEqual(div.textContent, '');
+
+            block.dispose();
         });
 
         it('should handle changed items', function () {
+            var list = new List([{ val: 1 }, { val: 2 }, { val: 3 }]);
+            view.setData({ data: list });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '123');
+
+            list.setAt(1, { val: 9 });
+            assert.strictEqual(div.textContent, '193');
+
+            block.dispose();
+        });
+
+        it('should handle changed items with keys', function () {
+            var list = new List([{ key: "a", val: 1 }, { key: "b", val: 2 }, { key: "c", val: 3 }]);
+            view.setData({ data: list });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '123');
+
+            list.setAt(1, { key: "d", val: 9 });
+            assert.strictEqual(div.textContent, '193');
+
+            block.dispose();
         });
        
         it('should insert correctly with multiple children', function () {
+            view.setData({ data: new List([{ val: 1 }, { val: 2 }, { val: 3 }]) });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [
+                            {
+                                type: Block.BlockType.Element,
+                                tag: "div",
+                                children: [{type: Block.BlockType.Text, value: "*"}]
+                            },
+                            {
+                                type: Block.BlockType.Element,
+                                tag: "div",
+                                binding: {
+                                    text: "item.val"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.children.length, 6);
+            assert.strictEqual(div.textContent, '*1*2*3');
+            block.dispose();
         });
 
         it('should support nesting repeaters', function () {
+            var list1 = new List([{ val: 1 }, { val: 2 }, { val: 3 }]);
+            var list2 = new List([{ val: 4 }, { val: 5 }, { val: 6 }]);
+            view.setData({ list1: list1, list2: list2  });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "list1",
+                        iterator: "item",
+                        children: [
+                            {
+                                type: Block.BlockType.Element,
+                                tag: "div",
+                                binding: {
+                                    text: "item.val"
+                                }
+                            },
+                            {
+                                type: Block.BlockType.RepeaterBlock,
+                                source: "list2",
+                                iterator: "item2",
+                                children: [
+                                    {
+                                        type: Block.BlockType.Element,
+                                        tag: "span",
+                                        binding: {
+                                            text: "item.val"
+                                        }
+                                    },
+                                    {
+                                        type: Block.BlockType.Element,
+                                        tag: "span",
+                                        binding: {
+                                            text: "item2.val"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '114151622425263343536');
+            block.dispose();
         });
 
         it('should support shadowing parent iterator', function () {

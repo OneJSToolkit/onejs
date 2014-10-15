@@ -153,6 +153,35 @@ export class Block {
         }
     }
 
+    insertElements(elements: HTMLElement[], refElement: HTMLElement) {
+        var index = this.elements.indexOf(refElement);
+        if (index >= 0) {
+            var spliceArgs: any[] = [index + 1, 0];
+            this.elements.splice.apply(this.elements, spliceArgs.concat(elements));
+        }
+        if (refElement.parentNode) {
+            var lastElement = refElement;
+            elements.forEach((element) => {
+                insertAfter(element, lastElement);
+                lastElement = element;
+            });
+        }
+    }
+
+    removeElements(elements: HTMLElement[]) {
+        //TODO: can we assume we are always removing contiguous elements?
+        var index = this.elements.indexOf(elements[0]);
+        if (index >= 0) {
+            this.elements.splice(index, elements.length);
+        }
+
+        elements.forEach((element) => {
+            if (element.parentNode) {
+                element.parentNode.removeChild(element);
+            }
+        });
+    }
+
     _updateViewValue(binding, bindingType, sourcePropertyName, bindingDest?) {
         var key = binding.id + bindingType + (bindingDest ? ('.' + bindingDest) : '');
         var lastValue = this._lastValues[key];
@@ -355,20 +384,14 @@ export class IfBlock extends Block {
     insert() {
         if (!this.inserted) {
             this.inserted = true;
-            var lastElement:Node = this.placeholder;
-            this.elements.forEach((element) => {
-                insertAfter(element, lastElement);
-                lastElement = element;
-            });
+            this.parent.insertElements(this.elements, <any>this.placeholder);
         }
     }
 
     remove() {
         if (this.inserted) {
             this.inserted = false;
-            this.elements.forEach((element) => {
-                element.parentNode.removeChild(element);
-            });
+            this.parent.removeElements(this.elements);
         }
     }
 }
@@ -427,6 +450,8 @@ export class RepeaterBlock extends Block {
                 this._reload();
                 break;
         }
+
+        this.update();
     }
 
     getList(): List {
@@ -452,16 +477,12 @@ export class RepeaterBlock extends Block {
         child.template = processTemplate(child, this.blockTemplate);
         if (this.rendered) {
             child.render();
-            child.update();
         }
         if (this.bound) {
             child.bind();
         }
 
-        child.elements.forEach((element) => {
-            insertAfter(element, precedingElement);
-            precedingElement = element;
-        });
+        this.parent.insertElements(child.elements, <any>precedingElement);
     }
 
     _removeChild(index: number) {
@@ -491,7 +512,7 @@ export class RepeaterBlock extends Block {
             var newItem = newList.getAt(i);
             var currentItem = currentList.getAt(i);
 
-            var newKey = newItem ? (newItem.key = newItem.key || i) : null;
+            var newKey = (newItem.key = newItem.key || i);
             var currentKey = currentItem ? (currentItem.key = currentItem.key || i) : null;
 
             if (newItem && !currentItem) {
