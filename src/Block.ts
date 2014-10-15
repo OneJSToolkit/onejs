@@ -489,9 +489,7 @@ export class RepeaterBlock extends Block {
         var child = this.children.splice(index, 1)[0];
         this._currentList.removeAt(index);
         child.dispose();
-        child.elements.forEach((element) => {
-            element.parentNode.removeChild(element);
-        });
+        this.parent.removeElements(child.elements);
         child.parent = null;
         child.view = null;
     }

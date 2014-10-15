@@ -861,6 +861,43 @@ describe('Block', function () {
         });
 
         it('should support shadowing parent iterator', function () {
+            var list1 = new List([{ val: 1 }, { val: 2 }, { val: 3 }]);
+            var list2 = new List([{ val: 4 }, { val: 5 }, { val: 6 }]);
+            view.setData({ list1: list1, list2: list2 });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "list1",
+                        iterator: "item",
+                        children: [
+                            {
+                                type: Block.BlockType.RepeaterBlock,
+                                source: "list2",
+                                iterator: "item",
+                                children: [
+                                    {
+                                        type: Block.BlockType.Element,
+                                        tag: "span",
+                                        binding: {
+                                            text: "item.val"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '456456456');
+            block.dispose();
         });
     });
 
