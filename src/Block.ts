@@ -1,6 +1,7 @@
 import View = require('./View');
 import DomUtils = require('./DomUtils');
 import List = require('./List');
+import EventGroup = require('./EventGroup');
 
 export interface IBindingEventMap {
     [key: string]: string[];
@@ -76,6 +77,7 @@ export class Block {
     bindings: Binding[] = [];
     _lastValues: any = {};
     _scope: IMap;
+    events = new EventGroup(this);
 
     constructor(view: View, parent: Block) {
         this.view = view;
@@ -126,6 +128,8 @@ export class Block {
         this.children.forEach((child) => {
             child.dispose();
         });
+
+        this.events.dispose();
     }
 
     getValue(propertyName: string) {
@@ -265,13 +269,13 @@ export class Block {
 
     _bindInputEvent(element: HTMLElement, binding:Binding) {
         if (binding.desc.attr && (binding.desc.attr['value'] || binding.desc.attr['checked'])) {
-            this.view.activeEvents.on(element, 'input,change', function () {
+            this.events.on(element, 'input,change', () => {
                 var source = binding.desc.attr['value'] ? 'value' : 'checked';
                 var newValue = element[source];
                 var key = binding.id + 'attr.' + source;
 
                 this._lastValues[key] = newValue;
-                this.setValue(binding.desc.attr[source], newValue);
+                this.view.setValue(binding.desc.attr[source], newValue);
 
                 return false;
             });
@@ -279,21 +283,19 @@ export class Block {
     }
 
     _bindEvent(element, eventName, targetList) {
-        var _this = this;
 
         if (eventName.indexOf('$view.') == 0) {
             eventName = eventName.substr(6);
-            element = this;
+            element = this.view;
         }
 
-        this.view.activeEvents.on(element, eventName, function (ev) {
+        this.events.on(element, eventName, (...args) => {
             var returnValue;
 
             for (var targetIndex = 0; targetIndex < targetList.length; targetIndex++) {
                 var target = targetList[targetIndex];
-                var args = < any > arguments;
 
-                returnValue = this._getValueFromFunction(target, args);
+                returnValue = this.view._getValueFromFunction(target, args);
             }
 
             return returnValue;
@@ -430,7 +432,7 @@ export class RepeaterBlock extends Block {
 
     bind() {
         this.bound = true;
-        this.view.activeEvents.on(this.getList(), 'change', this.onChange.bind(this));
+        this.events.on(this.getList(), 'change', this.onChange.bind(this));
         super.bind();
     }
 

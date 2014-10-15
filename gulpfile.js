@@ -71,7 +71,7 @@ gulp.task('test', ['tscTest'], function (done) {
   }, done);
 });
 
-gulp.task('tdd', ['tscTest'], function (done) {
+gulp.task('tdd', [], function (done) {
   karma.start({
     configFile: __dirname + '/karma.conf.js'
   }, done);
