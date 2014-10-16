@@ -185,8 +185,6 @@ class View extends BaseView {
         // If $ is provided, default the target to 'this'. this allows for sub views to be accessed
         // and helpers as well.
         if (propertyName[0] == '$') {
-            propTarget = this.owner || this;
-
             if (props[0] == 'parent') {
                 propTarget = this.parent;
                 props.shift();
@@ -199,7 +197,7 @@ class View extends BaseView {
                 props.shift();
             }
             else {
-                propTarget = this;
+                propTarget = this.owner || this;
                 
                 if (props[0] == 'view') {
                     props.shift();
