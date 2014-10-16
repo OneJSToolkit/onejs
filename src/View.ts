@@ -3,23 +3,31 @@ import ViewModel = require('./ViewModel');
 import EventGroup = require('./EventGroup');
 import DomUtils = require('./DomUtils');
 import IView = require('./IView');
-import IBinding = require('./IBinding');
+import Block = require('./Block');
 
 class View extends BaseView {
     owner;
 
-    _bindings: IBinding[] = [];
     _lastValues = {};
 
     _hasChanged: boolean;
     _isEvaluatingView: boolean;
+    _spec: Block.IBlockSpec;
+    _root: Block.Block;
+
+    onRender(): HTMLElement {
+        this._root = Block.fromSpec(this, this._spec);
+        this._root.render();
+        this.element = this._root.elements[0];
+        return this.element;
+    }
 
     onPostRender() {
         this.onUpdate();
     }
 
     onActivate(): void {
-        this._bindEvents();
+        this._root.bind();
         super.onActivate();
     }
 
@@ -32,27 +40,16 @@ class View extends BaseView {
     }
 
     onUpdate() {
-        if (this._bindings && this.element) {
-            for (var i = 0; this._bindings && i < this._bindings.length; i++) {
-                var binding = this._bindings[i];
-                if (binding.element) {
-                    for (var bindingType in binding) {
-                        if (bindingType != 'id' && bindingType != 'events' && bindingType != 'childId' && bindingType != 'element') {
-                            if (bindingType === 'text' || bindingType === 'html') {
-                                this._updateViewValue(binding, bindingType, binding[bindingType]);
-                            } else {
-                                for (var bindingDest in binding[bindingType]) {
-                                    this._updateViewValue(binding, bindingType, binding[bindingType][bindingDest], bindingDest);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if (this._root) {
+            this._root.update();
         }
     }
 
     onDispose(): void {
+        if (this._root) {
+            this._root.dispose();
+            this._root = null;
+        }
         super.onDispose();
     }
 
@@ -123,47 +120,6 @@ class View extends BaseView {
         this.setValue(destinationPropertyName, this.getValue(sourcePropertyName, true));
     }
 
-    _updateViewValue(binding, bindingType, sourcePropertyName, bindingDest ? ) {
-        var key = binding.id + bindingType + (bindingDest ? ('.' + bindingDest) : '');
-        var lastValue = this._lastValues[key];
-        var currentValue = this.getValue(sourcePropertyName, true);
-
-        if (lastValue != currentValue) {
-            this._lastValues[key] = currentValue;
-
-            // TODO: enqueue for renderframe update.
-            var el = binding.element; // this.subElements[binding.id];
-
-            switch (bindingType) {
-                case 'text':
-                    el.textContent = currentValue;
-                    break;
-
-                case 'html':
-                    el.innerHTML = currentValue;
-                    break;
-
-                case 'css':
-                    el.style[bindingDest] = currentValue;
-                    break;
-
-                case 'className':
-                    DomUtils.toggleClass(el, bindingDest, currentValue);
-                    break;
-
-                case 'attr':
-                    if (bindingDest === "value" || bindingDest === 'checked') {
-                        el[bindingDest] = currentValue;
-                    } else if (currentValue) {
-                        el.setAttribute(bindingDest, currentValue);
-                    } else {
-                        el.removeAttribute(bindingDest);
-                    }
-                    break;
-            }
-        }
-    }
-
     _getPropTarget(propertyName) {
         // [$scope].prop.prop.func(...)
         // $toggle
@@ -230,90 +186,6 @@ class View extends BaseView {
         }
 
         return root;
-    }
-
-    _bindEvents() {
-        var _this = this;
-
-        for (var i = 0; i < this._bindings.length; i++) {
-            var binding = this._bindings[i];
-            var targetElement = binding.element;
-
-            if (!targetElement) {
-                targetElement = binding.element = this[binding.id];
-            }
-
-            // Observe parent if bindings reference parent.
-            // TODO: This should be moved/removed.
-            for (var bindingType in binding) {
-                if (bindingType != 'id' && bindingType != 'events' && bindingType != 'element') {
-                    for (var bindingDest in binding[bindingType]) {
-                        var source = binding[bindingType];
-
-                        if (typeof source !== 'string') {
-                            source = source[bindingDest];
-                        }
-
-                        var target = this._getPropTarget(source);
-
-                        if (target.viewModel) {
-                            var data = {};
-
-                            data[source.replace('.', '-')] = target.viewModel;
-
-                            this.viewModel.setData(data, false);
-                        }
-                    }
-                }
-            }
-
-            if (binding.events) {
-                for (var eventName in binding.events) {
-                    var targetList = binding.events[eventName];
-
-                    this._bindEvent(targetElement, eventName, targetList);
-                }
-            }
-
-            this._bindInputEvent(targetElement, binding);
-        }
-    }
-
-    _bindInputEvent(element, binding) {
-        if (binding.attr && (binding.attr.value || binding.attr.checked)) {
-            this.activeEvents.on(element, 'input,change', function() {
-                var source = binding.attr.value ? 'value' : 'checked';
-                var newValue = element[source];
-                var key = binding.id + 'attr.' + source;
-
-                this._lastValues[key] = newValue;
-                this.setValue(binding.attr[source], newValue);
-
-                return false;
-            });
-        }
-    }
-
-    _bindEvent(element, eventName, targetList) {
-        var _this = this;
-
-        if (eventName.indexOf('$view.') == 0) {
-            eventName = eventName.substr(6);
-            element = this;
-        }
-
-        this.activeEvents.on(element, eventName, function(ev) {
-            var returnValue;
-
-            for (var targetIndex = 0; targetIndex < targetList.length; targetIndex++) {
-                var target = targetList[targetIndex];
-                var args = < any > arguments;
-
-                returnValue = this._getValueFromFunction(target, args);
-            }
-
-            return returnValue;
-        });
     }
 
     _getValueFromFunction(target, existingArgs ? ) {
