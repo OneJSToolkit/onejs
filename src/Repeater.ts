@@ -1,5 +1,6 @@
 import View = require('./View');
 import IView = require('./IView');
+import IItem = require('./IItem');
 import List = require('./List');
 import DomUtils = require('./DomUtils');
 
@@ -18,7 +19,7 @@ class Repeater extends View {
     baseClass = '';
     removeDelay = 0;
 
-    _currentList = new List();
+    _currentList = new List<IItem>();
 
     onRender(): HTMLElement {
         this.element = DomUtils.ce('div', ['class', this.baseClass]);
@@ -32,7 +33,7 @@ class Repeater extends View {
         var childElements = [];
 
         if (!items || !items.isList) {
-            items = new List(items);
+            items = new List<IItem>(items);
         }
 
         this.clearChildren();
@@ -67,14 +68,18 @@ class Repeater extends View {
     }
 
     _diffChildren() {
-        var newList: List = < List > this.getValue(this.collectionName);
+        var newList: List<IItem>;
+	var fetchedList = this.getValue(this.collectionName);
         var currentList = this._currentList;
         var surfaceElement = this.element;
         var element;
         var control;
 
-        if (newList && !newList.isList) {
-            newList = new List( < any > newList);
+        if (fetchedList && !fetchedList.isList) {
+	    newList = new List<IItem>(fetchedList);
+	}
+	else {
+            newList = fetchedList;
         }
 
         var count = newList.getCount();

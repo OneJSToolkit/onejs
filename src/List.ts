@@ -3,13 +3,13 @@ import EventGroup = require('./EventGroup');
 var CHANGE_EVENT ='change';
 var CHILD_CHANGE_EVENT ='change';
 
-class List {
+class List<T> {
     isList = true;
 
-    array: any[];
+    array: T[];
     events = new EventGroup(this);
 
-    constructor(array?) {
+    constructor(array?:T[]) {
         this.array = array || [];
         this.events.declare([ CHANGE_EVENT, CHILD_CHANGE_EVENT ]);
     }
@@ -27,7 +27,7 @@ class List {
         this.array.length = count;
     }
 
-    indexOf(item) {
+    indexOf(item: T) {
         return this.array.indexOf(item);
     }
 
@@ -43,11 +43,11 @@ class List {
         return -1;
     }
 
-    getAt(index) {
+    getAt(index): T {
         return this.array[index];
     }
 
-    setAt(index, item, suppressChange?: boolean) {
+    setAt(index, item: T, suppressChange?: boolean) {
 
         if (this.array[index]) {
             this.events.off(this.array[index]);
@@ -64,14 +64,14 @@ class List {
         }
     }
 
-    setRange(index, items) {
+    setRange(index, items: T[]) {
         for (var i = 0; i < items.length; i++) {
             this.setAt(index++, items[i], true);
         }
         this.change({ type: 'insertRange', index: index, items: items });
     }
 
-    insertAt(index, item) {
+    insertAt(index, item: T) {
         this.array.splice(index, 0, item);
 
         if (item && EventGroup.isDeclared(item, CHANGE_EVENT)) {
@@ -80,7 +80,7 @@ class List {
         this.change({ type: 'insert', index: index, item: item });
     }
 
-    push(item) {
+    push(item: T) {
         this.setAt(this.array.length, item, true);
 
         this.change({ type: 'insert', index: this.array.length - 1, item: item });
@@ -88,7 +88,7 @@ class List {
         return item;
     }
 
-    pop() {
+    pop(): T {
         var item = this.array.pop();
 
         this.change({ type: 'remove', index: this.array.length });
@@ -96,7 +96,7 @@ class List {
         return item;
     }
 
-    remove(item) {
+    remove(item: T) {
         this.removeAt(this.array.indexOf(item));
     }
 
