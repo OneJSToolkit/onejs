@@ -26,9 +26,45 @@ describe('View', function () {
         });
 
         it('should render bound elements', function () {
+            var view = new View();
+            view.setData({ pet: "cat" });
+            view._spec = {
+                type: Block.BlockType.Element,
+                tag: "div",
+                binding: {
+                    text: "pet"
+                }
+            };
+
+            var root = view.render();
+            view.activate();
+
+            assert.strictEqual(root.textContent, 'cat');
+            view.dispose();
         });
 
         it('should react to VM updates', function () {
+            var view = new View();
+            view.setData({ pet: "cat" });
+            view._spec = {
+                type: Block.BlockType.Element,
+                tag: "div",
+                binding: {
+                    text: "pet"
+                }
+            };
+
+            var root = view.render();
+            view.activate();
+
+            assert.strictEqual(root.textContent, 'cat');
+
+            view.setData({ pet: "dog" });
+            assert.strictEqual(root.textContent, 'dog');
+
+
+            view.dispose();
+
         });
     });
 
