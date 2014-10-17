@@ -26,7 +26,6 @@ describe('DomUtils', function() {
                 DomUtils.toggleClass(el, 'foo', true);
                 expect(el.className).to.equal('bar foo');
             });
-
         });
 
         describe('when isEnabled=false', () => {
