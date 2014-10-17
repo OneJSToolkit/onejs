@@ -38,7 +38,6 @@ gulp.task('tscCommonJS', ['clean'], function() {
             declarationFiles: true
         }));
 
-    
     tsResult.dts.pipe(gulp.dest('dist/commonjs'));
 
     return tsResult.js.pipe(gulp.dest('dist/commonjs'));
