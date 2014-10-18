@@ -197,10 +197,11 @@ class View extends BaseView {
                 props.shift();
             }
             else {
-                propTarget = this.owner || this;
-                
-                if (props[0] == 'view') {
+                if (props[0] === 'view') {
+                    propTarget = this;
                     props.shift();
+                } else {
+                    propTarget = this.owner || this;
                 }
             }
         }
