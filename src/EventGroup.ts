@@ -4,8 +4,8 @@ class EventGroup {
     private _eventRecords: any[];
     private _id = EventGroup._uniqueId++;
 
-    public constructor(parent ? : any) {
-        this._parent = parent || window;
+    public constructor(parent: any) {
+        this._parent = parent;
         this._eventRecords = [];
     }
 
@@ -41,31 +41,26 @@ class EventGroup {
             target.__events[eventName][this._id].push(eventRecord);
             target.__events[eventName].count++;
 
-            if (target.addEventListener) {
-                eventRecord.elementCallback = processElementEvent;
+            if (_isElement(target)) {
+                eventRecord.elementCallback = _processElementEvent;
 
-                target.addEventListener(eventName, processElementEvent);
-
-                if (eventName === 'click') {
-                    target.addEventListener('touchstart', processElementEvent);
-                }
-
-                function processElementEvent() {
-                    var result = callback.apply(parent, arguments);
-                    if (result === false && arguments[0] && arguments[0].preventDefault) {
-                        var e = arguments[0];
-
-                        e.preventDefault();
-                        e.cancelBubble = true;
-                    }
-
-                    return result;
-                }
-
+                _addEventListener(target, eventName, _processElementEvent);
             }
 
             // Remember the record locally, so that it can be removed.
             this._eventRecords.push(eventRecord);
+
+            function _processElementEvent() {
+                var result = callback.apply(parent, arguments);
+                if (result === false && arguments[0] && arguments[0].preventDefault) {
+                    var e = arguments[0];
+
+                    e.preventDefault();
+                    e.cancelBubble = true;
+                }
+
+                return result;
+            }
         }
     }
 
@@ -76,27 +71,27 @@ class EventGroup {
                 (!eventName || eventName === eventRecord.eventName) &&
                 (!callback || callback === eventRecord.callback)) {
                 var targetArrayLookup = eventRecord.target.__events[eventRecord.eventName];
-                var targetArray = targetArrayLookup[this._id];
+                var targetArray = targetArrayLookup ? targetArrayLookup[this._id] : null;
 
-                if (targetArray.length === 1 || !callback) {
-                    delete eventRecord.target.__events[eventRecord.eventName][this._id];
-                } else {
-                    targetArray.splice(targetArray.indexOf(eventRecord), 1);
-                }
+                // We may have already target's entries, so check for null.
+                if (targetArray) {
+                    if (targetArray.length === 1 || !callback) {
+                        targetArrayLookup.count = 1;
+                        delete eventRecord.target.__events[eventRecord.eventName][this._id];
+                    } else {
+                        targetArray.splice(targetArray.indexOf(eventRecord), 1);
+                    }
 
-                if (!--targetArrayLookup.count) {
-                    delete eventRecord.target.__events[eventRecord.eventName];
-                }
-
-                if (eventRecord.target.removeEventListener) {
-                    eventRecord.target.removeEventListener(eventRecord.eventName, eventRecord.elementCallback);
-
-                    if (eventName === 'click') {
-                        target.removeEventListener('touchstart', eventRecord.elementCallback);
+                    if (!--targetArrayLookup.count) {
+                        delete eventRecord.target.__events[eventRecord.eventName];
                     }
                 }
 
-                this._eventRecords.splice(i, 1);
+                if (eventRecord.elementCallback) {
+                    _removeEventListener(eventRecord.target, eventRecord.eventName, eventRecord.elementCallback);
+                }
+
+                this._eventRecords.splice(i--, 1);
             }
         }
     }
@@ -138,29 +133,32 @@ class EventGroup {
         }
     }
 
-    public autoWire(target ? : any, eventNamePrefix ? : string) {
-        target = target || this._parent;
-        eventNamePrefix = 'on' + (eventNamePrefix || '');
-
-        var proto = this._parent.constructor.prototype;
-
-        for (var propertyName in proto) {
-            if (typeof proto[propertyName] === 'function' && propertyName.indexOf(eventNamePrefix) === 0) {
-                var eventName = propertyName.substr(eventNamePrefix.length, 1).toLowerCase() + propertyName.substr(eventNamePrefix.length + 1);
-
-                if (EventGroup.isDeclared(target, eventName)) {
-                    this.on(this._parent, eventName, this._parent[propertyName]);
-                }
-            }
-        }
-    }
-
     public static isObserved(target: any, eventName: string): boolean {
-        return target && target.__events && target.__events[eventName];
+        return !!(target && target.__events && target.__events[eventName]);
     }
 
     public static isDeclared(target: any, eventName: string): boolean {
-        return target && target.__declaredEvents && target.__declaredEvents[eventName];
+        return !!(target && target.__declaredEvents && target.__declaredEvents[eventName]);
+    }
+}
+
+function _isElement(target) {
+    return target instanceof HTMLElement;
+}
+
+function _addEventListener(target, eventName, callback) {
+    if (target.addEventListener) {
+        target.addEventListener(eventName, callback);
+    } else if (target.attachEvent) {
+        target.attachEvent('on' + eventName, callback);
+    }
+}
+
+function _removeEventListener(target, eventName, callback) {
+    if (target.removeEventListener) {
+        target.removeEventListener(eventName, callback);
+    } else if (target.detachEvent) {
+        target.detachEvent('on' + eventName, callback);
     }
 }
 
