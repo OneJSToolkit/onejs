@@ -71,39 +71,6 @@ describe('EventGroup', function() {
         expect(timesCalled).to.equal(2);
     });
 
-    it('can observe an HTML element in IE8', () => {
-        var timesCalled = 0;
-        var sourceButton = document.createElement('button');
-        var parent = {
-            cb: function() {
-                timesCalled++;
-            }
-        }
-        var eg = new EventGroup(parent);
-        var ev = document.createEvent('HTMLEvents');
-
-        sourceButton.addEventListener = null;
-        sourceButton.removeEventListener = null;
-        
-        var eventNameAttached = null;
-        var eventNameDetached = null;
-
-        sourceButton.attachEvent = function(eventName, cb) : boolean {
-            eventNameAttached = eventName;
-            return true;
-        }
-        sourceButton.detachEvent = function(eventName, cb) : boolean {
-            eventNameDetached = eventName;
-            return true;
-        }
-
-        eg.on(sourceButton, 'click', parent.cb);
-        expect(eventNameAttached).to.equal('onclick');
-
-        eg.off();
-        expect(eventNameDetached).to.equal('onclick');
-    });
-
     it('can bubble object events', () => {
         var rootCalled = 0;
         var childCalled = 0;

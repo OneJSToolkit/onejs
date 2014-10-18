@@ -43,8 +43,7 @@ class EventGroup {
 
             if (_isElement(target)) {
                 eventRecord.elementCallback = _processElementEvent;
-
-                _addEventListener(target, eventName, _processElementEvent);
+                target.addEventListener(eventName, _processElementEvent);
             }
 
             // Remember the record locally, so that it can be removed.
@@ -88,7 +87,7 @@ class EventGroup {
                 }
 
                 if (eventRecord.elementCallback) {
-                    _removeEventListener(eventRecord.target, eventRecord.eventName, eventRecord.elementCallback);
+                    eventRecord.target.removeEventListener(eventRecord.eventName, eventRecord.elementCallback);
                 }
 
                 this._eventRecords.splice(i--, 1);
@@ -144,22 +143,6 @@ class EventGroup {
 
 function _isElement(target) {
     return target instanceof HTMLElement;
-}
-
-function _addEventListener(target, eventName, callback) {
-    if (target.addEventListener) {
-        target.addEventListener(eventName, callback);
-    } else if (target.attachEvent) {
-        target.attachEvent('on' + eventName, callback);
-    }
-}
-
-function _removeEventListener(target, eventName, callback) {
-    if (target.removeEventListener) {
-        target.removeEventListener(eventName, callback);
-    } else if (target.detachEvent) {
-        target.detachEvent('on' + eventName, callback);
-    }
 }
 
 export = EventGroup;
