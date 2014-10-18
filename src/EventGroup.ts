@@ -96,28 +96,7 @@ class EventGroup {
     }
 
     public raise(eventName: string, eventArgs ? : any, bubbleEvent ? : boolean): any {
-        var parent = this._parent;
-        var retVal;
-
-        while (parent && retVal !== false) {
-            var eventRecords = parent.__events ? parent.__events[eventName] : null;
-
-            for (var id in eventRecords) {
-                var eventRecordList = eventRecords[id];
-
-                for (var listIndex = 0; retVal !== false && listIndex < eventRecordList.length; listIndex++) {
-                    var record = eventRecordList[listIndex];
-
-                    // Call the callback in the context of the parent, using the supplied eventArgs.
-                    retVal = record.callback.call(record.parent, eventArgs);
-                }
-            }
-
-            // If the parent has a parent, bubble the event up.
-            parent = bubbleEvent ? parent.parent : null;
-        }
-
-        return retVal;
+        return EventGroup.raise(this._parent, eventName, eventArgs, bubbleEvent);
     }
 
     public declare(event: any) {
@@ -130,6 +109,38 @@ class EventGroup {
                 declaredEvents[event[i]] = true;
             }
         }
+    }
+
+    public static raise(target: any, eventName: string, eventArgs ? : string, bubbleEvent ? : boolean) {
+        var retVal;
+
+        if (_isElement(target)) {
+            var ev = document.createEvent('HTMLEvents');
+            
+            ev.initEvent(eventName, bubbleEvent, true);
+            ev['args'] = eventArgs;
+            retVal = target.dispatchEvent(ev);
+        } else {
+            while (target && retVal !== false) {
+                var eventRecords = target.__events ? target.__events[eventName] : null;
+
+                for (var id in eventRecords) {
+                    var eventRecordList = eventRecords[id];
+
+                    for (var listIndex = 0; retVal !== false && listIndex < eventRecordList.length; listIndex++) {
+                        var record = eventRecordList[listIndex];
+
+                        // Call the callback in the context of the parent, using the supplied eventArgs.
+                        retVal = record.callback.call(record.parent, eventArgs);
+                    }
+                }
+
+                // If the target has a parent, bubble the event up.
+                target = bubbleEvent ? target.parent : null;
+            }
+        }
+
+        return retVal;
     }
 
     public static isObserved(target: any, eventName: string): boolean {

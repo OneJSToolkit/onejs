@@ -236,7 +236,31 @@ describe('EventGroup', function() {
         sourceEvents.raise('foo');
         expect(cb1Called).to.equal(3);
         expect(cb2Called).to.equal(4);
-
     });
 
+    it('can raise custom html events', () => {
+        var timesCalled = 0;
+        var sourceButton = document.createElement('button');
+        var parent = {
+            cb: function() {
+                timesCalled++;
+            }
+        }
+        var eg = new EventGroup(parent);
+        var ev = document.createEvent('HTMLEvents');
+
+        eg.on(sourceButton, 'foobar', parent.cb);
+
+        EventGroup.raise(sourceButton, 'foobar');
+
+        expect(timesCalled).to.equal(1);
+
+        EventGroup.raise(sourceButton, 'foobar');
+        expect(timesCalled).to.equal(2);
+
+        eg.dispose();
+
+        EventGroup.raise(sourceButton, 'foobar');
+        expect(timesCalled).to.equal(2);
+    });   
 });
