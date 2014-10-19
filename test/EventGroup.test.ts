@@ -8,7 +8,6 @@ var expect = chai.expect;
 var assert = chai.assert;
 
 describe('EventGroup', function() {
-
     it('can observe an HTML element event', () => {
         var timesCalled = 0;
         var sourceButton = document.createElement('button');
