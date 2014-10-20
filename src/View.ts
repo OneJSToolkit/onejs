@@ -176,11 +176,16 @@ class View extends BaseView {
         // $toggle
         // $member.foo
 
+        if (propertyName[0] == '!') {
+            propertyName = propertyName.substr(1);
+            debugger;
+        }
+
         var propTarget: any = this.viewModel;
         var propertyPart;
         var args;
         var viewModel;
-        var props = propertyName.match(/([\w]+[\(][\w.,\(\)\'\" ]*[\)]|[\w]+)/g);
+        var props = propertyName.match(/([\w]+[\(][!$\w.,\(\)\'\" ]*[\)]|[\w]+)/g);
 
         // If $ is provided, default the target to 'this'. this allows for sub views to be accessed
         // and helpers as well.
@@ -260,6 +265,7 @@ class View extends BaseView {
             // TODO: This should be moved/removed.
             for (var bindingType in binding) {
                 if (bindingType != 'id' && bindingType != 'events' && bindingType != 'element') {
+
                     for (var bindingDest in binding[bindingType]) {
                         var source = binding[bindingType];
 
