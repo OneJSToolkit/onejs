@@ -162,7 +162,7 @@ describe('Scheduler', function () {
         it('should execute before tasks first', function (done) {
             var count = 0;
 
-            Scheduler.main.before.schedule(function () {
+            Scheduler.main.before().schedule(function () {
                 assert.strictEqual(count, 0);
                 count++;
             });
@@ -174,7 +174,7 @@ describe('Scheduler', function () {
         });
 
         it('should have an after that is distinct from main', function () {
-            assert.notStrictEqual(Scheduler.main.before.after, Scheduler.main);
+            assert.notStrictEqual(Scheduler.main.before().after(), Scheduler.main);
         });
 
     });
@@ -188,14 +188,14 @@ describe('Scheduler', function () {
                 count++;
             });
 
-            Scheduler.main.after.schedule(function () {
+            Scheduler.main.after().schedule(function () {
                 assert.strictEqual(count, 1);
                 done();
             });
         });
 
         it('should have a before that is distinct from main', function () {
-            assert.notStrictEqual(Scheduler.main.after.before, Scheduler.main);
+            assert.notStrictEqual(Scheduler.main.after().before(), Scheduler.main);
         });
     });
 
@@ -263,7 +263,7 @@ describe('Scheduler', function () {
 
             var count = 0;
 
-            Scheduler.main.after.schedule(function () {
+            Scheduler.main.after().schedule(function () {
                 assert.strictEqual(count, 2);
                 done();
             }, false, "third");
@@ -273,7 +273,7 @@ describe('Scheduler', function () {
                 count++;
             }, false, "second");
 
-            Scheduler.main.before.schedule(function () {
+            Scheduler.main.before().schedule(function () {
                 assert.strictEqual(count, 0);
                 count++;
             }, false, "first");
@@ -296,7 +296,7 @@ describe('Scheduler', function () {
         });
 
         it('should reflect the queue of the current task', function (done) {
-            var beforeQueue = Scheduler.main.before;
+            var beforeQueue = Scheduler.main.before();
 
             beforeQueue.schedule(function () {
                 assert.strictEqual(Scheduler.activeQueue, beforeQueue);
