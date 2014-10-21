@@ -31,6 +31,9 @@ class BaseView implements IView {
     onInitialize() {}
 
     onRender(): HTMLElement {
+        this.element = document.createElement('div');
+        this.element.setAttribute('class', this.viewName);
+
         return this.element;
     }
 

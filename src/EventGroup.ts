@@ -158,7 +158,7 @@ class EventGroup {
 }
 
 function _isElement(target) {
-    return target instanceof HTMLElement;
+    return !!(target && target.addEventListener);
 }
 
 export = EventGroup;
