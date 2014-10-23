@@ -114,9 +114,10 @@ class Repeater extends View {
     _insertChild(item, i) {
         var currentControl = this.children[i];
         var control = this._createChild(item, i);
-        var element = control.render();
 
         this._updateChildData(control, item, i);
+
+        var element = control.render();
 
         if (currentControl) {
             this.element.insertBefore(element, currentControl.element);
@@ -169,10 +170,16 @@ class Repeater extends View {
     _updateChildData(control, item, index) {
         var childData;
 
-        childData = {};
-        // childData[this.collectionName] = currentList;
-        childData[this.itemName] = item;
-        childData[this.indexName] = index;
+        if (this.itemName) {
+            childData = {};
+            // childData[this.collectionName] = currentList;
+            childData[this.itemName] = item;
+            childData[this.indexName] = index;            
+        }
+
+        else {
+            childData = item;
+        }
 
         control.setData(childData);
     }
