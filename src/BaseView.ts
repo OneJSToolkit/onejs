@@ -43,9 +43,7 @@ class BaseView implements IView {
 
     onViewModelInitialized(viewModel, previousViewModel) {}
 
-    onViewModelChanged(viewModel, changeArgs? : any): void {
-        this.update();
-    }
+    onViewModelChanged(viewModel, changeArgs? : any): void {}
 
     onResize() {}
 
@@ -117,6 +115,7 @@ class BaseView implements IView {
             if (viewModel) {                
                 this.events.on(viewModel, 'change', (args) => {
                     this.onViewModelChanged(viewModel, args);
+                    this.update();
                 });
                 this.onViewModelChanged(viewModel);
             }
