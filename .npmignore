@@ -3,5 +3,7 @@ bin
 definitions
 src
 test
-./*.js
+
+gulpfile.js
+karma*.js
 .travis*
