@@ -3,5 +3,5 @@ bin
 definitions
 src
 test
-*.js
+./*.js
 .travis*
