@@ -1,0 +1,7 @@
+node_modules
+bin
+definitions
+src
+test
+*.js
+.travis*
