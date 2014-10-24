@@ -41,14 +41,6 @@ class EventGroup {
             target.__events__[eventName][this._id].push(eventRecord);
             target.__events__[eventName].count++;
 
-            if (_isElement(target)) {
-                eventRecord.elementCallback = _processElementEvent;
-                target.addEventListener(eventName, _processElementEvent);
-            }
-
-            // Remember the record locally, so that it can be removed.
-            this._eventRecords.push(eventRecord);
-
             function _processElementEvent() {
                 var result = callback.apply(parent, arguments);
                 if (result === false && arguments[0] && arguments[0].preventDefault) {
@@ -60,6 +52,14 @@ class EventGroup {
 
                 return result;
             }
+
+            if (_isElement(target)) {
+                eventRecord.elementCallback = _processElementEvent;
+                target.addEventListener(eventName, _processElementEvent);
+            }
+
+            // Remember the record locally, so that it can be removed.
+            this._eventRecords.push(eventRecord);
         }
     }
 
