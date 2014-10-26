@@ -4,8 +4,8 @@ class EventGroup {
     private _eventRecords: any[];
     private _id = EventGroup._uniqueId++;
 
-    public constructor(parent ? : any) {
-        this._parent = parent || window;
+    public constructor(parent: any) {
+        this._parent = parent;
         this._eventRecords = [];
     }
 
@@ -33,35 +33,29 @@ class EventGroup {
             };
 
             // Initialize and wire up the record on the target, so that it can call the callback if the event fires.
-            target.__events = target.__events || {};
-            target.__events[eventName] = target.__events[eventName] || {
+            target.__events__ = target.__events__ || {};
+            target.__events__[eventName] = target.__events__[eventName] || {
                 count: 0
             };
-            target.__events[eventName][this._id] = target.__events[eventName][this._id] || [];
-            target.__events[eventName][this._id].push(eventRecord);
-            target.__events[eventName].count++;
+            target.__events__[eventName][this._id] = target.__events__[eventName][this._id] || [];
+            target.__events__[eventName][this._id].push(eventRecord);
+            target.__events__[eventName].count++;
 
-            if (target.addEventListener) {
-                eventRecord.elementCallback = processElementEvent;
+            function _processElementEvent() {
+                var result = callback.apply(parent, arguments);
+                if (result === false && arguments[0] && arguments[0].preventDefault) {
+                    var e = arguments[0];
 
-                target.addEventListener(eventName, processElementEvent);
-
-                if (eventName === 'click') {
-                    target.addEventListener('touchstart', processElementEvent);
+                    e.preventDefault();
+                    e.cancelBubble = true;
                 }
 
-                function processElementEvent() {
-                    var result = callback.apply(parent, arguments);
-                    if (result === false && arguments[0] && arguments[0].preventDefault) {
-                        var e = arguments[0];
+                return result;
+            }
 
-                        e.preventDefault();
-                        e.cancelBubble = true;
-                    }
-
-                    return result;
-                }
-
+            if (_isElement(target)) {
+                eventRecord.elementCallback = _processElementEvent;
+                target.addEventListener(eventName, _processElementEvent);
             }
 
             // Remember the record locally, so that it can be removed.
@@ -70,60 +64,44 @@ class EventGroup {
     }
 
     public off(target ? : any, eventName ? : string, callback ? : (args ? : any) => void) {
+        if (true) {
+
+        }
+
         for (var i = 0; i < this._eventRecords.length; i++) {
             var eventRecord = this._eventRecords[i];
             if ((!target || target === eventRecord.target) &&
                 (!eventName || eventName === eventRecord.eventName) &&
                 (!callback || callback === eventRecord.callback)) {
-                var targetArrayLookup = eventRecord.target.__events[eventRecord.eventName];
-                var targetArray = targetArrayLookup[this._id];
+                var targetArrayLookup = eventRecord.target.__events__[eventRecord.eventName];
+                var targetArray = targetArrayLookup ? targetArrayLookup[this._id] : null;
 
-                if (targetArray.length === 1 || !callback) {
-                    delete eventRecord.target.__events[eventRecord.eventName][this._id];
-                } else {
-                    targetArray.splice(targetArray.indexOf(eventRecord), 1);
-                }
+                // We may have already target's entries, so check for null.
+                if (targetArray) {
+                    if (targetArray.length === 1 || !callback) {
+                        targetArrayLookup.count -= targetArray.length;
+                        delete eventRecord.target.__events__[eventRecord.eventName][this._id];
+                    } else {
+                        targetArrayLookup.count--;
+                        targetArray.splice(targetArray.indexOf(eventRecord), 1);
+                    }
 
-                if (!--targetArrayLookup.count) {
-                    delete eventRecord.target.__events[eventRecord.eventName];
-                }
-
-                if (eventRecord.target.removeEventListener) {
-                    eventRecord.target.removeEventListener(eventRecord.eventName, eventRecord.elementCallback);
-
-                    if (eventName === 'click') {
-                        target.removeEventListener('touchstart', eventRecord.elementCallback);
+                    if (!targetArrayLookup.count) {
+                        delete eventRecord.target.__events__[eventRecord.eventName];
                     }
                 }
 
-                this._eventRecords.splice(i, 1);
+                if (eventRecord.elementCallback) {
+                    eventRecord.target.removeEventListener(eventRecord.eventName, eventRecord.elementCallback);
+                }
+
+                this._eventRecords.splice(i--, 1);
             }
         }
     }
 
     public raise(eventName: string, eventArgs ? : any, bubbleEvent ? : boolean): any {
-        var parent = this._parent;
-        var retVal;
-
-        while (parent && retVal !== false) {
-            var eventRecords = parent.__events ? parent.__events[eventName] : null;
-
-            for (var id in eventRecords) {
-                var eventRecordList = eventRecords[id];
-
-                for (var listIndex = 0; retVal !== false && listIndex < eventRecordList.length; listIndex++) {
-                    var record = eventRecordList[listIndex];
-
-                    // Call the callback in the context of the parent, using the supplied eventArgs.
-                    retVal = record.callback.call(record.parent, eventArgs);
-                }
-            }
-
-            // If the parent has a parent, bubble the event up.
-            parent = bubbleEvent ? parent.parent : null;
-        }
-
-        return retVal;
+        return EventGroup.raise(this._parent, eventName, eventArgs, bubbleEvent);
     }
 
     public declare(event: any) {
@@ -138,30 +116,49 @@ class EventGroup {
         }
     }
 
-    public autoWire(target ? : any, eventNamePrefix ? : string) {
-        target = target || this._parent;
-        eventNamePrefix = 'on' + (eventNamePrefix || '');
+    public static raise(target: any, eventName: string, eventArgs ? : string, bubbleEvent ? : boolean) {
+        var retVal;
 
-        var proto = this._parent.constructor.prototype;
+        if (_isElement(target)) {
+            var ev = document.createEvent('HTMLEvents');
+            
+            ev.initEvent(eventName, bubbleEvent, true);
+            ev['args'] = eventArgs;
+            retVal = target.dispatchEvent(ev);
+        } else {
+            while (target && retVal !== false) {
+                var eventRecords = target.__events__ ? target.__events__[eventName] : null;
 
-        for (var propertyName in proto) {
-            if (typeof proto[propertyName] === 'function' && propertyName.indexOf(eventNamePrefix) === 0) {
-                var eventName = propertyName.substr(eventNamePrefix.length, 1).toLowerCase() + propertyName.substr(eventNamePrefix.length + 1);
+                for (var id in eventRecords) {
+                    var eventRecordList = eventRecords[id];
 
-                if (EventGroup.isDeclared(target, eventName)) {
-                    this.on(this._parent, eventName, this._parent[propertyName]);
+                    for (var listIndex = 0; retVal !== false && listIndex < eventRecordList.length; listIndex++) {
+                        var record = eventRecordList[listIndex];
+
+                        // Call the callback in the context of the parent, using the supplied eventArgs.
+                        retVal = record.callback.call(record.parent, eventArgs);
+                    }
                 }
+
+                // If the target has a parent, bubble the event up.
+                target = bubbleEvent ? target.parent : null;
             }
         }
+
+        return retVal;
     }
 
     public static isObserved(target: any, eventName: string): boolean {
-        return target && target.__events && target.__events[eventName];
+        return !!(target && target.__events__ && target.__events__[eventName]);
     }
 
     public static isDeclared(target: any, eventName: string): boolean {
-        return target && target.__declaredEvents && target.__declaredEvents[eventName];
+        return !!(target && target.__declaredEvents && target.__declaredEvents[eventName]);
     }
+}
+
+function _isElement(target) {
+    return !!(target && target.addEventListener);
 }
 
 export = EventGroup;

@@ -1,0 +1,9 @@
+node_modules
+bin
+definitions
+src
+test
+
+gulpfile.js
+karma*.js
+.travis*

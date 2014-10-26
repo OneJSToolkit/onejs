@@ -1,9 +1,9 @@
 var gulp = require('gulp');
 var mocha = require('gulp-mocha');
-var clean = require('gulp-clean');
 var coveralls = require('gulp-coveralls');
 var tsc = require('gulp-typescript');
 var karma = require('karma').server;
+var del = require('del');
 
 var paths = {
     source: ['src/*.ts']
@@ -11,9 +11,8 @@ var paths = {
 
 var shouldExit = true;
 
-gulp.task('clean', function() {
-    return gulp.src(['dist'])
-        .pipe(clean());
+gulp.task('clean', function(cb) {
+    del(['dist/'], cb);
 });
 
 gulp.task('tscAMD', ['clean'], function() {
@@ -38,15 +37,13 @@ gulp.task('tscCommonJS', ['clean'], function() {
             declarationFiles: true
         }));
 
-    
     tsResult.dts.pipe(gulp.dest('dist/commonjs'));
 
     return tsResult.js.pipe(gulp.dest('dist/commonjs'));
 });
 
-gulp.task('cleanTest', function() {
-    return gulp.src(['bin'])
-        .pipe(clean());
+gulp.task('cleanTest', function(cb) {
+    del(['bin'], cb);
 });
 
 gulp.task('copyDist', ['tscCommonJS'], function() {

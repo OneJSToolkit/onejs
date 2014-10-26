@@ -5,6 +5,7 @@ import List = require("../src/List");
 import DomUtils = require("../src/DomUtils");
 
 var expect = chai.expect;
+var assert = chai.assert;
 
 describe('DomUtils', function() {
     describe('toggleClass', () => {
@@ -25,7 +26,6 @@ describe('DomUtils', function() {
                 DomUtils.toggleClass(el, 'foo', true);
                 expect(el.className).to.equal('bar foo');
             });
-
         });
 
         describe('when isEnabled=false', () => {
@@ -42,6 +42,16 @@ describe('DomUtils', function() {
         });
     });
 
+    describe('setText', () => {
+        it('should set the text of the given element', () => {
+            var el = document.createElement('div');
+            var text = 'sample text';
+            assert.strictEqual(el.innerText, '');
+            DomUtils.setText(el, text);
+            assert.strictEqual(el.innerText, text);
+        });
+    });
+
     describe('ce', () => {
         it('creates a basic element', () => {
             var tag = DomUtils.ce('span');
@@ -53,6 +63,31 @@ describe('DomUtils', function() {
 
             expect(tag.getAttribute('data-foo')).to.equal('bar');
             expect(tag.getAttribute('data-baz')).to.equal('boz');
+        });
+
+        it('sets its parent, if passed in', () => {
+            var parent = <any> DomUtils.ce('div');
+            var child = DomUtils.ce('p', [], [], parent);
+            assert.strictEqual(parent.element, child);
+        });
+
+        it('sets the children, if passed in', () => {
+            var childNode1 = DomUtils.ce('p');
+            var childNode2 = DomUtils.ce('h1');
+            var root = DomUtils.ce('div', [], [childNode1, childNode2]);
+            var childNodes = root.childNodes;
+            assert.strictEqual(childNodes.length, 2);
+            assert.strictEqual(childNodes[0], childNode1);
+            assert.strictEqual(childNodes[1], childNode2);
+        });
+    });
+
+    describe('ct', () => {
+        it('creates a text node', () => {
+            var text = 'sample text';
+            var createdNode = DomUtils.ct(text);
+            assert.strictEqual(createdNode instanceof Text, true);
+            assert.strictEqual(createdNode.data, text);
         });
     });
 });

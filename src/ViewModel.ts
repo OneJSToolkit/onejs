@@ -59,7 +59,7 @@ class ViewModel {
 
                 if (oldValue !== newValue || forceListen) {
                     if (oldValue && EventGroup.isDeclared(oldValue, 'change')) {
-                        this.__events.off(oldValue);
+                        this.__events.off(oldValue, 'change', this.change);
                     }
                     this[key] = newValue;
                     hasChanged = true;

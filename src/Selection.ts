@@ -11,7 +11,7 @@ class Selection {
 
     _isAllSelected = false;
     _events: EventGroup = new EventGroup(this);
-    _list: List;
+    _list: List<any>;
 
     constructor(isMultiSelectEnabled?: boolean) {
         this._events.declare('change');
@@ -19,7 +19,7 @@ class Selection {
         this.isMultiSelectEnabled = isMultiSelectEnabled;
     }
 
-    setList(list?: List) {
+    setList(list?: List<any>) {
         if (this._list) {
             this._events.off(this._list);
         }
