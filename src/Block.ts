@@ -1,5 +1,6 @@
 import View = require('./View');
 import DomUtils = require('./DomUtils');
+import IItem = require('./IItem');
 import List = require('./List');
 import EventGroup = require('./EventGroup');
 
@@ -416,7 +417,7 @@ export class RepeaterBlock extends Block {
     blockTemplate: IBlockSpec[];
     bound = false;
     rendered = false;
-    _currentList = new List();
+    _currentList = new List<IItem>();
 
     constructor(view:View, parent: Block, source: string, iterator: string, blockTemplate:IBlockSpec[]) {
         super(view, parent);
@@ -456,7 +457,7 @@ export class RepeaterBlock extends Block {
         this.update();
     }
 
-    getList(): List {
+    getList(): List<IItem> {
         return this.view.getValue(this.source, true);
     }
 
