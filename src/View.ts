@@ -3,6 +3,7 @@ import ViewModel = require('./ViewModel');
 import EventGroup = require('./EventGroup');
 import DomUtils = require('./DomUtils');
 import IView = require('./IView');
+import IScopeObj = require('./IScopeObj');
 import Block = require('./Block');
 
 class View extends BaseView {
@@ -54,7 +55,12 @@ class View extends BaseView {
     }
 
     getValue(propertyName: string, expandObservables?: boolean): any {
-        var targetObject = this._getPropTarget(propertyName);
+        return this._getValue(propertyName, expandObservables);
+    }
+
+    _getValue(propertyName: string, expandObservables?: boolean, scopeSource?: IScopeObj): any {
+        
+        var targetObject = this._getPropTarget(propertyName, scopeSource);
         var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
 
         if (targetValue) {
@@ -62,7 +68,7 @@ class View extends BaseView {
                 targetValue = targetValue.getValue();
             }
             else if (typeof targetValue === 'function') {
-                targetValue = this._getValueFromFunction(propertyName);
+                targetValue = this._getValueFromFunction(propertyName, undefined, scopeSource);
             }
         }
 
@@ -120,7 +126,7 @@ class View extends BaseView {
         this.setValue(destinationPropertyName, this.getValue(sourcePropertyName, true));
     }
 
-    _getPropTarget(propertyName) {
+    _getPropTarget(propertyName: string, scopeSource?: IScopeObj) {
         // [$scope].prop.prop.func(...)
         // $toggle
         // $member.foo
@@ -145,18 +151,26 @@ class View extends BaseView {
             }
             else if (props[0] == 'owner') {
                 if (this.owner) {
-                    propTarget = viewModel = (this.owner).viewModel;                    
+                    propTarget = viewModel = (this.owner).viewModel;
                 }
 
                 props.shift();
             }
-            else {
-                if (props[0] === 'view') {
+            else if (props[0] === 'view') {
                 propTarget = this;
-                    props.shift();
+                props.shift();
+            } else {
+                propTarget = this.owner || this;
+            }
+        } else {
+            while (scopeSource) {
+                if (scopeSource.scope && scopeSource.scope.hasOwnProperty(props[0])) {
+                    propTarget = scopeSource.scope;
+                    scopeSource = null;
                 } else {
-                    propTarget = this.owner || this;
+                    scopeSource = scopeSource.parent;
                 }
+                
             }
         }
 
@@ -199,7 +213,7 @@ class View extends BaseView {
         return root;
     }
 
-    _getValueFromFunction(target, existingArgs ? ) {
+    _getValueFromFunction(target, existingArgs?, scopeSource?: IScopeObj) {
         var propTarget = this._getPropTarget(target);
         var args = [];
         var returnValue = '';
@@ -218,7 +232,7 @@ class View extends BaseView {
                 } else if (arg.length > 0 && !isNaN(Number(arg))) {
                     args.push(Number(arg));
                 } else {
-                    args.push(this.getValue(providedArgs[i], true));
+                    args.push(this._getValue(providedArgs[i], true, scopeSource));
                 }
             }
         }

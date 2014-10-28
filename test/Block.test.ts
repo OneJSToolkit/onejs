@@ -899,6 +899,38 @@ describe('Block', function () {
             assert.strictEqual(div.textContent, '456456456');
             block.dispose();
         });
+
+        it('should support calling functions with the iterator', function () {
+            view.setData({ data: new List([{ val: 1 }]) });
+            view['multiplyBy3'] = function (arg) {
+                return arg * 3;
+            };
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "$view.multiplyBy3(item.val)"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '3');
+            block.dispose();
+        });
     });
 
 });

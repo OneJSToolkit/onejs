@@ -77,7 +77,7 @@ export class Block {
     placeholder: Comment;
     bindings: Binding[] = [];
     _lastValues: any = {};
-    _scope: IMap;
+    scope: IMap;
     events = new EventGroup(this);
 
     constructor(view: View, parent: Block) {
@@ -134,28 +134,7 @@ export class Block {
     }
 
     getValue(propertyName: string) {
-        //TODO: allow scope values to be called as functions
-        if (this._scope) {
-            var found = true;
-            var value = propertyName.split('.').reduce((prev:any, current:string):any => {
-                if (prev && prev.hasOwnProperty(current)) {
-                    return prev[current];
-                } else {
-                    found = false;
-                    return null;
-                }
-            }, this._scope);
-
-            if (found) {
-                return value;
-            }
-        }
-
-        if (this.parent) {
-            return this.parent.getValue(propertyName);
-        } else {
-            return this.view.getValue(propertyName, true);
-        }
+        return this.view._getValue(propertyName, true, this);
     }
 
     insertElements(elements: HTMLElement[], refElement: HTMLElement) {
@@ -475,8 +454,8 @@ export class RepeaterBlock extends Block {
         this._currentList.insertAt(index, item);
         var child = new Block(this.view, this);
         this.children.splice(index, 0, child);
-        child._scope = {};
-        child._scope[this.iterator] = item;
+        child.scope = {};
+        child.scope[this.iterator] = item;
         child.template = processTemplate(child, this.blockTemplate);
         if (this.rendered) {
             child.render();
@@ -499,7 +478,7 @@ export class RepeaterBlock extends Block {
 
     _updateChild(index: number, item: any) {
         var child = this.children[index];
-        child._scope[this.iterator] = item;
+        child.scope[this.iterator] = item;
         child.update();
     }
 
