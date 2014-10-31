@@ -66,6 +66,19 @@ describe('View', function () {
             view.dispose();
 
         });
+
+        it('should not require a spec', function () {
+            var view = new View();
+
+            var root = view.render();
+            view.activate();
+
+            assert.strictEqual(root.tagName, 'DIV');
+            assert.strictEqual(root.textContent, '');
+
+            view.dispose();
+
+        });
     });
 
 });

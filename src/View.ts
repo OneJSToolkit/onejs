@@ -17,9 +17,13 @@ class View extends BaseView {
     _root: Block.Block;
 
     onRender(): HTMLElement {
-        this._root = Block.fromSpec(this, this._spec);
-        this._root.render();
-        this.element = this._root.elements[0];
+        if (this._spec) {
+            this._root = Block.fromSpec(this, this._spec);
+            this._root.render();
+            this.element = this._root.elements[0];
+        } else {
+            super.onRender();
+        }
         return this.element;
     }
 
@@ -28,7 +32,9 @@ class View extends BaseView {
     }
 
     onActivate(): void {
-        this._root.bind();
+        if (this._root) {
+            this._root.bind();
+        }
         super.onActivate();
     }
 
@@ -43,8 +49,8 @@ class View extends BaseView {
     onUpdate() {
         if (this._root) {
             this._root.update();
-                                }
-                            }
+        }
+    }
 
     onDispose(): void {
         if (this._root) {
@@ -59,7 +65,7 @@ class View extends BaseView {
     }
 
     _getValue(propertyName: string, expandObservables?: boolean, scopeSource?: IScopeObj): any {
-        
+
         var targetObject = this._getPropTarget(propertyName, scopeSource);
         var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
 
@@ -110,11 +116,11 @@ class View extends BaseView {
                 else {
                     this.update();
                 }
-            }            
+            }
         }
     }
 
-    toggle(propertyName: string, allowPropogation ? : boolean) {
+    toggle(propertyName: string, allowPropogation?: boolean) {
         this.setValue(propertyName, !this.getValue(propertyName, true));
 
         allowPropogation = allowPropogation || false;
@@ -170,7 +176,7 @@ class View extends BaseView {
                 } else {
                     scopeSource = scopeSource.parent;
                 }
-                
+
             }
         }
 
