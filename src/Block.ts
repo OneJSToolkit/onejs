@@ -328,7 +328,7 @@ export class IfBlock extends Block {
     }
 
     render() {
-        if (!this.rendered && this.view.getValue(this.source, true)) {
+        if (!this.rendered && this.getValue(this.source)) {
             super.render();
             this.insert();
             this.rendered = true;
@@ -346,7 +346,7 @@ export class IfBlock extends Block {
     }
 
     update() {
-        var condition = this.view.getValue(this.source, true);
+        var condition = this.getValue(this.source);
 
         if (condition && !this.inserted) {
             if (this.rendered) {
@@ -437,7 +437,11 @@ export class RepeaterBlock extends Block {
     }
 
     getList(): List<IItem> {
-        return this.view.getValue(this.source, true);
+        var list = this.getValue(this.source);
+        if (list && !list.isList && Array.isArray(list)) {
+            list = new List<IItem>(list);
+        }
+        return list;
     }
 
     _insertChild(item, index: number) {

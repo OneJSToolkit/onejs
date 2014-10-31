@@ -618,6 +618,35 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should work with plain arrays', function () {
+            view.setData({ data: [{ val: 1 }, { val: 2 }, { val: 3 }] });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '123');
+            block.dispose();
+        });
+
         it('should render inserted items', function () {
             var list = new List([]);
             view.setData({ data: list });
@@ -900,6 +929,45 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should support lists of lists', function () {
+            var list = new List([{ val: new List([{ val: 4 }, { val: 5 }, { val: 6 }])}]);
+            view.setData({ list: list });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "list",
+                        iterator: "item",
+                        children: [
+                            {
+                                type: Block.BlockType.RepeaterBlock,
+                                source: "item.val",
+                                iterator: "item",
+                                children: [
+                                    {
+                                        type: Block.BlockType.Element,
+                                        tag: "span",
+                                        binding: {
+                                            text: "item.val"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '456');
+            block.dispose();
+        });
+
         it('should support calling functions with the iterator', function () {
             view.setData({ data: new List([{ val: 1 }]) });
             view['multiplyBy3'] = function (arg) {
@@ -929,6 +997,36 @@ describe('Block', function () {
             block.update();
             var div = block.elements[0];
             assert.strictEqual(div.textContent, '3');
+            block.dispose();
+        });
+
+        it('should support ifs inside of repeaters', function () {
+            view.setData({ data: new List([{ val: true }, {val: false}]) });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.IfBlock,
+                            source: "item.val",
+                            children: [{
+                                type: Block.BlockType.Text,
+                                value: "visible"
+                            }]
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, 'visible');
             block.dispose();
         });
     });
