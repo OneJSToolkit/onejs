@@ -412,7 +412,10 @@ export class RepeaterBlock extends Block {
 
     bind() {
         this.bound = true;
-        this.events.on(this.getList(), 'change', this.onChange.bind(this));
+        var list = this.getList();
+        if (list.wasList) {
+            this.events.on(list.list, 'change', this.onChange.bind(this));
+        }
         super.bind();
     }
 
@@ -436,12 +439,27 @@ export class RepeaterBlock extends Block {
         this.update();
     }
 
-    getList(): List<IItem> {
+    getList(): { list: List<IItem>; wasList: boolean } {
         var list = this.getValue(this.source);
-        if (list && !list.isList && Array.isArray(list)) {
-            list = new List<IItem>(list);
+        var wasList = true;
+
+        if (!list) {
+            list = new List<IItem>();
+            wasList = false;
         }
-        return list;
+
+        if (!list.isList) {
+            if (!Array.isArray(list)) {
+                list = [list];
+            }
+            list = new List<IItem>(list);
+            wasList = false;
+        }
+
+        return {
+            list: list,
+            wasList: wasList
+        };
     }
 
     _insertChild(item, index: number) {
@@ -487,7 +505,7 @@ export class RepeaterBlock extends Block {
     }
 
     _reload() {
-        var newList = this.getList();
+        var newList = this.getList().list;
         var currentList = this._currentList;
 
         var count = newList.getCount();

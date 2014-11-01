@@ -682,6 +682,64 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should work with empty values', function () {
+            view.setData({ data: null });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '');
+            block.dispose();
+        });
+
+        it('should work with bare values', function () {
+            view.setData({ data: { val: 42 }});
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '42');
+            block.dispose();
+        });
+
         it('should render inserted items', function () {
             var list = new List([]);
             view.setData({ data: list });
@@ -1064,6 +1122,7 @@ describe('Block', function () {
             assert.strictEqual(div.textContent, 'visible');
             block.dispose();
         });
+
     });
 
 });
