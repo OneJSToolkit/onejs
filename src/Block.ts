@@ -396,6 +396,7 @@ export class RepeaterBlock extends Block {
     blockTemplate: IBlockSpec[];
     bound = false;
     rendered = false;
+    _lastList;
     _currentList = new List<IItem>();
 
     constructor(view:View, parent: Block, source: string, iterator: string, blockTemplate:IBlockSpec[]) {
@@ -417,6 +418,26 @@ export class RepeaterBlock extends Block {
             this.events.on(list.list, 'change', this.onChange.bind(this));
         }
         super.bind();
+    }
+
+    update() {
+
+        var previous = this._lastList;
+        var list = this.getList();
+
+        if (previous !== list.list) {
+            if (list.wasList) {
+                this.events.on(list.list, 'change', this.onChange.bind(this));
+            }
+
+            if (previous && previous.isList) {
+                this.events.off(previous, 'change');
+            }
+
+            this._reload();
+        }
+
+        super.update();
     }
 
     onChange(args?) {
@@ -441,6 +462,7 @@ export class RepeaterBlock extends Block {
 
     getList(): { list: List<IItem>; wasList: boolean } {
         var list = this.getValue(this.source);
+        this._lastList = list;
         var wasList = true;
 
         if (!list) {

@@ -682,6 +682,38 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should work with an array that is updated', function () {
+            view.setData({ data: [{ val: 1 }, { val: 2 }, { val: 3 }] });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '123');
+            view.setData({ data: [{ val: 4 }, { val: 5 }, { val: 6 }] });
+            block.update();
+            assert.strictEqual(div.textContent, '456');
+            block.dispose();
+        });
+
         it('should work with empty values', function () {
             view.setData({ data: null });
             var block = Block.fromSpec(view, {
