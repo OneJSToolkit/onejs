@@ -275,7 +275,7 @@ export class Block {
             for (var targetIndex = 0; targetIndex < targetList.length; targetIndex++) {
                 var target = targetList[targetIndex];
 
-                returnValue = this.view._getValueFromFunction(target, args);
+                returnValue = this.view._getValueFromFunction(target, args, this);
             }
 
             return returnValue;
@@ -308,7 +308,7 @@ function renderNodes(block:Block, nodes: IBlockSpec[]): Node[]{
                 }
                 return c;
             } else if (node.type === BlockType.View) {
-                return block.view[node.name].render();
+                return block._processBinding(node, block.view[node.name].render());
             }
         });
     }

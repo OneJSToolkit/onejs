@@ -6,6 +6,7 @@ import Block = require('../src/Block');
 import BaseView = require('../src/BaseView');
 import View = require('../src/View');
 import List = require('../src/List');
+import EventGroup = require('../src/EventGroup');
 
 describe('Block', function () {
 
@@ -159,6 +160,40 @@ describe('Block', function () {
             block.render();
             var div = block.elements[0]
             assert.strictEqual(div.children[0], subView.element);
+            block.dispose();
+        });
+
+        it('should render a subview with bindings', function () {
+            var subView = new BaseView();
+            subView.element = document.createElement("div")
+            view.addChild(subView);
+            view['subView'] = subView;
+            var callbackCalled = false;
+            view['callback'] = function () {
+                callbackCalled = true;
+            }
+
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.View,
+                        name: "subView",
+                        binding: {
+                            events: {
+                                'test': ['$callback']
+                            }
+                        }
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            var div = block.elements[0]
+            EventGroup.raise(subView.element, 'test');
+            assert.strictEqual(callbackCalled, true);
             block.dispose();
         });
     });
