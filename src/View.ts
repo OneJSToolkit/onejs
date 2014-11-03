@@ -17,9 +17,14 @@ class View extends BaseView {
     _root: Block.Block;
 
     onRender(): HTMLElement {
-        this._root = Block.fromSpec(this, this._spec);
-        this._root.render();
-        this.element = this._root.elements[0];
+        if (this._spec) {
+            this._root = Block.fromSpec(this, this._spec);
+            this._root.render();
+            this.element = this._root.elements[0];
+        } else {
+            super.onRender();
+        }
+
         return this.element;
     }
 
@@ -28,7 +33,10 @@ class View extends BaseView {
     }
 
     onActivate(): void {
-        this._root.bind();
+        if (this._root) {
+            this._root.bind();
+        }
+
         super.onActivate();
     }
 
@@ -43,8 +51,8 @@ class View extends BaseView {
     onUpdate() {
         if (this._root) {
             this._root.update();
-                                }
-                            }
+        }
+    }
 
     onDispose(): void {
         if (this._root) {
@@ -54,20 +62,19 @@ class View extends BaseView {
         super.onDispose();
     }
 
-    getValue(propertyName: string, expandObservables?: boolean): any {
+    getValue(propertyName: string, expandObservables ? : boolean): any {
         return this._getValue(propertyName, expandObservables);
     }
 
-    _getValue(propertyName: string, expandObservables?: boolean, scopeSource?: IScopeObj): any {
-        
+    _getValue(propertyName: string, expandObservables ? : boolean, scopeSource ? : IScopeObj): any {
+
         var targetObject = this._getPropTarget(propertyName, scopeSource);
         var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
 
         if (targetValue) {
             if (expandObservables && targetValue.isObservable) {
                 targetValue = targetValue.getValue();
-            }
-            else if (typeof targetValue === 'function') {
+            } else if (typeof targetValue === 'function') {
                 targetValue = this._getValueFromFunction(propertyName, undefined, scopeSource);
             }
         }
@@ -100,17 +107,15 @@ class View extends BaseView {
 
             if (targetObjectValue && targetObjectValue.isObservable) {
                 targetObjectValue.setValue(propertyValue);
-            }
-            else if (typeof target[targetObject.propertyName] !== 'function') {
+            } else if (typeof target[targetObject.propertyName] !== 'function') {
                 target[targetObject.propertyName] = propertyValue;
 
                 if (target.change) {
                     target.change();
-                }
-                else {
+                } else {
                     this.update();
                 }
-            }            
+            }
         }
     }
 
@@ -126,7 +131,7 @@ class View extends BaseView {
         this.setValue(destinationPropertyName, this.getValue(sourcePropertyName, true));
     }
 
-    _getPropTarget(propertyName: string, scopeSource?: IScopeObj) {
+    _getPropTarget(propertyName: string, scopeSource ? : IScopeObj) {
         // [$scope].prop.prop.func(...)
         // $toggle
         // $member.foo
@@ -148,15 +153,13 @@ class View extends BaseView {
             if (props[0] == 'parent') {
                 propTarget = this.parent;
                 props.shift();
-            }
-            else if (props[0] == 'owner') {
+            } else if (props[0] == 'owner') {
                 if (this.owner) {
                     propTarget = viewModel = (this.owner).viewModel;
                 }
 
                 props.shift();
-            }
-            else if (props[0] === 'view') {
+            } else if (props[0] === 'view') {
                 propTarget = this;
                 props.shift();
             } else {
@@ -170,7 +173,7 @@ class View extends BaseView {
                 } else {
                     scopeSource = scopeSource.parent;
                 }
-                
+
             }
         }
 
@@ -213,7 +216,7 @@ class View extends BaseView {
         return root;
     }
 
-    _getValueFromFunction(target, existingArgs?, scopeSource?: IScopeObj) {
+    _getValueFromFunction(target, existingArgs ? , scopeSource ? : IScopeObj) {
         var propTarget = this._getPropTarget(target);
         var args = [];
         var returnValue = '';
@@ -238,7 +241,12 @@ class View extends BaseView {
         }
 
         if (args.length == 0 && existingArgs) {
-            args = existingArgs;
+            if (existingArgs && existingArgs.length == 1 && existingArgs[0].args) {
+                args = [ existingArgs[0].args ];
+            }
+            else {
+                args = existingArgs;
+            }
         }
 
         var parentObject = propTarget.target;

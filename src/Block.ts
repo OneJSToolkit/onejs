@@ -207,29 +207,37 @@ export class Block {
     }
 
     _bindEvents() {
+        var _this = this;
 
-        this.bindings.forEach((binding) => {
+        function _bindExternalModel(propName) {
+            // We need to observe an external viewmodel, so set it on the current.
+            var propTarget = _this.view._getPropTarget(propName);
+
+            if (propTarget.viewModel) {
+                var data = {};
+
+                data['__extern__' + propName.subStr(0, propName.indexOf('.'))] = propTarget.viewModel;
+                _this.view.viewModel.setData(data, false);
+            }
+        }
+
+        for (var i = 0; i < _this.bindings.length; i++) {
+            var binding = _this.bindings[i];
             var targetElement = binding.element;
+            var source;
+            var propTarget;
 
             // Observe parent if bindings reference parent.
             // TODO: This should be moved/removed.
             for (var bindingType in binding.desc) {
-                if (bindingType != 'events') {
-                    for (var bindingDest in binding.desc[bindingType]) {
-                        var source = binding.desc[bindingType];
-                        
-                        if (typeof source !== 'string') {
-                            source = source[bindingDest];
-                        }
+                if (bindingType != 'events' && bindingType != 'id') {
+                    var bindingSource = binding.desc[bindingType];
 
-                        var target = this.view._getPropTarget(source);
-
-                        if (target.viewModel) {
-                            var data = {};
-
-                            data[source.replace('.', '-')] = target.viewModel;
-
-                            this.view.viewModel.setData(data, false);
+                    if (bindingType === 'text' || bindingType === 'html') {
+                        _bindExternalModel(bindingSource);
+                    } else {
+                        for (var bindingDest in bindingSource) {
+                            _bindExternalModel(bindingSource[bindingDest]);
                         }
                     }
                 }
@@ -239,12 +247,12 @@ export class Block {
                 for (var eventName in binding.desc.events) {
                     var targetList = binding.desc.events[eventName];
 
-                    this._bindEvent(targetElement, eventName, targetList);
+                    _this._bindEvent(targetElement, eventName, targetList);
                 }
             }
 
-            this._bindInputEvent(targetElement, binding);
-        });
+            _this._bindInputEvent(targetElement, binding);
+        }
     }
 
     _bindInputEvent(element: HTMLElement, binding:Binding) {
@@ -269,13 +277,13 @@ export class Block {
             element = this.view;
         }
 
-        this.events.on(element, eventName, (...args) => {
+        this.events.on(element, eventName, (...args: any[]) => {
             var returnValue;
 
             for (var targetIndex = 0; targetIndex < targetList.length; targetIndex++) {
                 var target = targetList[targetIndex];
 
-                returnValue = this.view._getValueFromFunction(target, args);
+                returnValue = this.view._getValueFromFunction(target, args, this);
             }
 
             return returnValue;
@@ -308,7 +316,8 @@ function renderNodes(block:Block, nodes: IBlockSpec[]): Node[]{
                 }
                 return c;
             } else if (node.type === BlockType.View) {
-                return block.view[node.name].render();
+                //return block.view[node.name].render();
+                return block._processBinding(node, block.view[node.name].render());
             }
         });
     }
@@ -437,7 +446,13 @@ export class RepeaterBlock extends Block {
     }
 
     getList(): List<IItem> {
-        return this.view.getValue(this.source, true);
+        var list =  this.getValue(this.source);
+
+        if (!list || !list.isList) {
+            list = new List(list);
+        }
+
+        return list;
     }
 
     _insertChild(item, index: number) {
@@ -512,7 +527,6 @@ export class RepeaterBlock extends Block {
             this._removeChild(i);
         }
     }
-
 }
 
 export function fromSpec(view: View, spec: IBlockSpec): Block {

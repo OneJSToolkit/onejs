@@ -24,6 +24,9 @@ class BaseView implements IView {
     parent: IView;
     owner: IView;
 
+    isActive = false;
+    isDisposed = false;
+
     _shouldDisposeViewModel = false;
 
     // All reactive overridable methods. Each of these will occur.
@@ -95,6 +98,7 @@ class BaseView implements IView {
 
         if (this.state === ViewState.INACTIVE) {
             this.state = ViewState.ACTIVE;
+            this.isActive = true;
 
             this.onActivate();
         }
@@ -138,6 +142,7 @@ class BaseView implements IView {
 
         if (this.state === ViewState.ACTIVE) {
             this.state = ViewState.INACTIVE;
+            this.isActive = false;
 
             this.activeEvents.off();
 
@@ -157,6 +162,7 @@ class BaseView implements IView {
             }
 
             this.state = ViewState.DISPOSED;
+            this.isDisposed = true;
 
             this.onDispose();
 

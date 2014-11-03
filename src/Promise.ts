@@ -24,19 +24,20 @@
 /// </summary>
 
 var PromiseState = {
-    executing: 1,
-    complete: 2,
-    error: 3,
+    pending: 1,
+    fulfilled: 2,
+    rejected: 3,
     cancelled: 4
 };
 
 var _promiseId = 0;
 
 class Promise {
-    id: number;
+    id = _promiseId++;
     isPromise = true;
 
-    _state = PromiseState.executing;
+    _parentPromise: Promise;
+    _state = PromiseState.pending;
 
     _lastException;
     _thenHandlers = [];
@@ -46,13 +47,13 @@ class Promise {
     _onExecute: () => void;
     _onCancel: () => void;
 
-    _complete: (result?) => void;
+    _complete: (result ? ) => void;
     _error: () => void;
     _progress: () => void;
-    
+
     _done;
 
-    constructor(onExecute ? : (complete?, error?, progress?) => any, onCancel ? : () => void) {
+    constructor(onExecute ? : (complete ? , error ? , progress ? ) => any, onCancel ? : () => void, parentPromise ? : Promise) {
         /// <summary>Promise constructor.</summary>
         /// <param name="onExecute" type="Function">
         /// Function callback that will be executed immediately to start the promise. It should be implemented like so:
@@ -65,15 +66,18 @@ class Promise {
 
         _this._onExecute = onExecute;
         _this._onCancel = onCancel;
+
         _this._complete = _bind(_this, _complete);
         _this._error = _bind(_this, _error);
         _this._progress = _bind(_this, _progress);
+
         _this._done = null;
+        _this._parentPromise = parentPromise || this;
 
         _this._executePromise();
     }
 
-    then(onComplete?, onError?, onProgress?): Promise {
+    then(onComplete ? , onError ? , onProgress ? ): Promise {
         /// <summary>
         /// Allows the caller to provide a complete, error, and progress callback that will be called when the
         /// promise transitions (or is already in) the appropriate state. If the complete callback returns another promise,
@@ -91,12 +95,13 @@ class Promise {
         var _progress;
 
         var promise = new Promise(function(complete, fail, progress) {
-            _complete = complete;
-            _fail = fail;
-            _progress = progress;
-        }, function cancel() {
-            _this.cancel();
-        });
+                _complete = complete;
+                _fail = fail;
+                _progress = progress;
+            }, function cancel() {
+                _this.cancel();
+            },
+            this._parentPromise);
 
         _this._thenHandlers.push({
             onComplete: function() {
@@ -109,12 +114,12 @@ class Promise {
                 }
             },
             onError: function() {
-                onError && onError.apply(this, arguments);
-                _fail.apply(this, arguments);
+                onError && onError.apply(_this, arguments);
+                _fail.apply(_this, arguments);
             },
             onProgress: function() {
-                onProgress && onProgress.apply(this, arguments);
-                _progress.apply(this, arguments);
+                onProgress && onProgress.apply(_this, arguments);
+                _progress.apply(_this, arguments);
             }
         });
 
@@ -124,17 +129,24 @@ class Promise {
     }
 
     wait(milliseconds) {
-    	return Promise.timeout(milliseconds);
+        return this.then(() => {
+            var waitPromise = Promise.timeout(milliseconds, this._parentPromise);
+
+            waitPromise['promiseType'] = 'wait';
+
+            return waitPromise;
+        });
     }
 
     cancel() {
         /// <summary>Allows the caller to cancel a promise. If the promise is not already complete, it will error out and error handlers will be called.</summary>              
 
         var _this = this;
+        var currentState = _this._state;
 
-        if (_this._state !== PromiseState.complete) {
-            _this._state = PromiseState.cancelled;
-
+        _this._state = _this._parentPromise._state = PromiseState.cancelled;
+/*
+        if (currentState !== PromiseState.fulfilled) {
             if (_this._onCancel) {
                 _this._onCancel();
                 _this._onCancel = null;
@@ -143,10 +155,11 @@ class Promise {
             }
         }
 
-        _this._callPromiseCallbacks();
+        //_this._callPromiseCallbacks();
+        */
     }
 
-    done(onComplete, onError?, onProgress?) {
+    done(onComplete, onError ? , onProgress ? ) {
         /// <summary>Allows the caller to provide callbacks that should execute when the chain is complete.</summary>
         /// <param name="onComplete" type="Function">Complete handler.</param>
         /// <param name="onError" type="Function" optional="true">Error handler.</param>
@@ -174,7 +187,7 @@ class Promise {
         var callback;
         var handler;
 
-        if (_this._state == PromiseState.executing) {
+        if (_this._state == PromiseState.pending) {
             // If we have progress arguments, apply them to any handlers (don't remove the handlers.)
             if (_this._progressArguments) {
                 for (var i = 0; i < _this._thenHandlers.length; i++) {
@@ -185,17 +198,17 @@ class Promise {
 
                 _this._progressArguments = null;
             }
-        } else {
+        } else if (_this._parentPromise._state != PromiseState.cancelled) {
             while (_this._thenHandlers.length) {
                 handler = _this._thenHandlers.shift();
 
                 switch (_this._state) {
-                    case PromiseState.complete:
+                    case PromiseState.fulfilled:
                         callback = handler.onComplete;
                         break;
 
                     case PromiseState.cancelled:
-                    case PromiseState.error:
+                    case PromiseState.rejected:
                         callback = handler.onError;
                         break;
                 }
@@ -206,11 +219,11 @@ class Promise {
             }
 
             if (_this._done) {
-                callback = (_this._state === PromiseState.complete || _this._state === PromiseState.cancelled) ? _this._done.onComplete : _this._done.onError;
+                callback = (_this._state === PromiseState.fulfilled || _this._state === PromiseState.cancelled) ? _this._done.onComplete : _this._done.onError;
 
                 if (callback) {
                     callback.apply(_this, _this._completeArguments);
-                } else if (_this._state === PromiseState.error) {
+                } else if (_this._state === PromiseState.rejected) {
                     throw {
                         message: "Promise failed, but done.onError was not implemented.",
                         promise: _this
@@ -232,19 +245,18 @@ class Promise {
         try {
             if (_this._onExecute) {
                 _this._onExecute.call(_this, _this._complete, _this._error, _this._progress);
-            }
-            else {
+            } else {
                 _this._complete();
             }
         } catch ( /* @type(Error) */ e) {
             _this._lastException = e;
-            _this._state = PromiseState.error;
+            _this._state = PromiseState.rejected;
         }
 
         _this._callPromiseCallbacks();
     }
 
-    static timeout(duration) {
+    static timeout(duration, parentPromise?: Promise) {
         /// <summary>Creates a promise that will wait for the given amount of time before completing.</summary>
         /// <param name="duration" type="Number">Duration in milliseconds.</param>
         /// <returns type="Promise">The timeout promise.</returns>
@@ -261,19 +273,19 @@ class Promise {
             },
             function onCancel() {
                 cancelTimeout(timeoutId);
-            });
+            },
+            parentPromise);
     }
 
-    static wrap(result) {
+    static wrap(result, parentPromise?: Promise) {
         /// <param name="result" type="*" optional="true">Returns a completed promise that wraps the result.</param>
 
-        var promise = new Promise();
+        var promise = new Promise(null, null, parentPromise);
 
         promise._complete(result);
 
         return promise;
     }
-
 }
 
 function _complete() {
@@ -281,8 +293,8 @@ function _complete() {
 
     var _this = this;
 
-    if (_this._state === PromiseState.executing) {
-        _this._state = PromiseState.complete;
+    if (_this._state === PromiseState.pending) {
+        _this._state = PromiseState.fulfilled;
         _this._completeArguments = arguments;
         _this._callPromiseCallbacks();
     }
@@ -293,8 +305,8 @@ function _error() {
 
     var _this = this;
 
-    if (_this._state === PromiseState.executing) {
-        _this._state = PromiseState.error;
+    if (_this._state === PromiseState.pending) {
+        _this._state = PromiseState.rejected;
         _this._completeArguments = arguments;
         _this._callPromiseCallbacks();
     }
@@ -305,16 +317,16 @@ function _progress() {
 
     var _this = this;
 
-    if (_this._state === PromiseState.executing) {
+    if (_this._state === PromiseState.pending) {
         _this._progressArguments = arguments;
         _this._callPromiseCallbacks();
     }
 }
 
 function _bind(obj, func) {
-	return function() {
-		return func.apply(obj, arguments);
-	};
+    return function() {
+        return func.apply(obj, arguments);
+    };
 }
 
 export = Promise;

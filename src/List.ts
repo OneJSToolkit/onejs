@@ -113,7 +113,7 @@ class List<T> {
         }
     }
 
-    change(details) {
+    change(details?) {
         this.events.raise(CHANGE_EVENT, details);
     }
 
