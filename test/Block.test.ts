@@ -1014,6 +1014,67 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should support nesting repeaters that share a block template', function () {
+            var groups = [
+                {
+                    name: 'group 1',
+                    items: [{ name: 'foo' }, { name: 'bar' }]
+                },
+                {
+                    name: 'group 2',
+                    items: [{ name: 'baz' }, { name: 'boz' }]
+                },
+                {
+                    name: 'group 3',
+                    items: []
+                }
+            ];
+            view.setData({ groups: groups});
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "groups",
+                        iterator: "group",
+                        children: [
+                            {
+                                type: Block.BlockType.Element,
+                                tag: "h1",
+                                binding: {
+                                    text: "group.name"
+                                }
+                            },
+                            {
+                                type: Block.BlockType.Element,
+                                tag: "ul",
+                                children: [{
+                                    type: Block.BlockType.RepeaterBlock,
+                                    source: "group.items",
+                                    iterator: "item",
+                                    children: [{
+                                        type: Block.BlockType.Element,
+                                        tag: "li",
+                                        binding: {
+                                            text: "item.name"
+                                        }
+                                    }]
+                                }]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, 'group 1foobargroup 2bazbozgroup 3');
+            block.dispose();
+        });
+
         it('should support shadowing parent iterator', function () {
             var list1 = new List([{ val: 1 }, { val: 2 }, { val: 3 }]);
             var list2 = new List([{ val: 4 }, { val: 5 }, { val: 6 }]);

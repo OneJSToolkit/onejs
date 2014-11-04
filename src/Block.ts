@@ -594,10 +594,19 @@ function createBlock(view: View, parent: Block, spec: IBlockSpec): Block {
 function processTemplate(parent:Block, template: IBlockSpec[]): IBlockSpec[]{
 
     return template.map(function (spec) {
-
+        
         if (spec.type === BlockType.Element) {
             if (spec.children) {
-                spec.children = processTemplate(parent, spec.children);
+                // allow two repeaters to share the same blockTemplate
+                spec = {
+                    type: BlockType.Element,
+                    tag: spec.tag,
+                    attr: spec.attr,
+                    binding: spec.binding,
+                    // children has to be unique per repeater since blocks
+                    // are processed into comments
+                    children: processTemplate(parent, spec.children)
+                };
             }
         } else if(spec.type === BlockType.Block || spec.type === BlockType.IfBlock || spec.type === BlockType.RepeaterBlock) {
             var block = createBlock(parent.view, parent, spec);
