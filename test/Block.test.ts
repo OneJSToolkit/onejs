@@ -6,6 +6,7 @@ import Block = require('../src/Block');
 import BaseView = require('../src/BaseView');
 import View = require('../src/View');
 import List = require('../src/List');
+import EventGroup = require('../src/EventGroup');
 
 describe('Block', function () {
 
@@ -159,6 +160,40 @@ describe('Block', function () {
             block.render();
             var div = block.elements[0]
             assert.strictEqual(div.children[0], subView.element);
+            block.dispose();
+        });
+
+        it('should render a subview with bindings', function () {
+            var subView = new BaseView();
+            subView.element = document.createElement("div")
+            view.addChild(subView);
+            view['subView'] = subView;
+            var callbackCalled = false;
+            view['callback'] = function () {
+                callbackCalled = true;
+            }
+
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.View,
+                        name: "subView",
+                        binding: {
+                            events: {
+                                'test': ['$callback']
+                            }
+                        }
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            var div = block.elements[0]
+            EventGroup.raise(subView.element, 'test');
+            assert.strictEqual(callbackCalled, true);
             block.dispose();
         });
     });
@@ -618,6 +653,125 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should work with plain arrays', function () {
+            view.setData({ data: [{ val: 1 }, { val: 2 }, { val: 3 }] });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '123');
+            block.dispose();
+        });
+
+        it('should work with an array that is updated', function () {
+            view.setData({ data: [{ val: 1 }, { val: 2 }, { val: 3 }] });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '123');
+            view.setData({ data: [{ val: 4 }, { val: 5 }, { val: 6 }] });
+            block.update();
+            assert.strictEqual(div.textContent, '456');
+            block.dispose();
+        });
+
+        it('should work with empty values', function () {
+            view.setData({ data: null });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '');
+            block.dispose();
+        });
+
+        it('should work with bare values', function () {
+            view.setData({ data: { val: 42 }});
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '42');
+            block.dispose();
+        });
+
         it('should render inserted items', function () {
             var list = new List([]);
             view.setData({ data: list });
@@ -860,6 +1014,67 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should support nesting repeaters that share a block template', function () {
+            var groups = [
+                {
+                    name: 'group 1',
+                    items: [{ name: 'foo' }, { name: 'bar' }]
+                },
+                {
+                    name: 'group 2',
+                    items: [{ name: 'baz' }, { name: 'boz' }]
+                },
+                {
+                    name: 'group 3',
+                    items: []
+                }
+            ];
+            view.setData({ groups: groups});
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "groups",
+                        iterator: "group",
+                        children: [
+                            {
+                                type: Block.BlockType.Element,
+                                tag: "h1",
+                                binding: {
+                                    text: "group.name"
+                                }
+                            },
+                            {
+                                type: Block.BlockType.Element,
+                                tag: "ul",
+                                children: [{
+                                    type: Block.BlockType.RepeaterBlock,
+                                    source: "group.items",
+                                    iterator: "item",
+                                    children: [{
+                                        type: Block.BlockType.Element,
+                                        tag: "li",
+                                        binding: {
+                                            text: "item.name"
+                                        }
+                                    }]
+                                }]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, 'group 1foobargroup 2bazbozgroup 3');
+            block.dispose();
+        });
+
         it('should support shadowing parent iterator', function () {
             var list1 = new List([{ val: 1 }, { val: 2 }, { val: 3 }]);
             var list2 = new List([{ val: 4 }, { val: 5 }, { val: 6 }]);
@@ -900,6 +1115,45 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should support lists of lists', function () {
+            var list = new List([{ val: new List([{ val: 4 }, { val: 5 }, { val: 6 }])}]);
+            view.setData({ list: list });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "list",
+                        iterator: "item",
+                        children: [
+                            {
+                                type: Block.BlockType.RepeaterBlock,
+                                source: "item.val",
+                                iterator: "item",
+                                children: [
+                                    {
+                                        type: Block.BlockType.Element,
+                                        tag: "span",
+                                        binding: {
+                                            text: "item.val"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '456');
+            block.dispose();
+        });
+
         it('should support calling functions with the iterator', function () {
             view.setData({ data: new List([{ val: 1 }]) });
             view['multiplyBy3'] = function (arg) {
@@ -931,6 +1185,37 @@ describe('Block', function () {
             assert.strictEqual(div.textContent, '3');
             block.dispose();
         });
+
+        it('should support ifs inside of repeaters', function () {
+            view.setData({ data: new List([{ val: true }, {val: false}]) });
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.IfBlock,
+                            source: "item.val",
+                            children: [{
+                                type: Block.BlockType.Text,
+                                value: "visible"
+                            }]
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, 'visible');
+            block.dispose();
+        });
+
     });
 
 });

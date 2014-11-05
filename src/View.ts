@@ -66,7 +66,7 @@ class View extends BaseView {
         return this._getValue(propertyName, expandObservables);
     }
 
-    _getValue(propertyName: string, expandObservables ? : boolean, scopeSource ? : IScopeObj): any {
+    _getValue(propertyName: string, expandObservables?: boolean, scopeSource?: IScopeObj): any {
 
         var targetObject = this._getPropTarget(propertyName, scopeSource);
         var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
@@ -119,7 +119,7 @@ class View extends BaseView {
         }
     }
 
-    toggle(propertyName: string, allowPropogation ? : boolean) {
+    toggle(propertyName: string, allowPropogation?: boolean) {
         this.setValue(propertyName, !this.getValue(propertyName, true));
 
         allowPropogation = allowPropogation || false;

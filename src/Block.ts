@@ -316,7 +316,6 @@ function renderNodes(block:Block, nodes: IBlockSpec[]): Node[]{
                 }
                 return c;
             } else if (node.type === BlockType.View) {
-                //return block.view[node.name].render();
                 return block._processBinding(node, block.view[node.name].render());
             }
         });
@@ -337,7 +336,7 @@ export class IfBlock extends Block {
     }
 
     render() {
-        if (!this.rendered && this.view.getValue(this.source, true)) {
+        if (!this.rendered && this.getValue(this.source)) {
             super.render();
             this.insert();
             this.rendered = true;
@@ -355,7 +354,7 @@ export class IfBlock extends Block {
     }
 
     update() {
-        var condition = this.view.getValue(this.source, true);
+        var condition = this.getValue(this.source);
 
         if (condition && !this.inserted) {
             if (this.rendered) {
@@ -405,6 +404,7 @@ export class RepeaterBlock extends Block {
     blockTemplate: IBlockSpec[];
     bound = false;
     rendered = false;
+    _lastList;
     _currentList = new List<IItem>();
 
     constructor(view:View, parent: Block, source: string, iterator: string, blockTemplate:IBlockSpec[]) {
@@ -421,8 +421,31 @@ export class RepeaterBlock extends Block {
 
     bind() {
         this.bound = true;
-        this.events.on(this.getList(), 'change', this.onChange.bind(this));
+        var list = this.getList();
+        if (list.wasList) {
+            this.events.on(list.list, 'change', this.onChange.bind(this));
+        }
         super.bind();
+    }
+
+    update() {
+
+        var previous = this._lastList;
+        var list = this.getList();
+
+        if (previous !== list.list) {
+            if (list.wasList) {
+                this.events.on(list.list, 'change', this.onChange.bind(this));
+            }
+
+            if (previous && previous.isList) {
+                this.events.off(previous, 'change');
+            }
+
+            this._reload();
+        }
+
+        super.update();
     }
 
     onChange(args?) {
@@ -445,14 +468,28 @@ export class RepeaterBlock extends Block {
         this.update();
     }
 
-    getList(): List<IItem> {
-        var list =  this.getValue(this.source);
+    getList(): { list: List<IItem>; wasList: boolean } {
+        var list = this.getValue(this.source);
+        this._lastList = list;
+        var wasList = true;
 
-        if (!list || !list.isList) {
-            list = new List(list);
+        if (!list) {
+            list = new List<IItem>();
+            wasList = false;
         }
 
-        return list;
+        if (!list.isList) {
+            if (!Array.isArray(list)) {
+                list = [list];
+            }
+            list = new List<IItem>(list);
+            wasList = false;
+        }
+
+        return {
+            list: list,
+            wasList: wasList
+        };
     }
 
     _insertChild(item, index: number) {
@@ -498,7 +535,7 @@ export class RepeaterBlock extends Block {
     }
 
     _reload() {
-        var newList = this.getList();
+        var newList = this.getList().list;
         var currentList = this._currentList;
 
         var count = newList.getCount();
@@ -564,10 +601,19 @@ function createBlock(view: View, parent: Block, spec: IBlockSpec): Block {
 function processTemplate(parent:Block, template: IBlockSpec[]): IBlockSpec[]{
 
     return template.map(function (spec) {
-
+        
         if (spec.type === BlockType.Element) {
             if (spec.children) {
-                spec.children = processTemplate(parent, spec.children);
+                // allow two repeaters to share the same blockTemplate
+                spec = {
+                    type: BlockType.Element,
+                    tag: spec.tag,
+                    attr: spec.attr,
+                    binding: spec.binding,
+                    // children has to be unique per repeater since blocks
+                    // are processed into comments
+                    children: processTemplate(parent, spec.children)
+                };
             }
         } else if(spec.type === BlockType.Block || spec.type === BlockType.IfBlock || spec.type === BlockType.RepeaterBlock) {
             var block = createBlock(parent.view, parent, spec);
