@@ -206,20 +206,20 @@ export class Block {
         }
     }
 
-    _bindEvents() {
-        var _this = this;
+    _bindExternalModel(propName) {
+        // We need to observe an external viewmodel, so set it on the current.
+        var propTarget = this.view._getPropTarget(propName);
 
-        function _bindExternalModel(propName) {
-            // We need to observe an external viewmodel, so set it on the current.
-            var propTarget = _this.view._getPropTarget(propName);
+        if (propTarget.viewModel) {
+            var data = {};
 
-            if (propTarget.viewModel) {
-                var data = {};
-
-                data['__extern__' + propName.subStr(0, propName.indexOf('.'))] = propTarget.viewModel;
-                _this.view.viewModel.setData(data, false);
-            }
+            data['extern__' + propName.substr(0, propName.indexOf('.'))] = propTarget.viewModel;
+            this.view.viewModel.setData(data, false);
         }
+    }
+
+    _bindEvents() {
+        var _this = this; 
 
         for (var i = 0; i < _this.bindings.length; i++) {
             var binding = _this.bindings[i];
@@ -234,10 +234,10 @@ export class Block {
                     var bindingSource = binding.desc[bindingType];
 
                     if (bindingType === 'text' || bindingType === 'html') {
-                        _bindExternalModel(bindingSource);
+                        this._bindExternalModel(bindingSource);
                     } else {
                         for (var bindingDest in bindingSource) {
-                            _bindExternalModel(bindingSource[bindingDest]);
+                            this._bindExternalModel(bindingSource[bindingDest]);
                         }
                     }
                 }
