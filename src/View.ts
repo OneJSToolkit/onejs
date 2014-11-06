@@ -1,10 +1,13 @@
 import BaseView = require('./BaseView');
-import ViewModel = require('./ViewModel');
-import EventGroup = require('./EventGroup');
-import DomUtils = require('./DomUtils');
-import IView = require('./IView');
-import IScopeObj = require('./IScopeObj');
 import Block = require('./Block');
+import BlockProcessor = require('./BlockProcessor');
+import DomUtils = require('./DomUtils');
+import EventGroup = require('./EventGroup');
+import IBlockSpec = require('./IBlockSpec');
+import IScopeObj = require('./IScopeObj');
+import IView = require('./IView');
+import ViewModel = require('./ViewModel');
+
 
 class View extends BaseView {
     owner;
@@ -13,13 +16,13 @@ class View extends BaseView {
 
     _hasChanged: boolean;
     _isEvaluatingView: boolean;
-    _spec: Block.IBlockSpec;
-    _root: Block.Block;
+    _spec: IBlockSpec;
+    _root: Block;
     _activeScope: IScopeObj;
 
     onRender(): HTMLElement {
         if (this._spec) {
-            this._root = Block.fromSpec(this, this._spec);
+            this._root = BlockProcessor.fromSpec(this, this._spec);
             this._root.render();
             this.element = this._root.elements[0];
         } else {

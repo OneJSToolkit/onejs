@@ -22,7 +22,7 @@ class Repeater extends View {
     _currentList = new List<IItem>();
 
     onRender(): HTMLElement {
-        this.element = DomUtils.ce('div', ['class', this.baseClass]);
+        this.element = DomUtils.ce('div', {'class': this.baseClass });
         this._diffChildren();
 
         return this.element;
