@@ -141,6 +141,12 @@ class View extends BaseView {
         // $toggle
         // $member.foo
 
+        // Although our param is strongly typed in TS, we need to ensure we're getting only strings
+        // due to certain apps that modify their String prototype
+        if (typeof propertyName !== "string") {
+            return;
+        }
+
         if (propertyName[0] == '!') {
             propertyName = propertyName.substr(1);
             debugger;
