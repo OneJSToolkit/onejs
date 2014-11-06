@@ -15,6 +15,7 @@ class View extends BaseView {
     _isEvaluatingView: boolean;
     _spec: Block.IBlockSpec;
     _root: Block.Block;
+    _activeScope: IScopeObj;
 
     onRender(): HTMLElement {
         if (this._spec) {
@@ -93,7 +94,11 @@ class View extends BaseView {
     }
 
     setValue(propertyName: string, propertyValue: any) {
-        var targetObject = this._getPropTarget(propertyName);
+        this._setValue(propertyName, propertyValue);
+    }
+
+    _setValue(propertyName: string, propertyValue: any, scopeSource?: IScopeObj) {
+        var targetObject = this._getPropTarget(propertyName, scopeSource);
         var target = targetObject.target;
 
         // TODO, this is a temp fix, less than ideal. If we set command.isExpanded
@@ -120,7 +125,7 @@ class View extends BaseView {
     }
 
     toggle(propertyName: string, allowPropogation?: boolean) {
-        this.setValue(propertyName, !this.getValue(propertyName, true));
+        this._setValue(propertyName, !this._getValue(propertyName, true, this._activeScope), this._activeScope);
 
         allowPropogation = allowPropogation || false;
 
@@ -128,7 +133,7 @@ class View extends BaseView {
     }
 
     send(sourcePropertyName, destinationPropertyName) {
-        this.setValue(destinationPropertyName, this.getValue(sourcePropertyName, true));
+        this._setValue(destinationPropertyName, this._getValue(sourcePropertyName, true, this._activeScope), this._activeScope);
     }
 
     _getPropTarget(propertyName: string, scopeSource ? : IScopeObj) {
@@ -253,7 +258,9 @@ class View extends BaseView {
         var propertyName = propTarget.propertyName;
 
         if (parentObject && parentObject[propertyName]) {
+            this._activeScope = scopeSource;
             returnValue = parentObject[propertyName].apply(parentObject, args);
+            this._activeScope = undefined;
         }
 
         return returnValue;

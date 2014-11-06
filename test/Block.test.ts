@@ -1216,6 +1216,41 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should support calling view functions with the iterator', function () {
+            var data = [{ val: true }];
+            view.setData({ data: data });
+
+            var block = Block.fromSpec(view, {
+                type: Block.BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: Block.BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: Block.BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                events: { 'click': ["$toggle('item.val')"] }
+                            }
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            
+            var root = block.elements[0];
+            assert.strictEqual(root.children.length, 1);
+            var event = document.createEvent('MouseEvents');
+            event.initEvent('click', true, true);
+            root.children[0].dispatchEvent(event);
+            assert.strictEqual(data[0].val, false);
+            block.dispose();
+        });
+
     });
 
 });
