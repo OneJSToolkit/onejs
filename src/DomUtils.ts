@@ -39,15 +39,17 @@ module DomUtils {
         var el = document.createElement(tagName);
 
         if (attributes) {
-            Object.keys(attributes).forEach(function (attribute) {
+            var attributeKeys = Object.keys(attributes);
+            for (var i = 0; i < attributeKeys.length; i++) {
+                var attribute = attributeKeys[i];
                 el.setAttribute(attribute, attributes[attribute]);
-            });
+            }
         }
 
         if (children) {
-            children.forEach(function (child) {
-                el.appendChild(child);
-            });
+            for (var i = 0; i < children.length; i++) {
+                el.appendChild(children[i]);
+            }
         }
 
         return el;
