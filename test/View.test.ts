@@ -81,4 +81,16 @@ describe('View', function () {
         });
     });
 
+    describe('#_getPropTarget', function() {
+        it('should return an object', function() {
+            // The any type is there so TypeScript doesn't complain in the for loop
+            var foo: any = "0";
+            var view = new View();
+
+            for (var p in foo) {
+                assert.strictEqual(typeof view._getPropTarget(foo[p]), "object");
+            }
+        });
+    });
+
 });

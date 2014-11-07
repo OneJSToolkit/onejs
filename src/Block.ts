@@ -113,7 +113,9 @@ export class Block {
                         this._updateViewValue(binding, bindingType, binding.desc[bindingType]);
                     } else {
                         for (var bindingDest in binding.desc[bindingType]) {
-                            this._updateViewValue(binding, bindingType, binding.desc[bindingType][bindingDest], bindingDest);
+                            if (binding.desc[bindingType].hasOwnProperty(bindingDest)) {
+                                this._updateViewValue(binding, bindingType, binding.desc[bindingType][bindingDest], bindingDest);
+                            }
                         }
                     }
                 }
