@@ -341,6 +341,20 @@ describe('Block', function () {
             block.dispose();
 
         });
+
+        it('handles nonstandard prototypes', function() {
+            String.prototype['foo'] = () => {};
+
+            var block = new Block.Block(view, null);
+
+            var bindingDesc: Block.IBinding = {};
+            bindingDesc['id'] = '0';
+
+            block.bindings.push(new Block.Binding('0', null, bindingDesc));
+            block.update();
+
+            delete String.prototype['foo'];
+        });
     });
 
     describe('#IfBlock', function () {
