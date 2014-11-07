@@ -14,4 +14,30 @@ describe('ViewModel', function () {
         });
     });
 
+    describe('setData()', function() {
+        it('should set data', function() {
+            var vm = new ViewModel();
+            assert.strictEqual(vm['foo'], undefined);
+            vm.setData({foo: 'hello world'});
+            assert.strictEqual(vm['foo'], 'hello world');
+        });
+
+        it('should not set data from the prototype', function() {
+            var vm = new ViewModel();
+
+            var ParentClass = function() {
+                this.foo = 42;
+            };
+
+            var SubClass = function() {
+                this.bar = 'hello';
+            };
+
+            SubClass.prototype = new ParentClass();
+
+            vm.setData(new SubClass());
+            assert.strictEqual(vm['foo'], undefined);
+        });
+    });
+
 });

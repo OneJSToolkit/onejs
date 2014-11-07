@@ -53,7 +53,7 @@ class ViewModel {
         var hasChanged = false;
 
         for (var key in data) {
-            if (key[0] !== '_') {
+            if (data.hasOwnProperty(key) && key[0] !== '_') {
                 var oldValue = this[key];
                 var newValue = data[key];
 
