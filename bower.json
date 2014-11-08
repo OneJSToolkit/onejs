@@ -1,0 +1,25 @@
+{
+  "name": "OneJS",
+  "version": "1.1.60",
+  "homepage": "https://github.com/OneJSToolkit/onejs",
+  "description": "OneJS Framework",
+  "moduleType": [
+    "amd",
+    "node"
+  ],
+  "keywords": [
+    "OneJS",
+    "JS",
+    "JavaScript",
+    "TypeScript"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "bower_components",
+    "definitions",
+    "node_modules",
+    "src",
+    "test"
+  ]
+}
