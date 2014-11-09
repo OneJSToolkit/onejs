@@ -81,6 +81,11 @@ class BaseView implements IView {
             }
 
             this.onRender();
+
+            if (this.element) {
+                this.element['view'] = this;
+            }
+
             this.onPostRender();
         }
 
@@ -177,7 +182,7 @@ class BaseView implements IView {
             }
 
             if (this.element) {
-                this.element['control'] = null;
+                this.element['view'] = null;
                 this.element = null;
             }
         }
