@@ -3,6 +3,7 @@
 import chai = require("chai");
 import View = require("../src/View");
 import Block = require("../src/Block");
+import BlockType = require('../src/BlockType');
 
 var assert = chai.assert;
 
@@ -12,9 +13,9 @@ describe('View', function () {
         it('should render simple elements', function () {
             var view = new View();
             view._spec = {
-                type: Block.BlockType.Element,
+                type: BlockType.Element,
                 tag: "div",
-                children: [{type: Block.BlockType.Text, value: "Hello!"}]
+                children: [{type: BlockType.Text, value: "Hello!"}]
             };
 
             var root = view.render();
@@ -29,7 +30,7 @@ describe('View', function () {
             var view = new View();
             view.setData({ pet: "cat" });
             view._spec = {
-                type: Block.BlockType.Element,
+                type: BlockType.Element,
                 tag: "div",
                 binding: {
                     text: "pet"
@@ -47,7 +48,7 @@ describe('View', function () {
             var view = new View();
             view.setData({ pet: "cat" });
             view._spec = {
-                type: Block.BlockType.Element,
+                type: BlockType.Element,
                 tag: "div",
                 binding: {
                     text: "pet"

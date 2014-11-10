@@ -35,34 +35,44 @@ module DomUtils {
 
         el[TEXT_SETTING_METHOD] = text;
     }
+    export function ce(tagName: string, attributes?: { [key: string]: string }, children?: Node[]): HTMLElement {
+        var el = document.createElement(tagName);
 
-    export function ce(tagName: string, attributes? : string[], children? : any[], parent?: any): HTMLElement {
-        var element = document.createElement(tagName);
-        var i;
-        var val;
-
-        // Set default attributes.
-        for (i = 0; attributes && i < attributes.length; i += 2) {
-            element.setAttribute(attributes[i], attributes[i + 1]);
-        }
-
-        // Set element on parent if appropriate.
-        if (parent) {
-            parent.element = element;
-        }
-
-        // Append children.
-        if (children) {
-            for (i = 0; i < children.length; i++) {
-                element.appendChild(children[i]);
+        if (attributes) {
+            var attributeKeys = Object.keys(attributes);
+            for (var i = 0; i < attributeKeys.length; i++) {
+                var attribute = attributeKeys[i];
+                el.setAttribute(attribute, attributes[attribute]);
             }
         }
 
-        return element;
+        if (children) {
+            for (var i = 0; i < children.length; i++) {
+                el.appendChild(children[i]);
+            }
+        }
+
+        return el;
     }
+
 
     export function ct(val: string): Text {
         return document.createTextNode(val);
+    }
+
+    export function createComment(value: string): Comment {
+        return document.createComment(value);
+    }
+
+    export function insertAfter(newChild: Node, sibling: Node) {
+        var parent = sibling.parentNode;
+        var next = sibling.nextSibling;
+        if (next) {
+            // IE does not like undefined for refChild
+            parent.insertBefore(newChild, next);
+        } else {
+            parent.appendChild(newChild);
+        }
     }
 }
 

@@ -59,22 +59,16 @@ describe('DomUtils', function() {
         });
 
         it('sets attributes', () => {
-            var tag = DomUtils.ce('span', ['data-foo', 'bar', 'data-baz', 'boz']);
+            var tag = DomUtils.ce('span', { 'data-foo': 'bar', 'data-baz': 'boz' });
 
             expect(tag.getAttribute('data-foo')).to.equal('bar');
             expect(tag.getAttribute('data-baz')).to.equal('boz');
         });
 
-        it('sets its parent, if passed in', () => {
-            var parent = <any> DomUtils.ce('div');
-            var child = DomUtils.ce('p', [], [], parent);
-            assert.strictEqual(parent.element, child);
-        });
-
         it('sets the children, if passed in', () => {
             var childNode1 = DomUtils.ce('p');
             var childNode2 = DomUtils.ce('h1');
-            var root = DomUtils.ce('div', [], [childNode1, childNode2]);
+            var root = DomUtils.ce('div', {}, [childNode1, childNode2]);
             var childNodes = root.childNodes;
             assert.strictEqual(childNodes.length, 2);
             assert.strictEqual(childNodes[0], childNode1);
@@ -87,6 +81,15 @@ describe('DomUtils', function() {
             var text = 'sample text';
             var createdNode = DomUtils.ct(text);
             assert.strictEqual(createdNode instanceof Text, true);
+            assert.strictEqual(createdNode.data, text);
+        });
+    });
+
+    describe('createComment', () => {
+        it('creates a comment node', () => {
+            var text = 'sample text';
+            var createdNode = DomUtils.createComment(text);
+            assert.strictEqual(createdNode instanceof Comment, true);
             assert.strictEqual(createdNode.data, text);
         });
     });
