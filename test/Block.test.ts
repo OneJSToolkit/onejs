@@ -3,6 +3,8 @@
 import chai = require("chai");
 var assert = chai.assert;
 import Block = require('../src/Block');
+import IBinding = require('../src/IBinding');
+import Binding = require('../src/Binding');
 import BlockProcessor = require('../src/BlockProcessor');
 import BlockType = require('../src/BlockType');
 import BaseView = require('../src/BaseView');
@@ -346,12 +348,12 @@ describe('Block', function () {
         it('handles nonstandard prototypes', function() {
             String.prototype['foo'] = () => {};
 
-            var block = new Block.Block(view, null);
+            var block = new Block(view, null);
 
-            var bindingDesc: Block.IBinding = {};
+            var bindingDesc: IBinding = {};
             bindingDesc['id'] = '0';
 
-            block.bindings.push(new Block.Binding('0', null, bindingDesc));
+            block.bindings.push(new Binding('0', null, bindingDesc));
             block.update();
 
             delete String.prototype['foo'];
