@@ -1,8 +1,9 @@
 /// <reference path="../definitions/definitions.d.ts" />
 
-import chai = require("chai");
-import List = require("../src/List");
-import EventGroup = require("../src/EventGroup");
+import chai = require('chai');
+import List = require('../src/List');
+import EventGroup = require('../src/EventGroup');
+import ViewModel = require('../src/ViewModel');
 
 var assert = chai.assert;
 
@@ -23,6 +24,24 @@ describe('List', function() {
         it('should instantiate an instance of EventGroup', function() {
             var list = new List<any>();
             assert.instanceOf(list.events, EventGroup);
+        });
+
+        it('should fire change events if array items are observable and change', function() {
+            var array = [
+                new ViewModel(),
+                new ViewModel()
+            ];
+            var list = new List<any>(array);
+            var events = new EventGroup({});
+            var hasChanged = false;
+
+            events.on(list, 'change', function() {
+                hasChanged = true;
+            });
+
+            array[0].change();
+
+            assert.isTrue(hasChanged);
         });
     });
 

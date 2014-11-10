@@ -10,8 +10,9 @@ class List<T> {
     events = new EventGroup(this);
 
     constructor(array?:T[]) {
-        this.array = array || [];
         this.events.declare([ CHANGE_EVENT, CHILD_CHANGE_EVENT ]);
+
+        this.setArray(array);
     }
 
     clear() {
@@ -64,6 +65,15 @@ class List<T> {
         }
     }
 
+    setArray(array?: T[]) {
+        this.array = [];
+        this.events.off();
+
+        if (array && array.length > 0) {
+            this.setRange(0, array);
+        }
+    }
+
     setRange(index, items: T[]) {
         for (var i = 0; i < items.length; i++) {
             this.setAt(index++, items[i], true);
@@ -89,7 +99,7 @@ class List<T> {
     }
 
     pop(): T {
-        var item = this.array.pop();
+        var item = <T>this.array.pop();
 
         this.change({ type: 'remove', index: this.array.length });
 
