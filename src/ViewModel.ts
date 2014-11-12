@@ -2,48 +2,59 @@ import EventGroup = require('./EventGroup');
 
 class ViewModel {
     isViewModel = true;
-    
+    parent: any;
     parentValues = [];
 
-    __events: EventGroup;
+    _events: EventGroup;
 
     private static __instanceCount = 0;
     private __id = ViewModel.__instanceCount++;
 
     public constructor(data?: any) {
-        this.__events = new EventGroup(this);
-        this.__events.declare('change');
+        this._events = new EventGroup(this);
+        this._events.declare('change');
 
         if (data) {
             this.setData(data, false);
         }
     }
 
-    public initialize() {
-        this.setData(this, false, true);
- 
-        for (var i = 0; i < this.parentValues.length; i++) {
-            var args = { name: this.parentValues[i], val: null };
+    public findValue(valueName) {
+        var val = this[valueName];
 
-            this.__events.raise('findValue', args, true);
+        if (!val) {
+            var args = { name: valueName, val: null };
+
+            this._events.raise('findValue', args, true);
 
             if (args.val !== null) {
-                var data = {};
-                data[args.name] = args.val;
-                this.setData(data, false, true);
+                val = args.val;
             }
             else {
                 throw "Unable to find value: " + args.name;
-            }
+            }            
+        }
+
+        return val;
+    }
+
+    public initialize() {
+ 
+        // The parentValues concept is not great because it's not predictable.
+        // This should be removed, but will leave it for now to not break anything.
+        for (var i = 0; i < this.parentValues.length; i++) {
+            this[this.parentValues[i]] = this.findValue(this.parentValues[i]);
         }
 
         this.onInitialize();
+
+        this.setData(this, false, true);
     }
 
     public onInitialize() {}
 
     public dispose() {
-        this.__events.dispose();
+        this._events.dispose();
         this.onDispose();
     }
 
@@ -59,12 +70,12 @@ class ViewModel {
 
                 if (oldValue !== newValue || forceListen) {
                     if (oldValue && EventGroup.isDeclared(oldValue, 'change')) {
-                        this.__events.off(oldValue, 'change', this.change);
+                        this._events.off(oldValue, 'change', this.change);
                     }
                     this[key] = newValue;
                     hasChanged = true;
                     if (newValue && EventGroup.isDeclared(newValue, 'change')) {
-                        this.__events.on(newValue, 'change', this.change);
+                        this._events.on(newValue, 'change', this.change);
                     }
                 }
             }
@@ -76,7 +87,7 @@ class ViewModel {
     }
 
     public change(args ? : any) {
-        this.__events.raise('change', args);
+        this._events.raise('change', args);
     }
 }
 
