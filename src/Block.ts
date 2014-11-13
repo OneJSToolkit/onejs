@@ -3,6 +3,7 @@ import BlockType = require('./BlockType');
 import View = require('./View');
 import DomUtils = require('./DomUtils');
 import IBlockSpec = require('./IBlockSpec');
+import IView = require('./IView');
 import EventGroup = require('./EventGroup');
 
 class Block {
@@ -13,8 +14,10 @@ class Block {
     view: View;
     placeholder: Comment;
     bindings: Binding[] = [];
+    subViews: { name: string; view:IView }[] = [];
     _lastValues: any = {};
-    scope: {[key: string]: string};
+    bound = false;
+    scope: {[key: string]: any};
     events = new EventGroup(this);
 
     constructor(view: View, parent: Block) {
@@ -32,8 +35,9 @@ class Block {
     }
 
     bind() {
-
+        this.bound = true;
         this._bindEvents();
+        this._bindSubviews();
 
         this.children.forEach((child) => {
             child.bind();
@@ -68,6 +72,8 @@ class Block {
         this.children.forEach((child) => {
             child.dispose();
         });
+
+        this._disposeSubviews();
 
         this.events.dispose();
     }
@@ -229,6 +235,23 @@ class Block {
         });
     }
 
+    _bindSubviews() {
+        var length = this.subViews.length;
+        for (var i = 0; i < length; i++) {
+            this.subViews[i].view.activate();
+        }
+    }
+
+    _disposeSubviews() {
+        var length = this.subViews.length;
+        for (var i = 0; i < length; i++) {
+            var subview = this.subViews[i];
+            subview.view.dispose();
+            this.view.removeChild(subview.view);
+            delete this.scope[subview.name];
+        }
+    }
+
     _processBinding(spec: IBlockSpec, element: HTMLElement): HTMLElement {
 
         if (spec.binding) {
@@ -255,7 +278,20 @@ function renderNodes(block:Block, nodes: IBlockSpec[]): Node[]{
                 }
                 return c;
             } else if (node.type === BlockType.View) {
-                return block._processBinding(node, block.view[node.name].render());
+                var viewRef = block.view[node.name];
+                var view: IView;
+                if (typeof viewRef === 'function') {
+                    view = new viewRef();
+                    block.subViews.push({name: node.name, view: view});
+                    block.view.addChild(view);
+                    block.scope[node.name] = view;
+                    if (block.bound) {
+                        block._bindSubviews();
+                    }
+                } else {
+                    view = viewRef;
+                }
+                return block._processBinding(node, view.render());
             }
         });
     }

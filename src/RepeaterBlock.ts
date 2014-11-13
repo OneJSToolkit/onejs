@@ -10,7 +10,6 @@ class RepeaterBlock extends Block {
     source: string;
     iterator: string;
     blockTemplate: IBlockSpec[];
-    bound = false;
     rendered = false;
     _lastList;
     _currentList = new List<IItem>();
