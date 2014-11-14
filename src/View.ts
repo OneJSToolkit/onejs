@@ -88,12 +88,16 @@ class View extends BaseView {
 
     findValue(args) {
         var resource = this.getValue(args.name);
+        var continueFind = true;
 
         if (resource === undefined && this.parent && this.parent['findValue']) {
             this.parent['findValue'](args);
         } else {
             args.val = resource;
+            continueFind = false;
         }
+
+        return continueFind;
     }
 
     setValue(propertyName: string, propertyValue: any) {
@@ -161,6 +165,9 @@ class View extends BaseView {
             if (props[0] == 'parent') {
                 propTarget = this.parent;
                 props.shift();
+            } else if (props[0] == 'root') {
+                propTarget = this._getRoot();
+                props.shift();
             } else if (props[0] == 'owner') {
                 if (this.owner) {
                     propTarget = viewModel = (this.owner).viewModel;
@@ -172,6 +179,10 @@ class View extends BaseView {
                 props.shift();
             } else {
                 propTarget = this.owner || this;
+                if (propTarget && props[0] && propTarget[props[0]].viewModel) {
+                    propTarget = viewModel = propTarget[props[0]].viewModel;
+                    props.shift();
+                }
             }
         } else {
             while (scopeSource) {
@@ -195,14 +206,10 @@ class View extends BaseView {
                 prop = props[i] = prop.substr(0, parenIndex);
             }
 
-            if (i < (props.length - 1)) {
-                propTarget = propTarget[prop];
+            if (propTarget && propTarget.viewModel) {
 
-                if (propTarget && propTarget.viewModel) {
-
-                    // this vm should be observed.
-                    propTarget = viewModel = propTarget.viewModel;
-                }
+                // this vm should be observed.
+                propTarget = viewModel = propTarget.viewModel;
             }
         }
 
@@ -248,12 +255,12 @@ class View extends BaseView {
             }
         }
 
-        if (args.length == 0 && existingArgs) {
+        if (existingArgs) {
             if (existingArgs && existingArgs.length == 1 && existingArgs[0].args) {
-                args = [ existingArgs[0].args ];
+                args = args.concat([ existingArgs[0].args ]);
             }
             else {
-                args = existingArgs;
+                args = args.concat(existingArgs);
             }
         }
 
