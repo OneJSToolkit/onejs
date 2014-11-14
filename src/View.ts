@@ -66,7 +66,7 @@ class View extends BaseView {
         super.onDispose();
     }
 
-    getValue(propertyName: string, expandObservables ? : boolean): any {
+    getValue(propertyName: string, expandObservables?: boolean): any {
         return this._getValue(propertyName, expandObservables);
     }
 
@@ -88,12 +88,16 @@ class View extends BaseView {
 
     findValue(args) {
         var resource = this.getValue(args.name);
+        var continueFind = true;
 
         if (resource === undefined && this.parent && this.parent['findValue']) {
             this.parent['findValue'](args);
         } else {
             args.val = resource;
+            continueFind = false;
         }
+
+        return continueFind;
     }
 
     setValue(propertyName: string, propertyValue: any) {
@@ -139,7 +143,7 @@ class View extends BaseView {
         this._setValue(destinationPropertyName, this._getValue(sourcePropertyName, true, this._activeScope), this._activeScope);
     }
 
-    _getPropTarget(propertyName: string, scopeSource ? : IScopeObj) {
+    _getPropTarget(propertyName: string, scopeSource?: IScopeObj) {
         // [$scope].prop.prop.func(...)
         // $toggle
         // $member.foo
@@ -161,6 +165,9 @@ class View extends BaseView {
             if (props[0] == 'parent') {
                 propTarget = this.parent;
                 props.shift();
+            } else if (props[0] == 'root') {
+                propTarget = viewModel = this._getRoot().viewModel;
+                props.shift();
             } else if (props[0] == 'owner') {
                 if (this.owner) {
                     propTarget = viewModel = (this.owner).viewModel;
@@ -181,7 +188,6 @@ class View extends BaseView {
                 } else {
                     scopeSource = scopeSource.parent;
                 }
-
             }
         }
 
@@ -224,7 +230,7 @@ class View extends BaseView {
         return root;
     }
 
-    _getValueFromFunction(target, existingArgs ? , scopeSource ? : IScopeObj) {
+    _getValueFromFunction(target, existingArgs?, scopeSource?: IScopeObj) {
         var propTarget = this._getPropTarget(target);
         var args = [];
         var returnValue = '';
@@ -248,12 +254,11 @@ class View extends BaseView {
             }
         }
 
-        if (args.length == 0 && existingArgs) {
+        if (existingArgs) {
             if (existingArgs && existingArgs.length == 1 && existingArgs[0].args) {
-                args = [ existingArgs[0].args ];
-            }
-            else {
-                args = existingArgs;
+                args = args.concat([existingArgs[0].args]);
+            } else {
+                args = args.concat(existingArgs);
             }
         }
 
