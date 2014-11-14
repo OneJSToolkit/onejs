@@ -285,9 +285,6 @@ function renderNodes(block:Block, nodes: IBlockSpec[]): Node[]{
                     block.subViews.push({name: node.name, view: view});
                     block.view.addChild(view);
                     block.scope[node.name] = view;
-                    if (block.bound) {
-                        block._bindSubviews();
-                    }
                 } else {
                     view = viewRef;
                 }

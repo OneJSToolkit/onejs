@@ -119,11 +119,14 @@ class RepeaterBlock extends Block {
         if (this.rendered) {
             child.render();
         }
+
+        this.parent.insertElements(child.elements, <any>precedingElement);
+
         if (this.bound) {
             child.bind();
         }
 
-        this.parent.insertElements(child.elements, <any>precedingElement);
+        
     }
 
     _removeChild(index: number) {
