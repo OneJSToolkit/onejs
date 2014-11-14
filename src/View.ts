@@ -66,7 +66,7 @@ class View extends BaseView {
         super.onDispose();
     }
 
-    getValue(propertyName: string, expandObservables ? : boolean): any {
+    getValue(propertyName: string, expandObservables?: boolean): any {
         return this._getValue(propertyName, expandObservables);
     }
 
@@ -143,7 +143,7 @@ class View extends BaseView {
         this._setValue(destinationPropertyName, this._getValue(sourcePropertyName, true, this._activeScope), this._activeScope);
     }
 
-    _getPropTarget(propertyName: string, scopeSource ? : IScopeObj) {
+    _getPropTarget(propertyName: string, scopeSource?: IScopeObj) {
         // [$scope].prop.prop.func(...)
         // $toggle
         // $member.foo
@@ -166,7 +166,7 @@ class View extends BaseView {
                 propTarget = this.parent;
                 props.shift();
             } else if (props[0] == 'root') {
-                propTarget = this._getRoot();
+                propTarget = viewModel = this._getRoot().viewModel;
                 props.shift();
             } else if (props[0] == 'owner') {
                 if (this.owner) {
@@ -179,10 +179,6 @@ class View extends BaseView {
                 props.shift();
             } else {
                 propTarget = this.owner || this;
-                if (propTarget && props[0] && propTarget[props[0]].viewModel) {
-                    propTarget = viewModel = propTarget[props[0]].viewModel;
-                    props.shift();
-                }
             }
         } else {
             while (scopeSource) {
@@ -192,7 +188,6 @@ class View extends BaseView {
                 } else {
                     scopeSource = scopeSource.parent;
                 }
-
             }
         }
 
@@ -206,10 +201,14 @@ class View extends BaseView {
                 prop = props[i] = prop.substr(0, parenIndex);
             }
 
-            if (propTarget && propTarget.viewModel) {
+            if (i < (props.length - 1)) {
+                propTarget = propTarget[prop];
 
-                // this vm should be observed.
-                propTarget = viewModel = propTarget.viewModel;
+                if (propTarget && propTarget.viewModel) {
+
+                    // this vm should be observed.
+                    propTarget = viewModel = propTarget.viewModel;
+                }
             }
         }
 
@@ -231,7 +230,7 @@ class View extends BaseView {
         return root;
     }
 
-    _getValueFromFunction(target, existingArgs ? , scopeSource ? : IScopeObj) {
+    _getValueFromFunction(target, existingArgs?, scopeSource?: IScopeObj) {
         var propTarget = this._getPropTarget(target);
         var args = [];
         var returnValue = '';
@@ -257,9 +256,8 @@ class View extends BaseView {
 
         if (existingArgs) {
             if (existingArgs && existingArgs.length == 1 && existingArgs[0].args) {
-                args = args.concat([ existingArgs[0].args ]);
-            }
-            else {
+                args = args.concat([existingArgs[0].args]);
+            } else {
                 args = args.concat(existingArgs);
             }
         }

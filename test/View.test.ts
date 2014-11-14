@@ -92,6 +92,21 @@ describe('View', function () {
                 assert.strictEqual(typeof view._getPropTarget(foo[p]), "object");
             }
         });
+
+        it ('should return the root view model', function() {
+            var rootView = new View();
+            var childView = <View>rootView.addChild(new View());
+
+            rootView.setData({
+                foo: 'bar'
+            });
+
+            var propTarget = childView._getPropTarget('$root.foo');
+
+            assert.strictEqual(propTarget.target, rootView.viewModel);
+            assert.strictEqual(propTarget.viewModel, rootView.viewModel);
+            assert.strictEqual(propTarget.propertyName, 'foo');
+        });
     });
 
 });
