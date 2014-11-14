@@ -90,7 +90,7 @@ class View extends BaseView {
         var resource = this.getValue(args.name);
         var continueFind = true;
 
-        if (resource === undefined && this.parent && this.parent['findValue']) {
+        if (resource === "" && this.parent && this.parent['findValue']) {
             this.parent['findValue'](args);
         } else {
             args.val = resource;

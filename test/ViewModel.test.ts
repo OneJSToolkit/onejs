@@ -2,6 +2,7 @@
 
 import chai = require("chai");
 import ViewModel = require("../src/ViewModel");
+import View = require("../src/View");
 
 var assert = chai.assert;
 
@@ -11,6 +12,22 @@ describe('ViewModel', function () {
         it('should set data from the constructor', function () {
             var vm = new ViewModel({ a: 42 });
             assert.strictEqual(vm['a'], 42);
+        });
+    });
+
+    describe('findValue()', function() {
+        it ('should find a value from root', function() {
+            var rootView = new View();
+            var childView = <View>rootView.addChild(new View());
+            var grandChildView = childView.addChild(new View());
+            
+            rootView.setData({
+                foo: { bar: 'baz' }
+            });
+
+            rootView.activate();
+
+            assert.strictEqual(grandChildView.viewModel.findValue('foo.bar'), 'baz');
         });
     });
 

@@ -101,6 +101,9 @@ class BaseView implements IView {
             this.children[i].activate();
         }
 
+        if (this.state == ViewState.CREATED) {
+            this.initialize();
+        }
         if (this.state === ViewState.INACTIVE) {
             this.state = ViewState.ACTIVE;
             this.isActive = true;
