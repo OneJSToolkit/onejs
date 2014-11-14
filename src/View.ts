@@ -232,7 +232,7 @@ class View extends BaseView {
     }
 
     _getValueFromFunction(target, existingArgs ? , scopeSource ? : IScopeObj) {
-        var propTarget = this._getPropTarget(target);
+        var propTarget = this._getPropTarget(target, scopeSource);
         var args = [];
         var returnValue = '';
 

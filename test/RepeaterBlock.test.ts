@@ -2,11 +2,28 @@
 
 import chai = require("chai");
 var assert = chai.assert;
+import BaseView = require('../src/BaseView');
 import Block = require('../src/Block');
 import BlockProcessor = require('../src/BlockProcessor');
 import BlockType = require('../src/BlockType');
 import View = require('../src/View');
+import ViewModel = require('../src/ViewModel');
 import List = require('../src/List');
+
+class TestView extends BaseView {
+
+    viewModelType = TestViewModel;
+    
+    onPostRender() {
+        this.element.textContent = "Test";
+    }
+}
+
+class TestViewModel extends ViewModel {
+    upper(text: string): string {
+        return text.toUpperCase();
+    }
+}
 
 describe('Block', function () {
 
@@ -651,6 +668,117 @@ describe('Block', function () {
             block.dispose();
         });
 
+        it('should support subviews', function () {
+
+            view['subView'] = TestView;
+            view.setData({ data: new List([{ val: 1 }, { val: 2 }, { val: 3 }]) });
+            var block = BlockProcessor.fromSpec(view, {
+                type: BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "item.val"
+                            }
+                        }, {
+                            type: BlockType.View,
+                            name: "subView"
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '1Test2Test3Test');
+            assert.strictEqual(view.children.length, 3);
+            block.dispose();
+        });
+
+        it('should lifecycle views correctly', function () {
+
+            view['subView'] = TestView;
+            var list = new List([]);
+            view.setData({ data: list});
+            var block = BlockProcessor.fromSpec(view, {
+                type: BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: BlockType.View,
+                            name: "subView"
+                        }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, '');
+            assert.strictEqual(view.children.length, 0);
+
+            list.push({ val: 1 });
+            assert.strictEqual(div.textContent, 'Test');
+            assert.strictEqual(view.children.length, 1);
+            var child = <BaseView> view.children[0];
+            assert.strictEqual(child.isActive, true);
+            list.pop();
+            assert.strictEqual(view.children.length, 0);
+            assert.strictEqual(child.isActive, false);
+            assert.strictEqual(child.isDisposed, true);
+            
+
+            block.dispose();
+        });
+
+        it('should add subviews to block scope', function () {
+
+            view['subView'] = TestView;
+            view.setData({ data: new List([{ val: 'hey' }, { val: 'hi' }, { val: 'yo' }]) });
+            var block = BlockProcessor.fromSpec(view, {
+                type: BlockType.Element,
+                tag: "div",
+                children: [
+                    {
+                        type: BlockType.RepeaterBlock,
+                        source: "data",
+                        iterator: "item",
+                        children: [{
+                            type: BlockType.Element,
+                            tag: "div",
+                            binding: {
+                                text: "subView.upper(item.val)"
+                            }
+                        }, {
+                                type: BlockType.View,
+                                name: "subView"
+                            }]
+                    }
+                ]
+            });
+
+            block.render();
+            block.bind();
+            block.update();
+            var div = block.elements[0];
+            assert.strictEqual(div.textContent, 'HEYTestHITestYOTest');
+            assert.strictEqual(view.children.length, 3);
+            block.dispose();
+        });
     });
 
 });

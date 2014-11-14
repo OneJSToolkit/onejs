@@ -10,7 +10,6 @@ class RepeaterBlock extends Block {
     source: string;
     iterator: string;
     blockTemplate: IBlockSpec[];
-    bound = false;
     rendered = false;
     _lastList;
     _currentList = new List<IItem>();
@@ -120,11 +119,14 @@ class RepeaterBlock extends Block {
         if (this.rendered) {
             child.render();
         }
+
+        this.parent.insertElements(child.elements, <any>precedingElement);
+
         if (this.bound) {
             child.bind();
         }
 
-        this.parent.insertElements(child.elements, <any>precedingElement);
+        
     }
 
     _removeChild(index: number) {

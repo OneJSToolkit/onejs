@@ -145,7 +145,6 @@ describe('Block', function () {
 
         it('should render a subview', function () {
             var subView = new BaseView();
-            subView.element = document.createElement("div")
             view.addChild(subView);
             view['subView'] = subView;
 
@@ -168,7 +167,6 @@ describe('Block', function () {
 
         it('should render a subview with bindings', function () {
             var subView = new BaseView();
-            subView.element = document.createElement("div")
             view.addChild(subView);
             view['subView'] = subView;
             var callbackCalled = false;
