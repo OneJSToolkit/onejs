@@ -25,6 +25,10 @@ describe('ViewModel', function () {
                 foo: { bar: 'baz' }
             });
 
+            childView.setData({
+                foo: { baz: 'boz' }
+            });
+
             rootView.activate();
 
             assert.strictEqual(grandChildView.viewModel.findValue('foo.bar'), 'baz');

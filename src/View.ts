@@ -73,7 +73,7 @@ class View extends BaseView {
     _getValue(propertyName: string, expandObservables?: boolean, scopeSource?: IScopeObj): any {
 
         var targetObject = this._getPropTarget(propertyName, scopeSource);
-        var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : '';
+        var targetValue = (targetObject && targetObject.target) ? targetObject.target[targetObject.propertyName] : undefined;
 
         if (targetValue) {
             if (expandObservables && targetValue.isObservable) {
@@ -90,7 +90,7 @@ class View extends BaseView {
         var resource = this.getValue(args.name);
         var continueFind = true;
 
-        if (resource === "" && this.parent && this.parent['findValue']) {
+        if (resource === undefined && this.parent && this.parent['findValue']) {
             this.parent['findValue'](args);
         } else {
             args.val = resource;
