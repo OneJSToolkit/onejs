@@ -139,6 +139,10 @@ class View extends BaseView {
         return allowPropogation;
     }
 
+    raise(propertyName: string, ev) {
+        return EventGroup.raise(ev.target, propertyName, null, true);
+    }
+
     send(sourcePropertyName, destinationPropertyName) {
         this._setValue(destinationPropertyName, this._getValue(sourcePropertyName, true, this._activeScope), this._activeScope);
     }
