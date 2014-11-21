@@ -1,8 +1,8 @@
-/// <reference path="../definitions/definitions.d.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
 import chai = require("chai");
 import rewire = require("rewire");
-import _Scheduler = require('../src/Scheduler');
+import _Scheduler = require('../Scheduler');
 var Scheduler:typeof _Scheduler;
 
 var assert = chai.assert;
@@ -10,7 +10,7 @@ var assert = chai.assert;
 describe('Scheduler', function () {
 
     beforeEach(function () {
-       Scheduler = rewire<typeof _Scheduler>('../src/Scheduler');
+       Scheduler = rewire<typeof _Scheduler>('../Scheduler');
     });
 
     describe('#main', function () {

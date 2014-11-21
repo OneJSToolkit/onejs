@@ -41,6 +41,7 @@
     "requirejs": "^2.1.14",
     "rewire": "^2.1.0",
     "rewire-webpack": "^0.2.0",
+    "tsd": "^0.6.0-beta.4",
     "typescript": "1.1.0-1",
     "webpack": "^1.4.5",
     "webpack-dev-server": "^1.6.5"

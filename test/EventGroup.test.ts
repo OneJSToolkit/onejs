@@ -1,8 +1,8 @@
-/// <reference path="../definitions/definitions.d.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
 import chai = require("chai");
-import List = require("../src/List");
-import EventGroup = require("../src/EventGroup");
+import List = require("../List");
+import EventGroup = require("../EventGroup");
 
 var expect = chai.expect;
 var assert = chai.assert;
