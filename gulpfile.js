@@ -20,7 +20,7 @@ gulp.task('tdd', [], function (done) {
   }, done);
 });
 
-gulp.task('ciTest', ['tscTest'], function (done) {
+gulp.task('ciTest', ['test-preprocess'], function (done) {
   karma.start({
     configFile: __dirname + '/karma-ci.conf.js'
   }, done);
