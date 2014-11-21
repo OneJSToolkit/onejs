@@ -39,3 +39,6 @@ Icon
 node_modules
 bin
 dist
+app
+app-min
+temp
