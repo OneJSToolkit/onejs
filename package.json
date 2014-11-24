@@ -29,20 +29,19 @@
         "istanbul": "^0.3.2",
         "istanbul-instrumenter-loader": "^0.1.2",
         "karma": "^0.12.24",
+        "karma-chai": "~0.1.0",
         "karma-chrome-launcher": "^0.1.5",
+        "karma-cli": "0.0.4",
         "karma-coverage": "^0.2.6",
         "karma-html-reporter": "^0.2.4",
         "karma-mocha": "^0.1.9",
-        "karma-phantomjs-launcher": "^0.1.4",
-        "karma-webpack": "^1.2.2",
+        "karma-requirejs": "~0.2.2",
         "mocha": "^1.21.4",
         "phantomjs": "^1.9.10",
         "requirejs": "^2.1.14",
+        "requirejs": "^2.1.15",
         "rewire": "^2.1.0",
-        "rewire-webpack": "^0.2.0",
-        "typescript": "1.1.0-1",
-        "webpack": "^1.4.5",
-        "webpack-dev-server": "^1.6.5"
+        "typescript": "1.1.0-1"
     },
     "dependencies": {}
 }

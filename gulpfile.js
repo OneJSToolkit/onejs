@@ -6,95 +6,50 @@ var karma = require('karma').server;
 var del = require('del');
 
 var paths = {
-    source: ['src/*.ts']
+    app: 'app/',
+    dist: 'dist/',
+    amd: 'dist/amd',
+    commonjs: 'dist/commonjs',
+    appSourceDest: 'app/src/lib',
+    appTestDest: 'app/test/lib',
+    libSource: ['src/lib/**/*.ts'],
+    libTest: ['test/lib/**/*.ts']
 };
 
 var shouldExit = true;
 
 gulp.task('clean', function(cb) {
-    del(['dist/'], cb);
+    del([paths.dist, paths.app], cb);
 });
 
-gulp.task('tscAMD', ['clean'], function() {
-    var tsResult = gulp.src(paths.source)
+gulp.task('build-source', ['clean'], function() {
+    return gulp.src(paths.libSource)
         .pipe(tsc({
             module: 'amd',
             target: 'ES5',
             declarationFiles: true
-        }));
-
-    
-    tsResult.dts.pipe(gulp.dest('dist/amd'));
-
-    return tsResult.js.pipe(gulp.dest('dist/amd'));
+        }))
+        .pipe(gulp.dest(paths.amd))
+        .pipe(gulp.dest(paths.appSourceDest));
 });
 
-gulp.task('tscCommonJS', ['clean'], function() {
-    var tsResult = gulp.src(paths.source)
+gulp.task('build-test', ['clean', 'build-source'], function() {
+    return gulp.src(paths.libTest)
         .pipe(tsc({
-            module: 'commonjs',
+            module: 'amd',
             target: 'ES5',
-            declarationFiles: true
-        }));
-
-    tsResult.dts.pipe(gulp.dest('dist/commonjs'));
-
-    return tsResult.js.pipe(gulp.dest('dist/commonjs'));
+            declarationFiles: false
+        }))
+        .pipe(gulp.dest(paths.appTestDest));
 });
 
-gulp.task('cleanTest', function(cb) {
-    del(['bin'], cb);
-});
+gulp.task('build', ['build-source', 'build-test']);
 
-gulp.task('copyDist', ['tscCommonJS'], function() {
-    return gulp.src('dist/commonjs/*.js')
-        .pipe(gulp.dest('bin/src'));
-});
-
-gulp.task('tscTest', ['cleanTest', 'copyDist'], function() {
-    var tsResult = gulp.src('test/*.ts')
-        .pipe(tsc({
-            module: 'commonjs',
-            target: 'ES5'
-        }));
-
-    return tsResult.js.pipe(gulp.dest('bin/test'));
-});
-
-gulp.task('test', ['tscTest'], function (done) {
+gulp.task('test', ['build'], function (done) {
   karma.start({
     configFile: __dirname + '/karma.conf.js',
     singleRun: true
   }, done);
 });
 
-gulp.task('tdd', [], function (done) {
-  karma.start({
-    configFile: __dirname + '/karma.conf.js'
-  }, done);
-});
-
-gulp.task('ciTest', ['tscTest'], function (done) {
-  karma.start({
-    configFile: __dirname + '/karma-ci.conf.js'
-  }, done);
-});
-
-gulp.task('covertest', ['ciTest'], function() {
-    return gulp.src('bin/coverage/**/lcov.info')
-        .pipe(coveralls());
-});
-
-// karma blocks gulp from exiting without this
-gulp.doneCallback = function(err) {
-    if(shouldExit) {
-        process.exit(err? 1: 0);
-    }
-}
-
-gulp.task('default', ['tscAMD', 'tscCommonJS']);
-
-gulp.task('watch', ['default'], function() {
-    shouldExit = false;
-    return gulp.watch('src/**/*', ['default']);
-});
+gulp.task('default', ['build', 'test']);

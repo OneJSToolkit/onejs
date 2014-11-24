@@ -1,9 +1,9 @@
-/// <reference path="../definitions/definitions.d.ts" />
+/// <reference path="../../definitions/definitions.d.ts" />
 
 import chai = require('chai');
-import List = require('../src/List');
-import EventGroup = require('../src/EventGroup');
-import ViewModel = require('../src/ViewModel');
+import List = require('../../src/lib/List');
+import EventGroup = require('../../src/lib/EventGroup');
+import ViewModel = require('../../src/lib/ViewModel');
 
 var assert = chai.assert;
 

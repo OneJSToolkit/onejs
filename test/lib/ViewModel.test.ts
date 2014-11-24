@@ -1,8 +1,8 @@
-/// <reference path="../definitions/definitions.d.ts" />
+/// <reference path="../../definitions/definitions.d.ts" />
 
 import chai = require("chai");
-import ViewModel = require("../src/ViewModel");
-import View = require("../src/View");
+import ViewModel = require("../../src/lib/ViewModel");
+import View = require("../../src/lib/View");
 
 var assert = chai.assert;
 

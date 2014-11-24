@@ -1,8 +1,8 @@
-/// <reference path="../definitions/definitions.d.ts" />
+/// <reference path="../../definitions/definitions.d.ts" />
 
 import chai = require("chai");
-import List = require("../src/List");
-import DomUtils = require("../src/DomUtils");
+import List = require("../../src/lib/List");
+import DomUtils = require("../../src/lib/DomUtils");
 
 var expect = chai.expect;
 var assert = chai.assert;
