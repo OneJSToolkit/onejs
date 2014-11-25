@@ -12,8 +12,9 @@ var tsc = require('gulp-typescript');
 var paths = {
     app: 'app/',
     dist: 'dist/',
-    amd: 'dist/amd',
-    commonjs: 'dist/commonjs',
+    appAmd: 'dist/amd/lib',
+    appCommonJs: 'dist/commonjs/lib',
+    compilerCommonJs: 'dist/commonjs/compiler',
     appSourceDest: 'app/src/lib',
     appTestDest: 'app/test/lib',
     compilerSource: ['src/compiler/**/*.ts'],
@@ -27,18 +28,28 @@ gulp.task('clean', function(cb) {
     del([paths.dist, paths.app], cb);
 });
 
-gulp.task('build-source', ['clean'], function() {
+gulp.task('build-source-amd', ['clean'], function() {
     return gulp.src(paths.libSource)
         .pipe(tsc({
             module: 'amd',
             target: 'ES5',
             declarationFiles: true
         }))
-        .pipe(gulp.dest(paths.amd))
+        .pipe(gulp.dest(paths.appAmd))
         .pipe(gulp.dest(paths.appSourceDest));
 });
 
-gulp.task('build-test', ['clean', 'build-source'], function() {
+gulp.task('build-source-commonjs', ['clean'], function() {
+    return gulp.src(paths.libSource)
+        .pipe(tsc({
+            module: 'commonjs',
+            target: 'ES5',
+            declarationFiles: true
+        }))
+        .pipe(gulp.dest(paths.appCommonJs));
+});
+
+gulp.task('build-test', ['clean', 'build-source-amd'], function() {
     return gulp.src(paths.libTest)
         .pipe(tsc({
             module: 'amd',
@@ -55,10 +66,13 @@ gulp.task('build-compiler', ['clean'], function() {
             target: 'ES5',
             declarationFiles: false
         }))
-        .pipe(gulp.dest(paths.commonjs));
+        .pipe(gulp.dest(paths.compilerCommonJs));
 });
 
-gulp.task('build', ['build-source', 'build-test', 'build-compiler']);
+gulp.task('build', ['build-source-amd',
+                    'build-source-commonjs',
+                    'build-test',
+                    'build-compiler']);
 
 gulp.task('compiler-test', ['build-compiler'], function() {
     return exec('node generate.js LeftNav.html', {
@@ -77,12 +91,12 @@ gulp.task('test', ['build'], function (done) {
   }, done);
 });
 
-gulp.task('covertest', ['build','test'], function() {
+gulp.task('coverage-report', ['build','test'], function() {
     return gulp.src('coverage/**/lcov.info')
         .pipe(coveralls());
 
 });
 
-gulp.task('ci', ['covertest', 'compiler-test']);
+gulp.task('ci', ['coverage-report', 'compiler-test']);
 
 gulp.task('default', ['build', 'test', 'compiler-test']);
