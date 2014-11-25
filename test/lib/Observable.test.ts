@@ -1,8 +1,8 @@
-/// <reference path="../definitions/definitions.d.ts" />
+/// <reference path="../../definitions/definitions.d.ts" />
 
 import chai = require("chai");
-import Observable = require("../src/Observable");
-import EventGroup = require("../src/EventGroup");
+import Observable = require("../../src/lib/Observable");
+import EventGroup = require("../../src/lib/EventGroup");
 
 var assert = chai.assert;
 
