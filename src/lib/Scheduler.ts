@@ -112,7 +112,7 @@ export class SchedulerBackend implements ISchedulerBackend {
     }
 
     _setImmediate = (typeof setImmediate !== 'undefined') ? setImmediate : function (callback) { setTimeout(callback, 16); };
-    _now = Date.now.bind(Date);
+    _now = Date.now;
 
     scheduleRunner() {
         if (!this.running && !this.scheduled) {

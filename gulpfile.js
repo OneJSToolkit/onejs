@@ -52,4 +52,10 @@ gulp.task('test', ['build'], function (done) {
   }, done);
 });
 
+gulp.task('covertest', ['build','test'], function() {
+    return gulp.src('coverage/**/lcov.info')
+        .pipe(coveralls());
+
+});
+
 gulp.task('default', ['build', 'test']);

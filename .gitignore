@@ -41,3 +41,4 @@ bin
 dist
 npm-debug.log
 app
+coverage
