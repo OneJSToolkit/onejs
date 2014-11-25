@@ -1,9 +1,13 @@
-var gulp = require('gulp');
-var mocha = require('gulp-mocha');
 var coveralls = require('gulp-coveralls');
-var tsc = require('gulp-typescript');
-var karma = require('karma').server;
 var del = require('del');
+var exec = require('child_process').exec;
+var flatten = require('gulp-flatten');
+var gulp = require('gulp');
+var gutil = require('gulp-util');
+var karma = require('karma').server;
+var mocha = require('gulp-mocha');
+var tsc = require('gulp-typescript');
+
 
 var paths = {
     app: 'app/',
@@ -12,6 +16,7 @@ var paths = {
     commonjs: 'dist/commonjs',
     appSourceDest: 'app/src/lib',
     appTestDest: 'app/test/lib',
+    compilerSource: ['src/compiler/**/*.ts'],
     libSource: ['src/lib/**/*.ts'],
     libTest: ['test/lib/**/*.ts']
 };
@@ -43,7 +48,27 @@ gulp.task('build-test', ['clean', 'build-source'], function() {
         .pipe(gulp.dest(paths.appTestDest));
 });
 
-gulp.task('build', ['build-source', 'build-test']);
+gulp.task('build-compiler', ['clean'], function() {
+    return gulp.src(paths.compilerSource)
+        .pipe(tsc({
+            module: 'commonjs',
+            target: 'ES5',
+            declarationFiles: false
+        }))
+        .pipe(gulp.dest(paths.commonjs));
+});
+
+gulp.task('build', ['build-source', 'build-test', 'build-compiler']);
+
+gulp.task('compiler-test', ['build-compiler'], function() {
+    return exec('node generate.js LeftNav.html', {
+        cwd: 'test/compiler'
+    }, function(error, stdout, stderr) {
+        if (error) {
+            gutil.log(gutil.colors.red(error));
+        }
+    });
+});
 
 gulp.task('test', ['build'], function (done) {
   karma.start({
@@ -58,4 +83,6 @@ gulp.task('covertest', ['build','test'], function() {
 
 });
 
-gulp.task('default', ['build', 'test']);
+gulp.task('ci', ['covertest', 'compiler-test']);
+
+gulp.task('default', ['build', 'test', 'compiler-test']);
