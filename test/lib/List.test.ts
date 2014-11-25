@@ -1,9 +1,9 @@
 /// <reference path="../typings/tsd.d.ts" />
 
 import chai = require('chai');
-import List = require('../List');
-import EventGroup = require('../EventGroup');
-import ViewModel = require('../ViewModel');
+import List = require('../../src/lib/List');
+import EventGroup = require('../../src/lib/EventGroup');
+import ViewModel = require('../../src/lib/ViewModel');
 
 var assert = chai.assert;
 

@@ -1,9 +1,9 @@
 /// <reference path="../typings/tsd.d.ts" />
 
 import chai = require("chai");
-import View = require("../View");
-import Block = require("../Block");
-import BlockType = require('../BlockType');
+import View = require("../../src/lib/View");
+import Block = require("../../src/lib/Block");
+import BlockType = require('../../src/lib/BlockType');
 
 var assert = chai.assert;
 

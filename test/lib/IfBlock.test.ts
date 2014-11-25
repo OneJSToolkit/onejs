@@ -2,10 +2,10 @@
 
 import chai = require("chai");
 var assert = chai.assert;
-import Block = require('../Block');
-import BlockProcessor = require('../BlockProcessor');
-import BlockType = require('../BlockType');
-import View = require('../View');
+import Block = require('../../src/lib/Block');
+import BlockProcessor = require('../../src/lib/BlockProcessor');
+import BlockType = require('../../src/lib/BlockType');
+import View = require('../../src/lib/View');
 
 describe('Block', function () {
 

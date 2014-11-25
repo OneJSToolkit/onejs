@@ -1,8 +1,8 @@
 /// <reference path="../typings/tsd.d.ts" />
 
 import chai = require("chai");
-import List = require("../List");
-import DomUtils = require("../DomUtils");
+import List = require("../../src/lib/List");
+import DomUtils = require("../../src/lib/DomUtils");
 
 var expect = chai.expect;
 var assert = chai.assert;

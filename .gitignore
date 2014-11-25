@@ -42,3 +42,5 @@ dist
 app
 app-min
 temp
+npm-debug.log
+coverage

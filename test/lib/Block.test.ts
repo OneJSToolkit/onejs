@@ -2,14 +2,16 @@
 
 import chai = require("chai");
 var assert = chai.assert;
-import Block = require('../Block');
-import IBinding = require('../IBinding');
-import Binding = require('../Binding');
-import BlockProcessor = require('../BlockProcessor');
-import BlockType = require('../BlockType');
-import BaseView = require('../BaseView');
-import View = require('../View');
-import EventGroup = require('../EventGroup');
+import chai = require("chai");
+var assert = chai.assert;
+import Block = require('../../src/lib/Block');
+import IBinding = require('../../src/lib/IBinding');
+import Binding = require('../../src/lib/Binding');
+import BlockProcessor = require('../../src/lib/BlockProcessor');
+import BlockType = require('../../src/lib/BlockType');
+import BaseView = require('../../src/lib/BaseView');
+import View = require('../../src/lib/View');
+import EventGroup = require('../../src/lib/EventGroup');
 
 describe('Block', function () {
 
@@ -202,7 +204,7 @@ describe('Block', function () {
     });
 
     describe('#Block binding', function () {
-        
+
         it("should bind text", function () {
             view.setData({ pet: 'dog' });
             var block = BlockProcessor.fromSpec(view, {

@@ -1,30 +1,36 @@
 /// <reference path="../typings/tsd.d.ts" />
 
 import chai = require("chai");
-import rewire = require("rewire");
-import _Scheduler = require('../Scheduler');
-var Scheduler:typeof _Scheduler;
+import Scheduler = require('../../src/lib/Scheduler');
 
 var assert = chai.assert;
 
 describe('Scheduler', function () {
+    var scheduler: Scheduler.IQueue;
+    var backend: Scheduler._SchedulerBackend;
 
+<<<<<<< HEAD:test/Scheduler.test.ts
     beforeEach(function () {
        Scheduler = rewire<typeof _Scheduler>('../Scheduler');
+=======
+    beforeEach(function() {
+        backend = new Scheduler._SchedulerBackend();
+        scheduler = backend.buildMain();
+>>>>>>> master:test/lib/Scheduler.test.ts
     });
 
     describe('#main', function () {
         it('should schedule tasks', function (done) {
-            Scheduler.main.schedule(done);
+            scheduler.schedule(done);
         });
 
         it('should execute tasks in order', function (done) {
             var count = 0;
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 assert.strictEqual(count, 0);
                 count++;
             });
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 assert.strictEqual(count, 1);
                 done();
             });
@@ -32,11 +38,11 @@ describe('Scheduler', function () {
 
         it('should execute tasks inserted at the top first', function (done) {
             var count = 0;
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 assert.strictEqual(count, 1);
                 done();
             });
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 assert.strictEqual(count, 0);
                 count++;
             }, true);
@@ -44,11 +50,11 @@ describe('Scheduler', function () {
 
         it('should allow tasks to schedule tasks', function (done) {
             var count = 0;
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 assert.strictEqual(count, 0);
                 count++;
 
-                Scheduler.main.schedule(function () {
+                scheduler.schedule(function () {
                     assert.strictEqual(count, 1);
                     done();
                 });
@@ -62,14 +68,15 @@ describe('Scheduler', function () {
             function fakeImmediate(func) {
                 calls.push(func);
             }
-            var revert = Scheduler['__set__']('_setImmediate', fakeImmediate);
+            backend._setImmediate = fakeImmediate;
 
-            Scheduler.main.schedule(function () {
+            console.log("Scheduled first");
+            scheduler.schedule(function () {
+                console.log("First evaluated");
                 throw Error("Oh no!");
             });
 
-            Scheduler.main.schedule(function () {
-                revert();
+            scheduler.schedule(function () {
                 done();
             });
 
@@ -77,11 +84,9 @@ describe('Scheduler', function () {
             assert.throws(calls[0], "Oh no!"); // execute the first task
             assert.strictEqual(calls.length, 2);
             assert.doesNotThrow(calls[1]); // execute the second task
-
         });
 
         it('should yield when time slice is exhausted', function (done) {
-
             var calls = [];
 
             function fakeImmediate(func) {
@@ -93,20 +98,14 @@ describe('Scheduler', function () {
                 return nowValue;
             }
 
+            backend._setImmediate = fakeImmediate;
+            backend._now = fakeNow;
 
-            var revert = [];
-            revert.push(Scheduler['__set__']('_setImmediate', fakeImmediate));
-            revert.push(Scheduler['__set__']('_now', fakeNow));
-            var TIME_SLICE = Scheduler['__get__']('TIME_SLICE');
-
-            Scheduler.main.schedule(function () {
-                nowValue = TIME_SLICE + 1;
+            scheduler.schedule(function () {
+                nowValue = backend.time_slice + 1;
             });
 
-            Scheduler.main.schedule(function () {
-                revert.forEach(function (revertFunc) {
-                    revertFunc();
-                });
+            scheduler.schedule(function () {
                 done();
             });
 
@@ -118,7 +117,6 @@ describe('Scheduler', function () {
         });
 
         it('should not yield when time slice is not exhausted', function (done) {
-
             var calls = [];
 
             function fakeImmediate(func) {
@@ -130,18 +128,15 @@ describe('Scheduler', function () {
                 return nowValue;
             }
 
-
-            var revert = [];
-            revert.push(Scheduler['__set__']('_setImmediate', fakeImmediate));
-            revert.push(Scheduler['__set__']('_now', fakeNow));
-            var TIME_SLICE = Scheduler['__get__']('TIME_SLICE');
+            backend._setImmediate = fakeImmediate;
+            backend._now = fakeNow;
 
             var count = 0;
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 count++;
             });
 
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 count++;
             });
 
@@ -149,12 +144,8 @@ describe('Scheduler', function () {
             assert.doesNotThrow(calls[0]); // execute the first task
             assert.strictEqual(calls.length, 1);
             assert.strictEqual(count, 2);
-            revert.forEach(function (revertFunc) {
-                revertFunc();
-            });
+
             done();
-
-
         });
     });
 
@@ -162,19 +153,19 @@ describe('Scheduler', function () {
         it('should execute before tasks first', function (done) {
             var count = 0;
 
-            Scheduler.main.before.schedule(function () {
+            scheduler.before.schedule(function () {
                 assert.strictEqual(count, 0);
                 count++;
             });
 
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 assert.strictEqual(count, 1);
                 done();
             });
         });
 
         it('should have an after that is distinct from main', function () {
-            assert.notStrictEqual(Scheduler.main.before.after, Scheduler.main);
+            assert.notStrictEqual(scheduler.before.after, scheduler);
         });
 
     });
@@ -183,32 +174,32 @@ describe('Scheduler', function () {
         it('should execute after tasks second', function (done) {
             var count = 0;
 
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 assert.strictEqual(count, 0);
                 count++;
             });
 
-            Scheduler.main.after.schedule(function () {
+            scheduler.after.schedule(function () {
                 assert.strictEqual(count, 1);
                 done();
             });
         });
 
         it('should have a before that is distinct from main', function () {
-            assert.notStrictEqual(Scheduler.main.after.before, Scheduler.main);
+            assert.notStrictEqual(scheduler.after.before, scheduler);
         });
     });
 
     describe('#cancel', function () {
         it('should not execute a cancelled task', function (done) {
 
-            var id = Scheduler.main.schedule(function () {
+            var id = scheduler.schedule(function () {
                 assert.fail();
             });
 
             Scheduler.cancel(id);
 
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 done();
             });
 
@@ -218,83 +209,75 @@ describe('Scheduler', function () {
     describe('#retrieveState', function () {
 
         it('should report empty when no tasks are scheduled', function () {
-            var state = Scheduler.retrieveState();
+            var state = Scheduler.retrieveState(backend);
             assert.strictEqual(state.tasks.length, 0);
         });
 
         it('should show scheduled tasks', function (done) {
-            Scheduler.main.schedule(done, false, "xyzzy");
-            var state = Scheduler.retrieveState();
+            scheduler.schedule(done, false, "xyzzy");
+            var state = Scheduler.retrieveState(backend);
             assert.strictEqual(state.tasks.length, 1);
             var task = state.tasks[0];
             assert.strictEqual(task.name, "xyzzy");
         });
 
         it('should provide accurate ids for cancellation', function (done) {
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 assert.fail();
             });
-            var state = Scheduler.retrieveState();
+            var state = Scheduler.retrieveState(backend);
             assert.strictEqual(state.tasks.length, 1);
             var task = state.tasks[0];
             Scheduler.cancel(task.id);
             assert.strictEqual(task.cancelled, false);
 
-            state = Scheduler.retrieveState();
+            state = Scheduler.retrieveState(backend);
             assert.strictEqual(state.tasks.length, 1);
             task = state.tasks[0];
             assert.strictEqual(task.cancelled, true);
 
-            Scheduler.main.schedule(done);
+            scheduler.schedule(done);
         });
 
         it('should show the active task', function (done) {
-            var id = Scheduler.main.schedule(function () {
-                var state = Scheduler.retrieveState();
+            var id = scheduler.schedule(function () {
+                var state = Scheduler.retrieveState(backend);
                 assert.strictEqual(state.activeTask.id, id);
                 assert.strictEqual(state.activeTask.name, "activeTask");
                 assert.strictEqual(state.tasks.length, 0);
                 done();
             }, false, "activeTask");
-            
         });
 
         it('should show multiple queues in order', function (done) {
-
             var count = 0;
 
-            Scheduler.main.after.schedule(function () {
+            scheduler.after.schedule(function () {
                 assert.strictEqual(count, 2);
                 done();
             }, false, "third");
 
-            Scheduler.main.schedule(function () {
+            scheduler.schedule(function () {
                 assert.strictEqual(count, 1);
                 count++;
             }, false, "second");
 
-            Scheduler.main.before.schedule(function () {
+            scheduler.before.schedule(function () {
                 assert.strictEqual(count, 0);
                 count++;
             }, false, "first");
 
-            var state = Scheduler.retrieveState();
+            var state = Scheduler.retrieveState(backend);
             assert.strictEqual(state.tasks.length, 3);
             var taskNames = state.tasks.map(function (task) {
                 return task.name;
             });
             assert.deepEqual(taskNames, ["first", "second", "third"]);
-
         });
 
     });
 
     describe('#activeQueue', function () {
-
-        it('should default to the main queue', function () {
-            assert.strictEqual(Scheduler.activeQueue, Scheduler.main);
-        });
-
         it('should reflect the queue of the current task', function (done) {
             var beforeQueue = Scheduler.main.before;
 

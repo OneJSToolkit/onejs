@@ -1,8 +1,8 @@
 /// <reference path="../typings/tsd.d.ts" />
 
 import chai = require("chai");
-import Observable = require("../Observable");
-import EventGroup = require("../EventGroup");
+import Observable = require("../../src/lib/Observable");
+import EventGroup = require("../../src/lib/EventGroup");
 
 var assert = chai.assert;
 
