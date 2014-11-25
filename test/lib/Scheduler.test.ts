@@ -7,10 +7,10 @@ var assert = chai.assert;
 
 describe('Scheduler', function () {
     var scheduler: Scheduler.IQueue;
-    var backend: Scheduler.SchedulerBackend;
+    var backend: Scheduler._SchedulerBackend;
 
     beforeEach(function() {
-        backend = new Scheduler.SchedulerBackend();
+        backend = new Scheduler._SchedulerBackend();
         scheduler = backend.buildMain();
     });
 

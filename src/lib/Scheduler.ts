@@ -12,19 +12,19 @@ export interface IState {
 }
 
 interface ITaskMap {
-    [key: number]: Task;
+    [key: number]: _Task;
 }
 
 var taskMap: ITaskMap = {};
 
-export class Task implements ITaskState {
+export class _Task implements ITaskState {
     id: number;
     name: string;
     cancelled: boolean;
     work: Function;
 
     constructor(work: Function, name?: string) {
-        this.id = Task._instanceCount++;
+        this.id = _Task._instanceCount++;
         this.work = work;
         this.name = name;
         this.cancelled = false;
@@ -54,39 +54,27 @@ export interface IQueue {
     schedule(work: Function, insertAtTop?: boolean, name?: string): number;
 }
 
-export interface ISchedulerBackend {
-    scheduled: boolean;
-    running: boolean;
-    activeTask: Task;
-    _setImmediate(): any;
-    _now(): number;
-    scheduleRunner(): any;
-    nextTask(): Task;
-    main: Queue;
-    buildMain(): Queue;
-}
+export class _Queue implements IQueue {
 
-export class Queue implements IQueue {
+    _before: _Queue;
+    _after: _Queue;
+    _work: _Task[] = [];
+    _schedulerBackend: _SchedulerBackend;
 
-    _before: Queue;
-    _after: Queue;
-    _work: Task[] = [];
-    _schedulerBackend: ISchedulerBackend;
-
-    constructor(schedulerBackend: ISchedulerBackend) {
+    constructor(schedulerBackend: _SchedulerBackend) {
         this._schedulerBackend = schedulerBackend;
     }
 
     get before() {
-        return this._before || (this._before = new Queue(this._schedulerBackend));
+        return this._before || (this._before = new _Queue(this._schedulerBackend));
     }
 
     get after() {
-        return this._after || (this._after = new Queue(this._schedulerBackend));
+        return this._after || (this._after = new _Queue(this._schedulerBackend));
     }
 
     schedule(work: Function, insertAtTop = false, name?:string):number {
-        var task = new Task(work, name);
+        var task = new _Task(work, name);
         if (insertAtTop) {
             this._work.unshift(task);
         } else {
@@ -99,15 +87,15 @@ export class Queue implements IQueue {
     }
 }
 
-export class SchedulerBackend implements ISchedulerBackend {
+export class _SchedulerBackend {
     scheduled = false;
     running = false;
-    activeTask: Task = null;
-    main: Queue;
+    activeTask: _Task = null;
+    main: _Queue;
     time_slice = 30;
 
     buildMain() {
-        this.main = new Queue(this);
+        this.main = new _Queue(this);
         return this.main;
     }
 
@@ -151,9 +139,9 @@ export class SchedulerBackend implements ISchedulerBackend {
         }
     }
 
-    nextTask(): Task {
-        var queue: Queue = this.main;
-        var parents: Queue[] = [];
+    nextTask(): _Task {
+        var queue: _Queue = this.main;
+        var parents: _Queue[] = [];
 
         while (parents.length || queue) {
             if (queue) {
@@ -178,7 +166,7 @@ export function cancel(id: number) {
     }
 }
 
-export function retrieveState(backend?: ISchedulerBackend): IState {
+export function retrieveState(backend?: _SchedulerBackend): IState {
     if (!backend) {
         backend = schedulerBackend;
     }
@@ -186,8 +174,8 @@ export function retrieveState(backend?: ISchedulerBackend): IState {
         tasks: [],
         activeTask: backend.activeTask
     };
-    var queue: Queue = backend.main;
-    var parents: Queue[] = [];
+    var queue: _Queue = backend.main;
+    var parents: _Queue[] = [];
 
     while (parents.length || queue) {
         if (queue) {
@@ -209,6 +197,6 @@ export function retrieveState(backend?: ISchedulerBackend): IState {
     return state;
 }
 
-var schedulerBackend = new SchedulerBackend();
-export var main: Queue = schedulerBackend.buildMain();
+var schedulerBackend = new _SchedulerBackend();
+export var main: _Queue = schedulerBackend.buildMain();
 export var activeQueue: IQueue = main;
