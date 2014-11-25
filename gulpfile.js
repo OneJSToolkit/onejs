@@ -1,3 +1,5 @@
+'use strict';
+
 var coveralls = require('gulp-coveralls');
 var del = require('del');
 var exec = require('child_process').exec;
@@ -19,19 +21,20 @@ oneJsCompiler.gulpTasks.all({
 var shouldExit = true;
 
 gulp.task('tdd', [], function (done) {
-  karma.start({
-    configFile: __dirname + '/karma.conf.js'
-  }, done);
+    karma.start({
+        configFile: __dirname + '/karma.conf.js'
+    }, done);
 });
 
 gulp.task('ciTest', ['test-preprocess'], function (done) {
-  karma.start({
-    configFile: __dirname + '/karma-ci.conf.js'
-  }, done);
+    karma.start({
+        configFile: __dirname + '/karma-ci.conf.js'
+    }, done);
 });
 
 gulp.task('covertest', ['ciTest'], function() {
     return gulp.src('bin/coverage/**/lcov.info')
+});
 
 var paths = {
     app: 'app/',
@@ -109,16 +112,15 @@ gulp.task('compiler-test', ['build-compiler'], function() {
 });
 
 gulp.task('test', ['build'], function (done) {
-  karma.start({
-    configFile: __dirname + '/karma.conf.js',
-    singleRun: true
-  }, done);
+    karma.start({
+        configFile: __dirname + '/karma.conf.js',
+        singleRun: true
+    }, done);
 });
 
 gulp.task('coverage-report', ['build','test'], function() {
     return gulp.src('coverage/**/lcov.info')
         .pipe(coveralls());
-
 });
 
 gulp.task('watch', ['default'], function() {

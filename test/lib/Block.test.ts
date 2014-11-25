@@ -1,9 +1,6 @@
-/// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../../typings/tsd.d.ts" />
 
 import chai = require("chai");
-var assert = chai.assert;
-import chai = require("chai");
-var assert = chai.assert;
 import Block = require('../../src/lib/Block');
 import IBinding = require('../../src/lib/IBinding');
 import Binding = require('../../src/lib/Binding');
@@ -12,6 +9,8 @@ import BlockType = require('../../src/lib/BlockType');
 import BaseView = require('../../src/lib/BaseView');
 import View = require('../../src/lib/View');
 import EventGroup = require('../../src/lib/EventGroup');
+
+var assert = chai.assert;
 
 describe('Block', function () {
 

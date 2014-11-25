@@ -1,4 +1,4 @@
-/// <reference path="../typings/tsd.d.ts" />
+/// <reference path="../../typings/tsd.d.ts" />
 
 import chai = require("chai");
 import Scheduler = require('../../src/lib/Scheduler');
@@ -9,14 +9,9 @@ describe('Scheduler', function () {
     var scheduler: Scheduler.IQueue;
     var backend: Scheduler._SchedulerBackend;
 
-<<<<<<< HEAD:test/Scheduler.test.ts
-    beforeEach(function () {
-       Scheduler = rewire<typeof _Scheduler>('../Scheduler');
-=======
     beforeEach(function() {
         backend = new Scheduler._SchedulerBackend();
         scheduler = backend.buildMain();
->>>>>>> master:test/lib/Scheduler.test.ts
     });
 
     describe('#main', function () {
