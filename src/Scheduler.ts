@@ -91,6 +91,16 @@ var activeTask: Task = null;
 export var _setImmediate = (typeof setImmediate !== 'undefined') ? setImmediate : function (callback) { setTimeout(callback, 16); };
 export var _now = Date.now.bind(Date);
 
+var idleCallback;
+
+export function _onIdle(callback: () => void) {
+    if (!running && !scheduled) {
+        callback();
+    } else {
+        idleCallback = callback;
+    }
+}
+
 function scheduleRunner() {
     if (!running && !scheduled) {
         scheduled = true;
@@ -142,6 +152,8 @@ function run() {
 
         if (moreItems) {
             scheduleRunner();
+        } else if (idleCallback) {
+            idleCallback();
         }
     }
 }

@@ -15,8 +15,8 @@ function mock(item: any, prop: string, value: any): () => void {
 
 describe('Scheduler', function () {
 
-    beforeEach(function () {
-        
+    beforeEach(function (done) {
+        Scheduler._onIdle(done);
     });
 
     describe('#main', function () {
