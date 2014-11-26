@@ -14,8 +14,8 @@ var paths = {
     commonjs: 'dist/commonjs',
     appSourceDest: 'app/src',
     appTestDest: 'app/test',
-    libSource: ['src/**/*.ts'],
-    libTest: ['test/**/*.ts']
+    libSource: ['src/*.ts'],
+    libTest: ['test/*.ts']
 };
 
 var shouldExit = true;
@@ -25,14 +25,16 @@ gulp.task('clean', function(cb) {
 });
 
 gulp.task('build-source', ['clean'], function() {
-    return gulp.src(paths.libSource)
+    var tsResult = gulp.src(paths.libSource)
         .pipe(tsc({
             module: 'amd',
             target: 'ES5',
             declarationFiles: true
-        }))
-        .pipe(gulp.dest(paths.amd))
-        .pipe(gulp.dest(paths.appSourceDest));
+        }));
+
+    tsResult.dts.pipe(gulp.dest(paths.amd));
+    tsResult.js.pipe(gulp.dest(paths.amd))
+    return tsResult.js.pipe(gulp.dest(paths.appSourceDest));
 });
 
 gulp.task('build-test', ['clean', 'build-source'], function() {
