@@ -1,4 +1,4 @@
-/// <reference path="../../definitions/definitions.d.ts" />
+/// <reference path="../definitions/definitions.d.ts" />
 
 import chai = require("chai");
 var assert = chai.assert;
