@@ -7,7 +7,7 @@ module.exports = function(config) {
             {pattern: 'app/**/*.js', included: false}
         ],
         reporters: ['progress', 'coverage'],
-        preprocessors: { 'app/**/*.js': ['coverage'] },
+        preprocessors: { 'app/src/*.js': ['coverage'] },
         coverageReporter: {
             type: 'lcov',
             dir: 'coverage'
