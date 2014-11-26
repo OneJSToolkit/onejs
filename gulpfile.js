@@ -12,10 +12,10 @@ var paths = {
     dist: 'dist/',
     amd: 'dist/amd',
     commonjs: 'dist/commonjs',
-    appSourceDest: 'app/src/lib',
-    appTestDest: 'app/test/lib',
-    libSource: ['src/lib/**/*.ts'],
-    libTest: ['test/lib/**/*.ts']
+    appSourceDest: 'app/src',
+    appTestDest: 'app/test',
+    libSource: ['src/**/*.ts'],
+    libTest: ['test/**/*.ts']
 };
 
 var shouldExit = true;

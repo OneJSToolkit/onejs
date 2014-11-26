@@ -1,7 +1,7 @@
-/// <reference path="../../definitions/definitions.d.ts" />
+/// <reference path="../definitions/definitions.d.ts" />
 
 import chai = require("chai");
-import Promise = require("../../src/lib/Promise");
+import Promise = require("../src/Promise");
 
 var expect = chai.expect;
 var assert = chai.assert;

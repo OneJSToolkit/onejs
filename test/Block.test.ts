@@ -1,15 +1,15 @@
-/// <reference path="../../../definitions/definitions.d.ts" />
+/// <reference path="../../definitions/definitions.d.ts" />
 
 import chai = require("chai");
 var assert = chai.assert;
-import Block = require('../../src/lib/Block');
-import IBinding = require('../../src/lib/IBinding');
-import Binding = require('../../src/lib/Binding');
-import BlockProcessor = require('../../src/lib/BlockProcessor');
-import BlockType = require('../../src/lib/BlockType');
-import BaseView = require('../../src/lib/BaseView');
-import View = require('../../src/lib/View');
-import EventGroup = require('../../src/lib/EventGroup');
+import Block = require('../src/Block');
+import IBinding = require('../src/IBinding');
+import Binding = require('../src/Binding');
+import BlockProcessor = require('../src/BlockProcessor');
+import BlockType = require('../src/BlockType');
+import BaseView = require('../src/BaseView');
+import View = require('../src/View');
+import EventGroup = require('../src/EventGroup');
 
 describe('Block', function () {
 
@@ -202,7 +202,7 @@ describe('Block', function () {
     });
 
     describe('#Block binding', function () {
-        
+
         it("should bind text", function () {
             view.setData({ pet: 'dog' });
             var block = BlockProcessor.fromSpec(view, {

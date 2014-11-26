@@ -1,8 +1,8 @@
-/// <reference path="../../definitions/definitions.d.ts" />
+/// <reference path="../definitions/definitions.d.ts" />
 
 import chai = require("chai");
-import ViewModel = require("../../src/lib/ViewModel");
-import View = require("../../src/lib/View");
+import ViewModel = require("../src/ViewModel");
+import View = require("../src/View");
 
 var assert = chai.assert;
 
@@ -20,7 +20,7 @@ describe('ViewModel', function () {
             var rootView = new View();
             var childView = <View>rootView.addChild(new View());
             var grandChildView = childView.addChild(new View());
-            
+
             rootView.setData({
                 foo: { bar: 'baz' }
             });

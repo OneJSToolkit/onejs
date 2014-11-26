@@ -1,8 +1,8 @@
-/// <reference path="../../definitions/definitions.d.ts" />
+/// <reference path="../definitions/definitions.d.ts" />
 
 import chai = require("chai");
-import List = require("../../src/lib/List");
-import EventGroup = require("../../src/lib/EventGroup");
+import List = require("../src/List");
+import EventGroup = require("../src/EventGroup");
 
 var expect = chai.expect;
 var assert = chai.assert;
@@ -261,5 +261,5 @@ describe('EventGroup', function() {
 
         EventGroup.raise(sourceButton, 'foobar');
         expect(timesCalled).to.equal(2);
-    });   
+    });
 });
