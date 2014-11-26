@@ -1,7 +1,7 @@
 /// <reference path="../../typings/tsd.d.ts" />
 
 import chai = require("chai");
-import Promise = require("../../src/lib/Promise");
+import Promise = require("../src/Promise");
 
 var expect = chai.expect;
 var assert = chai.assert;

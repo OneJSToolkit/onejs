@@ -4,10 +4,7 @@
   "description": "",
   "main": "gulpfile.js",
   "scripts": {
-    "test": "gulp ci"
-  },
-  "engines": {
-    "node": ">=0.10.0"
+    "test": "gulp covertest"
   },
   "repository": {
     "type": "git",
@@ -23,16 +20,12 @@
     "del": "^0.1.3",
     "gulp": "^3.8.5",
     "gulp-coveralls": "^0.1.3",
-    "gulp-flatten": "0.0.2",
     "gulp-jasmine": "^0.2.0",
     "gulp-mocha": "^1.1.0",
     "gulp-requirejs": "^0.1.3",
     "gulp-rjs": "^0.1.0",
     "gulp-typescript": "2.0.0",
     "gulp-uglifyjs": "^0.4.2",
-    "gulp-util": "^3.0.0",
-    "gutil": "^1.4.0",
-    "htmlencode": "0.0.4",
     "istanbul": "^0.3.2",
     "istanbul-instrumenter-loader": "^0.1.2",
     "karma": "^0.12.24",
@@ -49,7 +42,5 @@
     "rewire": "^2.1.0",
     "typescript": "1.1.0-1"
   },
-  "dependencies": {
-    "xmldom": "^0.1.19"
-  }
+  "dependencies": {}
 }

@@ -1,8 +1,8 @@
 /// <reference path="../../typings/tsd.d.ts" />
 
 import chai = require("chai");
-import ViewModel = require("../../src/lib/ViewModel");
-import View = require("../../src/lib/View");
+import ViewModel = require("../src/ViewModel");
+import View = require("../src/View");
 
 var assert = chai.assert;
 
