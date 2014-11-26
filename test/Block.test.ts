@@ -1,14 +1,14 @@
 /// <reference path="../typings/tsd.d.ts" />
 
 import chai = require("chai");
-import Block = require('../src/Block');
-import IBinding = require('../src/IBinding');
-import Binding = require('../src/Binding');
-import BlockProcessor = require('../src/BlockProcessor');
-import BlockType = require('../src/BlockType');
-import BaseView = require('../src/BaseView');
-import View = require('../src/View');
-import EventGroup = require('../src/EventGroup');
+import Block = require('../Block');
+import IBinding = require('../IBinding');
+import Binding = require('../Binding');
+import BlockProcessor = require('../BlockProcessor');
+import BlockType = require('../BlockType');
+import BaseView = require('../BaseView');
+import View = require('../View');
+import EventGroup = require('../EventGroup');
 
 var assert = chai.assert;
 

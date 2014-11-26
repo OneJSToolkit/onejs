@@ -1,10 +1,10 @@
 /// <reference path="../typings/tsd.d.ts" />
 
 import chai = require("chai");
-import Block = require('../src/Block');
-import BlockProcessor = require('../src/BlockProcessor');
-import BlockType = require('../src/BlockType');
-import View = require('../src/View');
+import Block = require('../Block');
+import BlockProcessor = require('../BlockProcessor');
+import BlockType = require('../BlockType');
+import View = require('../View');
 
 var assert = chai.assert;
 
