@@ -8,7 +8,7 @@ var gulp = require('gulp');
 var mocha = require('gulp-mocha');
 var coveralls = require('gulp-coveralls');
 var tsc = require('gulp-typescript');
-var oneJsCompiler = require('gulp-onejs-compiler');
+var oneJsCompiler = require('gulp-onejs-build');
 var karma = require('karma').server;
 
 oneJsCompiler.gulpTasks.all({
