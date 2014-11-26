@@ -1,5 +1,7 @@
 declare var setImmediate;
 
+export var _TIME_SLICE = 30;
+
 export interface ITaskState {
     id: number;
     name: string;
@@ -12,19 +14,19 @@ export interface IState {
 }
 
 interface ITaskMap {
-    [key: number]: _Task;
+    [key: number]: Task;
 }
 
 var taskMap: ITaskMap = {};
 
-export class _Task implements ITaskState {
+class Task implements ITaskState {
     id: number;
     name: string;
     cancelled: boolean;
     work: Function;
 
     constructor(work: Function, name?: string) {
-        this.id = _Task._instanceCount++;
+        this.id = Task._instanceCount++;
         this.work = work;
         this.name = name;
         this.cancelled = false;
@@ -54,107 +56,104 @@ export interface IQueue {
     schedule(work: Function, insertAtTop?: boolean, name?: string): number;
 }
 
-export class _Queue implements IQueue {
+class Queue implements IQueue {
 
-    _before: _Queue;
-    _after: _Queue;
-    _work: _Task[] = [];
-    _schedulerBackend: _SchedulerBackend;
-
-    constructor(schedulerBackend: _SchedulerBackend) {
-        this._schedulerBackend = schedulerBackend;
-    }
+    _before: Queue;
+    _after: Queue;
+    _work: Task[] = [];
 
     get before() {
-        return this._before || (this._before = new _Queue(this._schedulerBackend));
+        return this._before || (this._before = new Queue());
     }
 
     get after() {
-        return this._after || (this._after = new _Queue(this._schedulerBackend));
+        return this._after || (this._after = new Queue());
     }
 
     schedule(work: Function, insertAtTop = false, name?:string):number {
-        var task = new _Task(work, name);
+        var task = new Task(work, name);
         if (insertAtTop) {
             this._work.unshift(task);
         } else {
             this._work.push(task);
         }
 
-        this._schedulerBackend.scheduleRunner();
+        scheduleRunner();
 
         return task.id;
     }
 }
 
-export class _SchedulerBackend {
+var scheduled = false;
+var running = false;
+var activeTask: Task = null;
+
+export var _setImmediate = (typeof setImmediate !== 'undefined') ? setImmediate : function (callback) { setTimeout(callback, 16); };
+export var _now = Date.now.bind(Date);
+
+var idleCallback;
+
+export function _onIdle(callback: () => void) {
+    if (!running && !scheduled) {
+        callback();
+    } else {
+        idleCallback = callback;
+    }
+}
+
+function scheduleRunner() {
+    if (!running && !scheduled) {
+        scheduled = true;
+        _setImmediate(run);
+    }
+}
+
+function nextTask(): Task {
+
+    var queue:Queue = <any>main;
+    var parents: Queue[] = [];
+
+    while (parents.length || queue) {
+        if (queue) {
+            parents.push(queue);
+            queue = queue._before;
+        } else {
+            queue = parents.pop();
+            if (queue._work.length) {
+                activeQueue = queue;
+                return queue._work.shift();
+            }
+            queue = queue._after;
+        }
+    }
+}
+
+function run() {
     scheduled = false;
-    running = false;
-    activeTask: _Task = null;
-    main: _Queue;
-    time_slice = 30;
+    running = true;
+    var end = _now() + _TIME_SLICE;
+    var moreItems = true;
 
-    buildMain() {
-        this.main = new _Queue(this);
-        return this.main;
-    }
-
-    _setImmediate = (typeof setImmediate !== 'undefined') ? setImmediate : function (callback) { setTimeout(callback, 16); };
-    _now = Date.now;
-
-    scheduleRunner() {
-        if (!this.running && !this.scheduled) {
-            this.scheduled = true;
-            this._setImmediate(() => {
-                this.run();
-            });
-        }
-    }
-
-    run() {
-        this.scheduled = false;
-        this.running = true;
-        var end = this._now() + this.time_slice;
-        var moreItems = true;
-
-        try {
-            while (moreItems && (this._now() <= end)) {
-                var next = this.nextTask();
-                if (next) {
-                    this.activeTask = next;
-                    next.execute();
-                } else {
-                    moreItems = false;
-                }
-            }
-        }
-        finally {
-            this.running = false;
-            this.activeTask = null;
-            activeQueue = this.main;
-
-            if (moreItems) {
-                this.scheduleRunner();
-            }
-        }
-    }
-
-    nextTask(): _Task {
-        var queue: _Queue = this.main;
-        var parents: _Queue[] = [];
-
-        while (parents.length || queue) {
-            if (queue) {
-                parents.push(queue);
-                queue = queue._before;
+    try {
+        while (moreItems && (_now() <= end)) {
+            var next = nextTask();
+            if (next) {
+                activeTask = next;
+                next.execute();
             } else {
-                queue = parents.pop();
-                if (queue._work.length) {
-                    activeQueue = queue;
-                    return queue._work.shift();
-                }
-                queue = queue._after;
+                moreItems = false;
             }
+        }
+    }
+    finally {
+        running = false;
+        activeTask = null;
+        activeQueue = main;
+
+        if (moreItems) {
+            scheduleRunner();
+        } else if (idleCallback) {
+            idleCallback();
         }
     }
 }
@@ -166,16 +165,13 @@ export function cancel(id: number) {
     }
 }
 
-export function retrieveState(backend?: _SchedulerBackend): IState {
-    if (!backend) {
-        backend = schedulerBackend;
-    }
+export function retrieveState(): IState {
     var state: IState = {
         tasks: [],
-        activeTask: backend.activeTask
+        activeTask: activeTask
     };
-    var queue: _Queue = backend.main;
-    var parents: _Queue[] = [];
+    var queue: Queue = <any>main;
+    var parents: Queue[] = [];
 
     while (parents.length || queue) {
         if (queue) {
@@ -197,6 +193,5 @@ export function retrieveState(backend?: _SchedulerBackend): IState {
     return state;
 }
 
-var schedulerBackend = new _SchedulerBackend();
-export var main: _Queue = schedulerBackend.buildMain();
+export var main: IQueue = new Queue();
 export var activeQueue: IQueue = main;

@@ -1,25 +1,22 @@
+// PhantomJS doesn't support Function.prototype.bind
 if (!Function.prototype.bind) {
-  Function.prototype.bind = function(oThis) {
-    if (typeof this !== 'function') {
-      // closest thing possible to the ECMAScript 5
-      // internal IsCallable function
-      throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+  var slice = Array.prototype.slice;
+  Function.prototype.bind = function(context) {
+    var func = this;
+    var args = slice.call(arguments, 1);
+
+    function bound() {
+      var calledAsConstructor = func.prototype && (this instanceof func);
+      return func.apply(
+        // ignore context when called as a constructor
+        !calledAsConstructor && context || this,
+        args.concat(slice.call(arguments))
+      );
     }
 
-    var aArgs   = Array.prototype.slice.call(arguments, 1),
-        fToBind = this,
-        fNOP    = function() {},
-        fBound  = function() {
-          return fToBind.apply(this instanceof fNOP && oThis
-                 ? this
-                 : oThis,
-                 aArgs.concat(Array.prototype.slice.call(arguments)));
-        };
+    bound.prototype = func.prototype;
 
-    fNOP.prototype = this.prototype;
-    fBound.prototype = new fNOP();
-
-    return fBound;
+    return bound;
   };
 }
 
