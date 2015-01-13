@@ -1,5 +1,5 @@
 define(["require", "exports"], function(require, exports) {
-    var TIME_SLICE = 30;
+    exports._TIME_SLICE = 30;
 
     var taskMap = {};
 
@@ -69,15 +69,26 @@ define(["require", "exports"], function(require, exports) {
     var running = false;
     var activeTask = null;
 
-    var _setImmediate = (typeof setImmediate !== 'undefined') ? setImmediate : function (callback) {
+    exports._setImmediate = (typeof setImmediate !== 'undefined') ? setImmediate : function (callback) {
         setTimeout(callback, 16);
     };
-    var _now = Date.now.bind(Date);
+    exports._now = Date.now.bind(Date);
+
+    var idleCallback;
+
+    function _onIdle(callback) {
+        if (!running && !scheduled) {
+            callback();
+        } else {
+            idleCallback = callback;
+        }
+    }
+    exports._onIdle = _onIdle;
 
     function scheduleRunner() {
         if (!running && !scheduled) {
             scheduled = true;
-            _setImmediate(run);
+            exports._setImmediate(run);
         }
     }
 
@@ -103,11 +114,11 @@ define(["require", "exports"], function(require, exports) {
     function run() {
         scheduled = false;
         running = true;
-        var end = _now() + TIME_SLICE;
+        var end = exports._now() + exports._TIME_SLICE;
         var moreItems = true;
 
         try  {
-            while (moreItems && (_now() <= end)) {
+            while (moreItems && (exports._now() <= end)) {
                 var next = nextTask();
                 if (next) {
                     activeTask = next;
@@ -123,6 +134,8 @@ define(["require", "exports"], function(require, exports) {
 
             if (moreItems) {
                 scheduleRunner();
+            } else if (idleCallback) {
+                idleCallback();
             }
         }
     }

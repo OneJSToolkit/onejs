@@ -95,7 +95,7 @@ define(["require", "exports", './EventGroup'], function(require, exports, EventG
             viewParams = (typeof (viewParams) == "string") ? viewParams : _serializeParams(viewParams);
 
             if (_supportsHistoryApi) {
-                history.replaceState({}, null, "/?" + viewParams);
+                history.replaceState({}, null, document.location.pathname + "?" + viewParams);
             } else {
                 document.location.hash = viewParams;
             }

@@ -24,10 +24,17 @@ define(["require", "exports"], function(require, exports) {
 
         function loadStyles(rules) {
             var styleEl = document.createElement('style');
+            styleEl.setAttribute('type', 'text/css');
 
-            styleEl.type = "text/css";
-            styleEl.appendChild(document.createTextNode(rules));
-            document.head.appendChild(styleEl);
+            if (styleEl['styleSheet']) {
+                // For IE < 9
+                styleEl['styleSheet'].cssText = rules;
+            } else {
+                styleEl.appendChild(document.createTextNode(rules));
+            }
+
+            var head = document.getElementsByTagName('head')[0];
+            head.appendChild(styleEl);
         }
         DomUtils.loadStyles = loadStyles;
 
