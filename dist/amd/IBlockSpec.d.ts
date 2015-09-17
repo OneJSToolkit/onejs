@@ -1,6 +1,6 @@
-import BlockType = require('BlockType');
-import Block = require('Block');
-import IBinding = require('IBinding');
+import BlockType = require('./BlockType');
+import Block = require('./Block');
+import IBinding = require('./IBinding');
 interface IBlockSpec {
     type: BlockType;
     children?: IBlockSpec[];
