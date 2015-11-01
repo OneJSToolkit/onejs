@@ -1,7 +1,7 @@
-/// <reference path="../definitions/definitions.d.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
 import chai = require("chai");
-import Scheduler = require('../src/Scheduler');
+import Scheduler = require('../Scheduler');
 
 var assert = chai.assert;
 

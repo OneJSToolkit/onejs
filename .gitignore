@@ -39,6 +39,8 @@ Icon
 node_modules
 bin
 dist
-npm-debug.log
 app
+app-min
+temp
+npm-debug.log
 coverage

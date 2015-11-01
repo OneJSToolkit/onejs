@@ -1,12 +1,13 @@
-/// <reference path="../definitions/definitions.d.ts" />
+/// <reference path="../typings/tsd.d.ts" />
 
 import chai = require("chai");
+import Block = require('../Block');
+import BlockProcessor = require('../BlockProcessor');
+import BlockType = require('../BlockType');
+import View = require('../View');
+import List = require('../List');
+
 var assert = chai.assert;
-import Block = require('../src/Block');
-import BlockProcessor = require('../src/BlockProcessor');
-import BlockType = require('../src/BlockType');
-import View = require('../src/View');
-import List = require('../src/List');
 
 describe('Block', function () {
 
