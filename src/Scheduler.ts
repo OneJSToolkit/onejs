@@ -51,8 +51,8 @@ class Task implements ITaskState {
 }
 
 export interface IQueue {
-    before: IQueue;
-    after: IQueue;
+    before(): IQueue;
+    after(): IQueue;
     schedule(work: Function, insertAtTop?: boolean, name?: string): number;
 }
 
@@ -62,11 +62,11 @@ class Queue implements IQueue {
     _after: Queue;
     _work: Task[] = [];
 
-    get before() {
+    before() {
         return this._before || (this._before = new Queue());
     }
 
-    get after() {
+    after() {
         return this._after || (this._after = new Queue());
     }
 
